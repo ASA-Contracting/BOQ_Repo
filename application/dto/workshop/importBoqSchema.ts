@@ -40,8 +40,7 @@ export const importBoqSchema = z.object({
   columnMappingByIndex: columnMappingByIndexSchema.optional(),
   projectId: z.number().int().positive().optional(),
   boqId: z.number().int().positive().optional(),
-  abrdProjectId: z.number().int().positive().optional(),
-  projectName: z.string().trim().min(1).max(150).optional(),
+  projectName: z.string().trim().min(1).max(150),
   client: z.string().trim().max(150).optional(),
 });
 
@@ -110,6 +109,8 @@ export const saveClassificationSchema = z.object({
   itemId: z.number().int().positive(),
   familyId: z.number().int().positive(),
 });
+
+export type SaveClassificationInput = z.infer<typeof saveClassificationSchema>;
 
 export const returnToEngineerSchema = z.object({
   batchId: z.number().int().positive(),

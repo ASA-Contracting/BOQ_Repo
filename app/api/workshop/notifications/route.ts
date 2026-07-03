@@ -8,13 +8,19 @@ export async function GET(request: NextRequest) {
   if (!ctx) return apiError("Unauthorized", 401);
 
   const limit = Number(request.nextUrl.searchParams.get("limit") ?? "20");
-  const result = await getAppServices().workshop.listBoqNotificationsUseCase.execute(ctx, {
-    limit: Number.isFinite(limit) ? limit : 20,
-  });
 
-  if (!result.ok) {
-    return apiError(result.error.message, 403);
+  try {
+    const result = await getAppServices().workshop.listBoqNotificationsUseCase.execute(ctx, {
+      limit: Number.isFinite(limit) ? limit : 20,
+    });
+
+    if (!result.ok) {
+      return apiError(result.error.message, 403);
+    }
+
+    return apiSuccess(result.value, "Notifications retrieved");
+  } catch {
+    // Fail open: inbox badge is optional; do not block the app shell on slow DB.
+    return apiSuccess([], "Notifications unavailable");
   }
-
-  return apiSuccess(result.value, "Notifications retrieved");
 }

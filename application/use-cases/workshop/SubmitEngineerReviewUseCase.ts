@@ -1,6 +1,7 @@
 import type { IUseCase } from "@/application/use-cases/IUseCase";
 import { authorizeEngineerSubmit } from "@/application/use-cases/workshop/authorizeEngineerSubmit";
 import { toBoqVersionId } from "@/domain/boq/ids";
+import type { IBoqVersionRepository } from "@/domain/boq/repositories/IBoqVersionRepository";
 import type { DomainError } from "@/domain/shared/errors/DomainError";
 import type { IUnitOfWork } from "@/domain/shared/persistence/IUnitOfWork";
 import type { RequestContext } from "@/domain/shared/RequestContext";

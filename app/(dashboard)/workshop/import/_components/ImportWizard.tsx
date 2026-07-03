@@ -48,6 +48,7 @@ const FIELD_LABELS: Record<BoqImportWizardFieldKey, string> = {
 
 type ImportWizardProps = {
   initialBatchName?: string;
+  initialProjectName?: string;
   redirectToBoq?: boolean;
 };
 
@@ -78,6 +79,7 @@ async function parseExcelFile(file: File, sheetName?: string): Promise<ExcelPrev
 
 export function ImportWizard({
   initialBatchName = "",
+  initialProjectName = "",
   redirectToBoq = false,
 }: ImportWizardProps) {
   const router = useRouter();
@@ -86,17 +88,8 @@ export function ImportWizard({
   const leftColumnRef = useRef<HTMLDivElement>(null);
   const [leftColumnHeight, setLeftColumnHeight] = useState<number | null>(null);
 
+  const [projectName, setProjectName] = useState(initialProjectName);
   const [batchName, setBatchName] = useState(initialBatchName);
-  const [projectSearch, setProjectSearch] = useState("");
-  const [projectResults, setProjectResults] = useState<
-    Array<{ id: number; name: string; client: string | null; statusName: string | null }>
-  >([]);
-  const [selectedAbrdProject, setSelectedAbrdProject] = useState<{
-    id: number;
-    name: string;
-    client: string | null;
-  } | null>(null);
-  const [searchingProjects, setSearchingProjects] = useState(false);
   const [preview, setPreview] = useState<ExcelPreviewDto | null>(null);
   const [allRows, setAllRows] = useState<string[][]>([]);
   const [columnMappingByIndex, setColumnMappingByIndex] = useState<
@@ -154,7 +147,7 @@ export function ImportWizard({
   );
 
   const importPayload = useMemo(() => {
-    if (!preview || !batchName.trim()) {
+    if (!preview || !batchName.trim() || !projectName.trim()) {
       return null;
     }
     return buildImportRequestPayload(
@@ -163,12 +156,12 @@ export function ImportWizard({
       batchName.trim(),
       columnMappingByIndex,
       {
-        projectName: selectedAbrdProject?.name ?? batchName.trim(),
-        abrdProjectId: selectedAbrdProject?.id,
-        client: selectedAbrdProject?.client ?? undefined,
+        projectName: projectName.trim(),
       },
     );
-  }, [allRows, batchName, columnMappingByIndex, preview, selectedAbrdProject]);
+  }, [allRows, batchName, columnMappingByIndex, preview, projectName]);
+
+  const projectStepComplete = projectName.trim().length > 0 && batchName.trim().length > 0;
 
   const importableRowCount = useMemo(() => {
     if (!importPayload) {
@@ -306,7 +299,7 @@ export function ImportWizard({
       observer.disconnect();
       window.removeEventListener("resize", syncHeight);
     };
-  }, [batchName, preview, uploadedFile, loading]);
+  }, [batchName, preview, projectName, uploadedFile, loading]);
 
   return (
     <ShellContent className="mx-auto w-full min-w-0 max-w-7xl pb-10">
@@ -334,101 +327,33 @@ export function ImportWizard({
             <ImportWizardStep
               step={1}
               tone="sky"
-              title="Batch name"
-              description="Name this import batch."
-              complete={batchName.trim().length > 0}
+              title="Project & BOQ"
+              description="Choose the project and name this BOQ import."
+              complete={projectStepComplete}
               className="shrink-0"
             >
               <div className="grid gap-4">
                 <div className="grid gap-2">
-                  <Label htmlFor="batch-name">Batch name</Label>
+                  <Label htmlFor="project-name">Project name</Label>
+                  <Input
+                    id="project-name"
+                    value={projectName}
+                    onChange={(event) => setProjectName(event.target.value)}
+                    placeholder="North Tower MEP"
+                  />
+                  <Text variant="muted" size="xs">
+                    One project can have many BOQs. Reusing the same project name links this import
+                    to the existing project.
+                  </Text>
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="batch-name">BOQ name</Label>
                   <Input
                     id="batch-name"
                     value={batchName}
                     onChange={(event) => setBatchName(event.target.value)}
-                    placeholder="Project Alpha BOQ"
+                    placeholder="Electrical BOQ Rev A"
                   />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="project-search">ABRD project (optional)</Label>
-                  <div className="flex gap-2">
-                    <Input
-                      id="project-search"
-                      value={projectSearch}
-                      onChange={(event) => setProjectSearch(event.target.value)}
-                      placeholder="Search ABRD projects…"
-                    />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      disabled={searchingProjects || projectSearch.trim().length < 2}
-                      onClick={async () => {
-                        setSearchingProjects(true);
-                        try {
-                          const response = await fetch(
-                            `/api/projects/search?q=${encodeURIComponent(projectSearch.trim())}`,
-                          );
-                          const json = (await response.json()) as {
-                            success: boolean;
-                            data?: Array<{
-                              id: number;
-                              name: string;
-                              client: string | null;
-                              statusName: string | null;
-                            }>;
-                          };
-                          setProjectResults(json.success ? (json.data ?? []) : []);
-                        } finally {
-                          setSearchingProjects(false);
-                        }
-                      }}
-                    >
-                      {searchingProjects ? "…" : "Search"}
-                    </Button>
-                  </div>
-                  {selectedAbrdProject ? (
-                    <p className="text-sm text-emerald-800">
-                      Linked: {selectedAbrdProject.name}
-                      {selectedAbrdProject.client ? ` · ${selectedAbrdProject.client}` : ""}
-                      <button
-                        type="button"
-                        className="ml-2 text-xs underline"
-                        onClick={() => setSelectedAbrdProject(null)}
-                      >
-                        Clear
-                      </button>
-                    </p>
-                  ) : null}
-                  {projectResults.length > 0 ? (
-                    <ul className="max-h-40 overflow-auto rounded-md border border-sky-200 bg-white">
-                      {projectResults.map((project) => (
-                        <li key={project.id} className="border-b border-sky-100 last:border-0">
-                          <button
-                            type="button"
-                            className="w-full px-3 py-2 text-left text-sm hover:bg-sky-50"
-                            onClick={() => {
-                              setSelectedAbrdProject({
-                                id: project.id,
-                                name: project.name,
-                                client: project.client,
-                              });
-                              setBatchName((current) => current || project.name);
-                            }}
-                          >
-                            <span className="font-medium">{project.name}</span>
-                            {project.statusName ? (
-                              <span className="ml-2 text-xs text-muted-foreground">
-                                {project.statusName}
-                              </span>
-                            ) : null}
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
-                  ) : null}
-                  <Text variant="muted" size="xs">
-                    When ABRD is not configured, the batch name is used as the local project name.
-                  </Text>
                 </div>
               </div>
             </ImportWizardStep>

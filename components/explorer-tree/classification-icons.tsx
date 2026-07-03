@@ -36,6 +36,39 @@ export function IconFilter({ className }: IconProps) {
   );
 }
 
+export function IconParentTrail({ className }: IconProps) {
+  return (
+    <svg className={className} viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+      <path
+        d="M4 3.5v7A2.5 2.5 0 0 0 6.5 13H12"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.35"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path d="M4 7.5h7" fill="none" stroke="currentColor" strokeWidth="1.35" strokeLinecap="round" />
+      <circle cx="4" cy="3" r="1.35" fill="none" stroke="currentColor" strokeWidth="1.1" />
+      <circle cx="12" cy="7.5" r="1.35" fill="none" stroke="currentColor" strokeWidth="1.1" />
+    </svg>
+  );
+}
+
+export function IconExpandAll({ className }: IconProps) {
+  return (
+    <svg className={className} viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+      <path
+        d="M4 6 8 9.8 12 6"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 export function IconCollapseAll({ className }: IconProps) {
   return (
     <svg className={className} viewBox="0 0 16 16" aria-hidden="true" focusable="false">

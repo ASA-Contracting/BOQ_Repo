@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { CategoryBulkPanel } from './category-bulk-panel';
 import { CategoryExplorerTree, CategoryContextMenu } from './category-explorer-tree';
 import { CategoryImportDrawer, readImportRowsFromFile } from './category-import-drawer';
@@ -8,26 +8,9 @@ import { CategoryImportPrompt } from './category-import-prompt';
 import { CategoryLevelGridPanel } from './category-level-grid-panel';
 import { CategorySearchStrip } from './category-search-strip';
 import { CategoryTreeHeader } from './category-tree-header';
-import { MaterialItemsPanel } from './material-items-panel';
 import type { CategoryExplorerTreeNode } from '@/lib/category-tree-builder';
+import { getInheritedTagsForNode } from '@/lib/category-tree-builder';
 import { useClassificationStore } from '@/hooks/use-classification-store';
-
-function findNodeInTree(root: CategoryExplorerTreeNode | null, nodeId: number): CategoryExplorerTreeNode | null {
-  if (!root) return null;
-  const walk = (node: CategoryExplorerTreeNode): CategoryExplorerTreeNode | null => {
-    if (node.id === nodeId) return node;
-    for (const child of node.children) {
-      const found = walk(child);
-      if (found) return found;
-    }
-    return null;
-  };
-  for (const child of root.children) {
-    const found = walk(child);
-    if (found) return found;
-  }
-  return null;
-}
 
 function countSearchMatches(root: CategoryExplorerTreeNode | null): number {
   if (!root) return 0;
@@ -44,7 +27,6 @@ function countSearchMatches(root: CategoryExplorerTreeNode | null): number {
 export function CategoryWorkspace() {
   const store = useClassificationStore();
   const shellRef = useRef<HTMLDivElement>(null);
-  const [rightPanelMode, setRightPanelMode] = useState<'categories' | 'items'>('categories');
 
   useEffect(() => {
     const onPointerDown = (event: MouseEvent) => {
@@ -58,11 +40,6 @@ export function CategoryWorkspace() {
     return () => document.removeEventListener('mousedown', onPointerDown);
   }, [store.closeOverlays]);
 
-  const contextNode = useMemo(
-    () => (store.contextMenu ? findNodeInTree(store.treeRoot, store.contextMenu.nodeId) : null),
-    [store.contextMenu, store.treeRoot],
-  );
-
   const contextNodeTags =
     store.contextMenu && store.state
       ? store.state.materialTags
@@ -71,12 +48,9 @@ export function CategoryWorkspace() {
       : [];
 
   const contextInheritedTags =
-    contextNode?.tags
-      ?.filter((tag) => tag.inherited && !tag.overflow)
-      .map((tag) => ({
-        tag: tag.label,
-        sourceLabel: tag.title?.replace(/^Inherited from /, '') ?? '',
-      })) ?? [];
+    store.contextMenu && store.state
+      ? getInheritedTagsForNode(store.state, store.treeIndex, store.contextMenu.nodeId)
+      : [];
 
   const contextAvailableTags = store.availableTags
     .map((tag) => tag.name)
@@ -87,7 +61,7 @@ export function CategoryWorkspace() {
 
   return (
     <div className="mc-dual-shell" ref={shellRef} style={{ ['--mc-sidebar-width' as string]: `${store.drawerWidthPx}px` }}>
-      <aside className="mc-dual-shell__sidebar mc-side-card mc-side-card--tree" aria-label="Material classification hierarchy">
+      <aside className="mc-dual-shell__sidebar mc-side-card mc-side-card--tree" aria-label="Category hierarchy">
         <CategoryTreeHeader
           exporting={store.exporting}
           categoryCount={store.categoryCount}
@@ -121,7 +95,10 @@ export function CategoryWorkspace() {
               onClearFilterTags={store.clearFilterTags}
               isFilterOptionSelected={store.isFilterOptionSelected}
               isFilterTagSelected={store.isFilterTagSelected}
-              onCollapseAll={store.collapseAll}
+              treeFullyExpanded={store.treeFullyExpanded}
+              onToggleExpandCollapse={store.toggleExpandCollapseAll}
+              showParentContext={store.showParentContext}
+              onToggleShowParentContext={store.toggleShowParentContext}
             />
 
             {store.loading ? (
@@ -229,64 +206,23 @@ export function CategoryWorkspace() {
       </button>
 
       <section className="mc-dual-shell__main">
-        <div className="mc-dual-shell__main-toolbar">
-          <label htmlFor="classification-schema">Schema</label>
-          <select
-            id="classification-schema"
-            value={store.schemaId ?? ''}
-            onChange={(event) => store.setSchemaId(Number(event.target.value))}
-          >
-            {store.schemas.map((schema) => (
-              <option key={schema.id} value={schema.id}>
-                {schema.name}
-              </option>
-            ))}
-          </select>
-          <span className="mx-2 text-zinc-300">|</span>
-          <div className="inline-flex rounded-md border border-zinc-200 p-0.5 dark:border-zinc-700">
-            <button
-              type="button"
-              className={`rounded px-3 py-1 text-xs font-semibold ${
-                rightPanelMode === 'categories'
-                  ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900'
-                  : 'text-zinc-600'
-              }`}
-              onClick={() => setRightPanelMode('categories')}
-            >
-              Child categories
-            </button>
-            <button
-              type="button"
-              className={`rounded px-3 py-1 text-xs font-semibold ${
-                rightPanelMode === 'items'
-                  ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900'
-                  : 'text-zinc-600'
-              }`}
-              onClick={() => setRightPanelMode('items')}
-            >
-              Material items
-            </button>
-          </div>
-        </div>
         {store.error && store.categoryCount > 0 && (
           <div className="mc-tree-context-error">{store.error}</div>
         )}
-        {rightPanelMode === 'categories' ? (
+        <div className="mc-level-panel-host">
           <CategoryLevelGridPanel
-            parentPathLabel={store.selectedPathLabel}
+            parentPath={store.selectedPath}
             canAdd={store.canAddChildAtSelected}
-            existingSiblingNames={store.existingSiblingNames}
+            existingChildNodes={store.existingChildNodes}
             applying={store.creatingChildNodes}
+            saving={store.updatingChildNodes}
+            deleting={store.deletingChildNodes}
             onApply={store.batchAddChildNodes}
+            onSaveRenames={store.batchRenameChildNodes}
+            onDeleteSelected={store.batchDeleteChildNodes}
+            onSelectPathNode={store.setSelectedNodeId}
           />
-        ) : (
-          <MaterialItemsPanel
-            pathLabel={store.selectedPathLabel}
-            codePreview={store.selectedCode}
-            items={store.nodeItems}
-            onCreateItem={store.createMaterialItem}
-          />
-        )}
+        </div>
       </section>
 
       <CategoryBulkPanel
@@ -353,6 +289,9 @@ export function CategoryWorkspace() {
         }}
         onRemoveTag={(tagId) => {
           if (store.contextMenu) void store.removeTag(store.contextMenu.nodeId, tagId);
+        }}
+        onRenameTag={(tagId, name) => {
+          void store.renameTag(tagId, name);
         }}
       />
     </div>

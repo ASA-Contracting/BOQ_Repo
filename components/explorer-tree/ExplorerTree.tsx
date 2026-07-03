@@ -296,6 +296,9 @@ function TreeNode({
                   metaKey: event.metaKey,
                   shiftKey: event.shiftKey,
                 });
+                if (hasChildren(node) && !expanded && !event.ctrlKey && !event.metaKey && !event.shiftKey) {
+                  onNodeToggled?.(node);
+                }
               }}
               onDoubleClick={(event) => {
                 event.preventDefault();
@@ -418,7 +421,7 @@ function TreeNode({
                     onNodeContextMenu?.({
                       node,
                       clientX: rect.left,
-                      clientY: rect.top + rect.height / 2,
+                      clientY: rect.bottom + 4,
                     });
                   }}
                 >

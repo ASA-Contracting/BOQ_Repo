@@ -18,7 +18,7 @@ type WorkshopBatchRow = {
   name: string;
   description: string | null;
   status: string;
-  workflow_stage: string;
+  workflowStage: string;
   import_item_count: number;
   items_pending_review_count: number;
   items_approved_count: number;
@@ -26,12 +26,12 @@ type WorkshopBatchRow = {
   latest_ai_analysis_id: number | null;
   scope_project_id: number | null;
   scope_boq_id: number | null;
-  linked_boq_version_id: number | null;
-  engineer_submitted_at: Date | null;
-  engineer_submitted_by: string | null;
-  section_head_approved_at: Date | null;
-  section_head_approved_by: string | null;
-  return_to_engineer_notes: string | null;
+  linkedBoqVersionId: number | null;
+  engineerSubmittedAt: Date | null;
+  engineerSubmittedBy: string | null;
+  sectionHeadApprovedAt: Date | null;
+  sectionHeadApprovedBy: string | null;
+  returnToEngineerNotes: string | null;
 };
 
 type WorkshopItemRow = {
@@ -76,8 +76,8 @@ type ReviewDecisionRow = {
 
 export function mapWorkshopBatchRowToDomain(row: WorkshopBatchRow): WorkshopBatch {
   const status = isWorkshopBatchStatus(row.status) ? row.status : "imported";
-  const workflowStage = isWorkshopWorkflowStage(row.workflow_stage)
-    ? row.workflow_stage
+  const workflowStage = isWorkshopWorkflowStage(row.workflowStage)
+    ? row.workflowStage
     : "imported";
 
   return {
@@ -93,12 +93,12 @@ export function mapWorkshopBatchRowToDomain(row: WorkshopBatchRow): WorkshopBatc
     latestAiAnalysisId: row.latest_ai_analysis_id,
     scopeProjectId: row.scope_project_id,
     scopeBoqId: row.scope_boq_id,
-    linkedBoqVersionId: row.linked_boq_version_id,
-    engineerSubmittedAt: row.engineer_submitted_at,
-    engineerSubmittedBy: row.engineer_submitted_by,
-    sectionHeadApprovedAt: row.section_head_approved_at,
-    sectionHeadApprovedBy: row.section_head_approved_by,
-    returnToEngineerNotes: row.return_to_engineer_notes,
+    linkedBoqVersionId: row.linkedBoqVersionId,
+    engineerSubmittedAt: row.engineerSubmittedAt,
+    engineerSubmittedBy: row.engineerSubmittedBy,
+    sectionHeadApprovedAt: row.sectionHeadApprovedAt,
+    sectionHeadApprovedBy: row.sectionHeadApprovedBy,
+    returnToEngineerNotes: row.returnToEngineerNotes,
   };
 }
 

@@ -252,6 +252,11 @@ export async function createTag(db: Db, name: string) {
   return row;
 }
 
+export async function updateTag(db: Db, id: number, name: string) {
+  const [row] = await db.update(tags).set({ name }).where(eq(tags.id, id)).returning();
+  return row ?? null;
+}
+
 export async function deleteTag(db: Db, id: number) {
   await db.delete(materialTags).where(eq(materialTags.tagId, id));
   await db.delete(tags).where(eq(tags.id, id));

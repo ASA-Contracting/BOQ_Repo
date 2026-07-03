@@ -1,23 +1,40 @@
 'use client';
 
 import { Loader2, Plus, Trash2, Upload } from 'lucide-react';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { parseSingleColumnFile, parseSingleColumnText } from '@/lib/parse-single-column-rows';
+import { cn } from '@/lib/utils';
 
 type GridRow = {
   id: string;
   name: string;
 };
 
+export type ExistingChildNode = {
+  id: number;
+  name: string;
+};
+
+export type PathSegment = {
+  id: number;
+  name: string;
+};
+
 type Props = {
-  parentPathLabel: string;
+  parentPath: PathSegment[];
   canAdd: boolean;
-  existingSiblingNames: string[];
+  existingChildNodes: ExistingChildNode[];
   applying: boolean;
+  saving: boolean;
+  deleting: boolean;
   onApply: (names: string[]) => Promise<void>;
+  onSaveRenames: (updates: Array<{ id: number; name: string }>) => Promise<void>;
+  onDeleteSelected: (ids: number[]) => Promise<void>;
+  onSelectPathNode: (nodeId: number) => void;
 };
 
 function createEmptyRow(): GridRow {
@@ -25,19 +42,72 @@ function createEmptyRow(): GridRow {
 }
 
 export function CategoryLevelGridPanel({
-  parentPathLabel,
+  parentPath,
   canAdd,
-  existingSiblingNames,
+  existingChildNodes,
   applying,
+  saving,
+  deleting,
   onApply,
+  onSaveRenames,
+  onDeleteSelected,
+  onSelectPathNode,
 }: Props) {
   const [rows, setRows] = useState<GridRow[]>([createEmptyRow(), createEmptyRow(), createEmptyRow()]);
+  const [selectedExistingIds, setSelectedExistingIds] = useState<Set<number>>(new Set());
+  const [selectedNewRowIds, setSelectedNewRowIds] = useState<Set<string>>(new Set());
+  const [editedNames, setEditedNames] = useState<Record<number, string>>({});
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  useEffect(() => {
+    setSelectedExistingIds(new Set());
+    setSelectedNewRowIds(new Set());
+    setEditedNames(Object.fromEntries(existingChildNodes.map((node) => [node.id, node.name])));
+    setError(null);
+  }, [parentPath, existingChildNodes]);
+
   const existingKeys = useMemo(
-    () => new Set(existingSiblingNames.map((name) => name.toLowerCase())),
-    [existingSiblingNames],
+    () => new Set(existingChildNodes.map((node) => node.name.toLowerCase())),
+    [existingChildNodes],
+  );
+
+  const allExistingSelected =
+    existingChildNodes.length > 0 &&
+    existingChildNodes.every((node) => selectedExistingIds.has(node.id));
+
+  const someExistingSelected = selectedExistingIds.size > 0 && !allExistingSelected;
+
+  const allNewRowsSelected = rows.length > 0 && rows.every((row) => selectedNewRowIds.has(row.id));
+
+  const someNewRowsSelected = selectedNewRowIds.size > 0 && !allNewRowsSelected;
+
+  const renameUpdates = useMemo(() => {
+    const updates: Array<{ id: number; name: string }> = [];
+    for (const node of existingChildNodes) {
+      const nextName = editedNames[node.id]?.trim() ?? '';
+      if (!nextName || nextName === node.name) {
+        continue;
+      }
+      updates.push({ id: node.id, name: nextName });
+    }
+    return updates;
+  }, [editedNames, existingChildNodes]);
+
+  const renameDuplicateNames = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const node of existingChildNodes) {
+      const key = (editedNames[node.id] ?? node.name).trim().toLowerCase();
+      if (!key) continue;
+      counts.set(key, (counts.get(key) ?? 0) + 1);
+    }
+    return [...counts.entries()].filter(([, count]) => count > 1).map(([name]) => name);
+  }, [editedNames, existingChildNodes]);
+
+  const renameEmptyCount = useMemo(
+    () =>
+      existingChildNodes.filter((node) => !(editedNames[node.id] ?? node.name).trim()).length,
+    [editedNames, existingChildNodes],
   );
 
   const namesToCreate = useMemo(() => {
@@ -63,12 +133,11 @@ export function CategoryLevelGridPanel({
     if (!names.length) return;
     setRows((current) => {
       const nonEmpty = current.filter((row) => row.name.trim());
-      const next = [
+      return [
         ...nonEmpty,
         ...names.map((name) => ({ id: crypto.randomUUID(), name })),
         createEmptyRow(),
       ];
-      return next;
     });
     setError(null);
   }, []);
@@ -102,6 +171,55 @@ export function CategoryLevelGridPanel({
     [appendNames],
   );
 
+  const toggleExisting = useCallback((nodeId: number, checked: boolean) => {
+    setSelectedExistingIds((current) => {
+      const next = new Set(current);
+      if (checked) next.add(nodeId);
+      else next.delete(nodeId);
+      return next;
+    });
+  }, []);
+
+  const toggleSelectAllExisting = useCallback(
+    (checked: boolean) => {
+      if (!checked) {
+        setSelectedExistingIds(new Set());
+        return;
+      }
+      setSelectedExistingIds(new Set(existingChildNodes.map((node) => node.id)));
+    },
+    [existingChildNodes],
+  );
+
+  const toggleNewRow = useCallback((rowId: string, checked: boolean) => {
+    setSelectedNewRowIds((current) => {
+      const next = new Set(current);
+      if (checked) next.add(rowId);
+      else next.delete(rowId);
+      return next;
+    });
+  }, []);
+
+  const toggleSelectAllNewRows = useCallback(
+    (checked: boolean) => {
+      if (!checked) {
+        setSelectedNewRowIds(new Set());
+        return;
+      }
+      setSelectedNewRowIds(new Set(rows.map((row) => row.id)));
+    },
+    [rows],
+  );
+
+  const handleDeleteSelectedNewRows = () => {
+    if (!selectedNewRowIds.size) return;
+    setRows((current) => {
+      const next = current.filter((row) => !selectedNewRowIds.has(row.id));
+      return next.length ? next : [createEmptyRow()];
+    });
+    setSelectedNewRowIds(new Set());
+  };
+
   const handleApply = async () => {
     if (!canAdd) {
       setError('This node cannot accept child categories.');
@@ -119,102 +237,342 @@ export function CategoryLevelGridPanel({
     try {
       await onApply(namesToCreate);
       setRows([createEmptyRow(), createEmptyRow(), createEmptyRow()]);
+      setSelectedNewRowIds(new Set());
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create categories.');
     }
   };
 
+  const handleDeleteSelected = async () => {
+    if (!selectedExistingIds.size) return;
+    setError(null);
+    try {
+      await onDeleteSelected(Array.from(selectedExistingIds));
+      setSelectedExistingIds(new Set());
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete categories.');
+    }
+  };
+
+  const handleSaveRenames = async () => {
+    if (!renameUpdates.length) return;
+    if (renameEmptyCount > 0) {
+      setError('Category names cannot be empty.');
+      return;
+    }
+    if (renameDuplicateNames.length) {
+      setError(`Duplicate names: ${renameDuplicateNames.join(', ')}`);
+      return;
+    }
+    setError(null);
+    try {
+      await onSaveRenames(renameUpdates);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to save category names.');
+    }
+  };
+
   return (
-    <div className="space-y-4" onPaste={handlePaste}>
-      <div>
-        <p className="text-xs uppercase tracking-wide text-zinc-500">Add child categories under</p>
-        <p className="text-sm font-medium">{parentPathLabel || 'Select a category node'}</p>
-      </div>
+    <div className="mc-level-panel" onPaste={handlePaste}>
+      <header className="mc-level-panel__header">
+        <div>
+          <p className="mc-level-panel__eyebrow">Child categories under</p>
+          <nav className="mc-level-panel__path" aria-label="Category path">
+            {parentPath.length === 0 ? (
+              <span className="mc-level-panel__path-placeholder">Select a category in the tree</span>
+            ) : (
+              parentPath.map((node, index) => {
+                const isLast = index === parentPath.length - 1;
+                return (
+                  <span key={node.id} className="mc-level-panel__path-segment">
+                    {index > 0 ? (
+                      <span className="mc-level-panel__path-separator" aria-hidden="true">
+                        {' / '}
+                      </span>
+                    ) : null}
+                    <button
+                      type="button"
+                      className={cn(
+                        'mc-level-panel__path-link',
+                        isLast && 'mc-level-panel__path-link--current',
+                      )}
+                      aria-current={isLast ? 'page' : undefined}
+                      onClick={() => onSelectPathNode(node.id)}
+                    >
+                      {node.name}
+                    </button>
+                  </span>
+                );
+              })
+            )}
+          </nav>
+        </div>
+      </header>
 
-      <div className="flex flex-wrap items-center gap-2">
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          disabled={!canAdd}
-          onClick={() => setRows((current) => [...current, createEmptyRow()])}
-        >
-          <Plus className="mr-1.5 h-3.5 w-3.5" />
-          Add row
-        </Button>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          disabled={!canAdd}
-          onClick={() => fileInputRef.current?.click()}
-        >
-          <Upload className="mr-1.5 h-3.5 w-3.5" />
-          Upload Excel
-        </Button>
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept=".xlsx,.xls,.csv,.txt"
-          className="hidden"
-          onChange={(event) => void handleFileChange(event)}
-        />
-        <span className="text-xs text-zinc-500">Paste from Excel with Ctrl+V</span>
-      </div>
+      <div className="mc-level-panel__body">
+        {existingChildNodes.length > 0 ? (
+          <section className="mc-level-panel__section mc-level-panel__section--existing">
+            <div className="mc-level-panel__section-head">
+              <h2 className="mc-level-panel__section-title">
+                Existing
+                <span className="mc-level-panel__count">{existingChildNodes.length}</span>
+              </h2>
+              <div className="flex flex-wrap items-center gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={saving || renameUpdates.length === 0 || renameDuplicateNames.length > 0}
+                  onClick={() => void handleSaveRenames()}
+                >
+                  {saving ? (
+                    <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                  ) : null}
+                  Save changes{renameUpdates.length ? ` (${renameUpdates.length})` : ''}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="mc-level-panel__danger-btn"
+                  disabled={deleting || selectedExistingIds.size === 0}
+                  onClick={() => void handleDeleteSelected()}
+                >
+                {deleting ? (
+                  <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Trash2 className="mr-1.5 h-3.5 w-3.5" />
+                )}
+                Delete selected ({selectedExistingIds.size})
+              </Button>
+              </div>
+            </div>
 
-      <div className="overflow-hidden rounded-md border border-zinc-200 dark:border-zinc-800">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-zinc-200 bg-zinc-50 text-left text-xs uppercase tracking-wide text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900">
-              <th className="w-10 px-2 py-2">#</th>
-              <th className="px-2 py-2">Category name</th>
-              <th className="w-10 px-2 py-2" />
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((row, index) => (
-              <tr key={row.id} className="border-b border-zinc-100 last:border-0 dark:border-zinc-800">
-                <td className="px-2 py-1.5 text-xs text-zinc-400">{index + 1}</td>
-                <td className="px-2 py-1.5">
-                  <Input
-                    value={row.name}
-                    placeholder="Category name"
-                    disabled={!canAdd}
-                    className="h-8"
-                    onChange={(event) => {
-                      const value = event.target.value;
-                      setRows((current) =>
-                        current.map((item) =>
-                          item.id === row.id ? { ...item, name: value } : item,
-                        ),
-                      );
-                    }}
-                  />
-                </td>
-                <td className="px-2 py-1.5">
-                  <button
-                    type="button"
-                    className="rounded p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-zinc-800"
-                    aria-label="Remove row"
-                    disabled={rows.length <= 1}
-                    onClick={() => setRows((current) => current.filter((item) => item.id !== row.id))}
+            <div className="mc-level-panel__table-scroll">
+              <table className="mc-level-panel__table">
+                <thead>
+                  <tr>
+                    <th className="w-10 px-3 py-2">
+                      <Checkbox
+                        checked={
+                          allExistingSelected
+                            ? true
+                            : someExistingSelected
+                              ? 'indeterminate'
+                              : false
+                        }
+                        aria-label="Select all existing categories"
+                        onCheckedChange={(checked) => toggleSelectAllExisting(checked === true)}
+                      />
+                    </th>
+                    <th className="w-12 px-3 py-2">#</th>
+                    <th className="px-3 py-2">Category name</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {existingChildNodes.map((node, index) => {
+                    const checked = selectedExistingIds.has(node.id);
+                    const checkboxId = `existing-category-${node.id}`;
+                    const draftName = editedNames[node.id] ?? node.name;
+                    const isDirty = draftName.trim() !== node.name;
+
+                    return (
+                      <tr
+                        key={node.id}
+                        className={cn(
+                          'mc-level-panel__row',
+                          checked && 'is-selected',
+                          isDirty && 'is-dirty',
+                        )}
+                      >
+                        <td className="px-3 py-2">
+                          <Checkbox
+                            id={checkboxId}
+                            checked={checked}
+                            aria-label={`Select ${node.name}`}
+                            onCheckedChange={(value) => toggleExisting(node.id, value === true)}
+                          />
+                        </td>
+                        <td className="px-3 py-2 text-xs tabular-nums text-muted-foreground">
+                          {index + 1}
+                        </td>
+                        <td className="px-3 py-2" onClick={(event) => event.stopPropagation()}>
+                          <Input
+                            value={draftName}
+                            aria-label={`Edit ${node.name}`}
+                            disabled={saving}
+                            className={cn(
+                              'h-8 border-zinc-200 bg-white shadow-none focus-visible:ring-emerald-500/30',
+                              isDirty && 'border-emerald-400/70 bg-emerald-50/40',
+                            )}
+                            onChange={(event) => {
+                              const value = event.target.value;
+                              setEditedNames((current) => ({
+                                ...current,
+                                [node.id]: value,
+                              }));
+                            }}
+                            onKeyDown={(event) => {
+                              if (event.key === 'Enter') {
+                                event.preventDefault();
+                                void handleSaveRenames();
+                              }
+                            }}
+                          />
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        ) : parentPath.length > 0 ? (
+          <p className="mc-level-panel__empty-hint">
+            No child categories yet. Add names below or upload from Excel.
+          </p>
+        ) : null}
+
+        <section className="mc-level-panel__section mc-level-panel__section--add">
+          <div className="mc-level-panel__section-head">
+            <h2 className="mc-level-panel__section-title">Add new</h2>
+            <div className="mc-level-panel__toolbar">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={!canAdd}
+                onClick={() => setRows((current) => [...current, createEmptyRow()])}
+              >
+                <Plus className="mr-1.5 h-3.5 w-3.5" />
+                Add row
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="mc-level-panel__danger-btn"
+                disabled={!canAdd || selectedNewRowIds.size === 0}
+                onClick={handleDeleteSelectedNewRows}
+              >
+                <Trash2 className="mr-1.5 h-3.5 w-3.5" />
+                Delete selected ({selectedNewRowIds.size})
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={!canAdd}
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <Upload className="mr-1.5 h-3.5 w-3.5" />
+                Upload Excel
+              </Button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".xlsx,.xls,.csv,.txt"
+                className="hidden"
+                onChange={(event) => void handleFileChange(event)}
+              />
+              <span className="mc-level-panel__hint">Paste from Excel with Ctrl+V</span>
+            </div>
+          </div>
+
+          <div className="mc-level-panel__table-scroll mc-level-panel__table-scroll--grow">
+            <table className="mc-level-panel__table">
+              <thead>
+                <tr>
+                  <th className="w-10 px-3 py-2">
+                    <Checkbox
+                      checked={
+                        allNewRowsSelected ? true : someNewRowsSelected ? 'indeterminate' : false
+                      }
+                      aria-label="Select all new category rows"
+                      disabled={!canAdd}
+                      onCheckedChange={(checked) => toggleSelectAllNewRows(checked === true)}
+                    />
+                  </th>
+                  <th className="w-12 px-3 py-2">#</th>
+                  <th className="px-3 py-2">Category name</th>
+                  <th className="w-12 px-3 py-2" />
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((row, index) => {
+                  const checked = selectedNewRowIds.has(row.id);
+                  const checkboxId = `new-category-${row.id}`;
+
+                  return (
+                  <tr
+                    key={row.id}
+                    className={cn('mc-level-panel__row', checked && 'is-selected')}
                   >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+                    <td className="px-3 py-2">
+                      <Checkbox
+                        id={checkboxId}
+                        checked={checked}
+                        disabled={!canAdd}
+                        aria-label={`Select row ${index + 1}`}
+                        onCheckedChange={(value) => toggleNewRow(row.id, value === true)}
+                      />
+                    </td>
+                    <td className="px-3 py-2 text-xs tabular-nums text-muted-foreground">
+                      {index + 1}
+                    </td>
+                    <td className="px-3 py-2">
+                      <Input
+                        value={row.name}
+                        placeholder="Category name"
+                        disabled={!canAdd}
+                        className="h-8 border-zinc-200 bg-white shadow-none focus-visible:ring-emerald-500/30"
+                        onChange={(event) => {
+                          const value = event.target.value;
+                          setRows((current) =>
+                            current.map((item) =>
+                              item.id === row.id ? { ...item, name: value } : item,
+                            ),
+                          );
+                        }}
+                      />
+                    </td>
+                    <td className="px-3 py-2">
+                      <button
+                        type="button"
+                        className="rounded p-1 text-zinc-400 transition hover:bg-zinc-100 hover:text-zinc-700"
+                        aria-label="Remove row"
+                        disabled={rows.length <= 1}
+                        onClick={() => {
+                          setRows((current) => current.filter((item) => item.id !== row.id));
+                          setSelectedNewRowIds((current) => {
+                            const next = new Set(current);
+                            next.delete(row.id);
+                            return next;
+                          });
+                        }}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </td>
+                  </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </section>
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="text-xs text-zinc-500">
-          {namesToCreate.length} to create
-          {duplicateNames.length ? ` · ${duplicateNames.length} duplicate(s)` : ''}
-        </p>
+      <footer className="mc-level-panel__footer">
+        <div className="mc-level-panel__footer-meta">
+          <span>{namesToCreate.length} to create</span>
+          {duplicateNames.length ? (
+            <span className="text-amber-700"> · {duplicateNames.length} duplicate(s)</span>
+          ) : null}
+        </div>
         <Button
           type="button"
+          className="mc-level-panel__submit"
           disabled={!canAdd || applying || !namesToCreate.length || duplicateNames.length > 0}
           onClick={() => void handleApply()}
         >
@@ -227,11 +585,11 @@ export function CategoryLevelGridPanel({
             'Create categories'
           )}
         </Button>
-      </div>
+      </footer>
 
-      {error ? <p className="text-sm text-rose-600">{error}</p> : null}
-      {!canAdd ? (
-        <p className="text-sm text-amber-700">Select a node that can accept child categories.</p>
+      {error ? <p className="mc-level-panel__error">{error}</p> : null}
+      {!canAdd && parentPath.length > 0 ? (
+        <p className="mc-level-panel__warning">This node cannot accept child categories.</p>
       ) : null}
     </div>
   );

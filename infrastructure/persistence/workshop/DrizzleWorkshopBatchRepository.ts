@@ -55,7 +55,14 @@ export class DrizzleWorkshopBatchRepository
 
   async listAwaitingSectionHead(limit = 20): Promise<PendingSectionHeadBatchDto[]> {
     const rows = await this.database
-      .select()
+      .select({
+        id: boqWorkBatch.id,
+        name: boqWorkBatch.name,
+        scope_project_id: boqWorkBatch.scope_project_id,
+        scope_boq_id: boqWorkBatch.scope_boq_id,
+        engineerSubmittedAt: boqWorkBatch.engineerSubmittedAt,
+        items_pending_review_count: boqWorkBatch.items_pending_review_count,
+      })
       .from(boqWorkBatch)
       .where(eq(boqWorkBatch.workflowStage, "awaiting_section_head"))
       .orderBy(desc(boqWorkBatch.engineerSubmittedAt))
@@ -66,7 +73,7 @@ export class DrizzleWorkshopBatchRepository
       batchName: row.name,
       projectId: row.scope_project_id,
       boqId: row.scope_boq_id,
-      engineerSubmittedAt: row.engineer_submitted_at?.toISOString() ?? null,
+      engineerSubmittedAt: row.engineerSubmittedAt?.toISOString() ?? null,
       pendingItemCount: row.items_pending_review_count,
     }));
   }
@@ -82,8 +89,8 @@ export class DrizzleWorkshopBatchRepository
         scope_project_id: input.scopeProjectId,
         scope_boq_id: input.scopeBoqId,
         status: "imported",
-        workflow_stage: "imported",
-        linked_boq_version_id: input.linkedBoqVersionId ?? null,
+        workflowStage: "imported",
+        linkedBoqVersionId: input.linkedBoqVersionId ?? null,
         import_snapshot_at: now,
         import_item_count: input.importItemCount,
         publish_policy: "partial",
@@ -119,7 +126,7 @@ export class DrizzleWorkshopBatchRepository
       .update(boqWorkBatch)
       .set({
         status,
-        ...(workflowStage ? { workflow_stage: workflowStage } : {}),
+        ...(workflowStage ? { workflowStage } : {}),
         updated_at: new Date(),
       })
       .where(eq(boqWorkBatch.id, id));
@@ -132,7 +139,7 @@ export class DrizzleWorkshopBatchRepository
     await this.database
       .update(boqWorkBatch)
       .set({
-        workflow_stage: workflowStage,
+        workflowStage,
         updated_at: new Date(),
       })
       .where(eq(boqWorkBatch.id, id));
@@ -145,10 +152,10 @@ export class DrizzleWorkshopBatchRepository
     await this.database
       .update(boqWorkBatch)
       .set({
-        workflow_stage: "awaiting_section_head",
-        engineer_submitted_at: input.submittedAt,
-        engineer_submitted_by: input.submittedBy,
-        return_to_engineer_notes: null,
+        workflowStage: "awaiting_section_head",
+        engineerSubmittedAt: input.submittedAt,
+        engineerSubmittedBy: input.submittedBy,
+        returnToEngineerNotes: null,
         updated_at: input.submittedAt,
         updated_by: input.submittedBy,
       })
@@ -162,10 +169,10 @@ export class DrizzleWorkshopBatchRepository
     await this.database
       .update(boqWorkBatch)
       .set({
-        workflow_stage: "version_approved",
+        workflowStage: "version_approved",
         status: "ready_for_review",
-        section_head_approved_at: input.approvedAt,
-        section_head_approved_by: input.approvedBy,
+        sectionHeadApprovedAt: input.approvedAt,
+        sectionHeadApprovedBy: input.approvedBy,
         updated_at: input.approvedAt,
         updated_by: input.approvedBy,
       })
@@ -179,10 +186,10 @@ export class DrizzleWorkshopBatchRepository
     await this.database
       .update(boqWorkBatch)
       .set({
-        workflow_stage: "ready_for_engineer_review",
-        engineer_submitted_at: null,
-        engineer_submitted_by: null,
-        return_to_engineer_notes: input.notes,
+        workflowStage: "ready_for_engineer_review",
+        engineerSubmittedAt: null,
+        engineerSubmittedBy: null,
+        returnToEngineerNotes: input.notes,
         updated_at: input.returnedAt,
       })
       .where(eq(boqWorkBatch.id, id));
@@ -197,7 +204,7 @@ export class DrizzleWorkshopBatchRepository
       .set({
         latest_ai_analysis_id: input.latestAiAnalysisId,
         status: input.status,
-        workflow_stage: "ready_for_engineer_review",
+        workflowStage: "ready_for_engineer_review",
         updated_at: new Date(),
       })
       .where(eq(boqWorkBatch.id, id));

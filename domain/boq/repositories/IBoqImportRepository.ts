@@ -37,8 +37,6 @@ export interface IBoqImportRepository {
     lines: ImportBoqLineInput[];
     projectId?: number;
     boqId?: number;
-    abrdProjectId?: number;
-    externalSource?: "abrd" | "local";
     client?: string;
   }): Promise<ImportBoqSnapshotResult>;
 }

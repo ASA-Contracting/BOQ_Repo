@@ -1,8 +1,6 @@
 export const TREE_FILTER_OPTION_MODES = [
   'tagged',
   'untagged',
-  'material-records',
-  'price-records',
 ] as const;
 
 export type TreeFilterOptionMode = (typeof TREE_FILTER_OPTION_MODES)[number];
@@ -15,6 +13,7 @@ export type CategoryTreeFilter =
 
 export const TREE_FILTER_STORAGE_KEY = 'cls-app.classification.tree-filter.v1';
 export const TREE_TAG_FILTER_STORAGE_KEY = 'cls-app.classification.tree-tag-filter.v1';
+export const TREE_PARENT_CONTEXT_STORAGE_KEY = 'cls-app.classification.tree-parent-context.v1';
 
 export function isTreeFilterOptionMode(value: unknown): value is TreeFilterOptionMode {
   return TREE_FILTER_OPTION_MODES.includes(value as TreeFilterOptionMode);
@@ -136,6 +135,28 @@ export function writeStoredTreeTagFilter(tagNames: Iterable<string>): void {
   }
 }
 
+export function readStoredShowParentContext(): boolean {
+  if (typeof localStorage === 'undefined') {
+    return false;
+  }
+  try {
+    return localStorage.getItem(TREE_PARENT_CONTEXT_STORAGE_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
+
+export function writeStoredShowParentContext(enabled: boolean): void {
+  if (typeof localStorage === 'undefined') {
+    return;
+  }
+  try {
+    localStorage.setItem(TREE_PARENT_CONTEXT_STORAGE_KEY, enabled ? '1' : '0');
+  } catch {
+    // Ignore blocked storage.
+  }
+}
+
 export function toggleTreeFilterOption(
   current: CategoryTreeFilter,
   option: TreeFilterOptionMode
@@ -172,10 +193,6 @@ export function getTreeFilterLabel(mode: CategoryTreeFilter): string {
         return 'Tagged';
       case 'untagged':
         return 'No tags';
-      case 'material-records':
-        return 'Material records';
-      case 'price-records':
-        return 'Price records';
       default:
         return 'Filtered';
     }
@@ -204,9 +221,7 @@ export function matchesModeFilter(
   }
   return (
     (selectedModes.has('tagged') && tagNames.length > 0) ||
-    (selectedModes.has('untagged') && tagNames.length === 0) ||
-    (selectedModes.has('material-records') && materialItemCount > 0) ||
-    (selectedModes.has('price-records') && materialItemCount === 0)
+    (selectedModes.has('untagged') && tagNames.length === 0)
   );
 }
 

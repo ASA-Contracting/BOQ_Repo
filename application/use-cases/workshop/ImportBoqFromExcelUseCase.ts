@@ -61,13 +61,12 @@ export class ImportBoqFromExcelUseCase
 
     const result = await this.deps.unitOfWork.runInTransaction(async () => {
       const snapshot = await this.deps.boqImportRepository.createImportSnapshot({
-        projectName: input.projectName ?? input.batchName,
+        projectName: input.projectName,
         boqName: input.batchName,
         createdBy: ctx.userId,
         lines,
         projectId: input.projectId,
         boqId: input.boqId,
-        abrdProjectId: input.abrdProjectId,
         client: input.client,
       });
 

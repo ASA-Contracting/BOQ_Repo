@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { ExplorerTree } from '@/components/explorer-tree/ExplorerTree';
 import { IconPen, IconPlus, IconTag, IconX } from '@/components/explorer-tree/classification-icons';
 import type { CategoryExplorerTreeNode } from '@/lib/category-tree-builder';
@@ -57,7 +57,7 @@ export function CategoryExplorerTree({ root, store }: Props) {
       showGlyph
       showMeta={false}
       searchTerm={store.search}
-      ariaLabel="Material classification hierarchy"
+      ariaLabel="Category hierarchy"
       onNodeSelected={({ node, ctrlKey, metaKey, shiftKey }) => {
         const nodeId = nodeIdAsNumber(node.id);
         if (nodeId == null) return;
@@ -67,7 +67,9 @@ export function CategoryExplorerTree({ root, store }: Props) {
       }}
       onNodeToggled={(node) => {
         const nodeId = nodeIdAsNumber(node.id);
-        if (nodeId != null) store.toggleExpanded(nodeId);
+        if (nodeId != null) {
+          store.toggleExpanded(nodeId);
+        }
       }}
       onNodeContextMenu={({ node, clientX, clientY }) => {
         const nodeId = nodeIdAsNumber(node.id);
@@ -98,6 +100,7 @@ export function CategoryContextMenu({
   onAddChild,
   onAssignTag,
   onRemoveTag,
+  onRenameTag,
 }: {
   menu: CategoryContextMenuState;
   nodeTags: Array<{ id: number; name: string }>;
@@ -109,16 +112,41 @@ export function CategoryContextMenu({
   onAddChild: () => void;
   onAssignTag: (tagName: string) => void;
   onRemoveTag: (tagId: number) => void;
+  onRenameTag: (tagId: number, name: string) => void;
 }) {
   const [tagInput, setTagInput] = useState('');
+  const [editingTagId, setEditingTagId] = useState<number | null>(null);
+  const [editingTagName, setEditingTagName] = useState('');
   const tagInputRef = useRef<HTMLInputElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (menu) {
       setTagInput('');
+      setEditingTagId(null);
+      setEditingTagName('');
       queueMicrotask(() => tagInputRef.current?.focus());
     }
   }, [menu]);
+
+  useLayoutEffect(() => {
+    if (!menu || !menuRef.current) return;
+    const el = menuRef.current;
+    const rect = el.getBoundingClientRect();
+    let top = menu.y;
+    let left = menu.x;
+
+    if (rect.bottom > window.innerHeight - 12) {
+      top = Math.max(12, menu.y - rect.height - 8);
+    }
+    if (rect.right > window.innerWidth - 12) {
+      left = Math.max(12, window.innerWidth - rect.width - 12);
+    }
+    if (top < 12) top = 12;
+
+    el.style.top = `${top}px`;
+    el.style.left = `${left}px`;
+  }, [menu, nodeTags.length, inheritedTags.length, editingTagId]);
 
   if (!menu) return null;
 
@@ -129,12 +157,22 @@ export function CategoryContextMenu({
     setTagInput('');
   };
 
+  const submitTagRename = () => {
+    if (editingTagId == null) return;
+    const trimmed = editingTagName.trim().replace(/^#+/, '');
+    if (!trimmed) return;
+    onRenameTag(editingTagId, trimmed);
+    setEditingTagId(null);
+    setEditingTagName('');
+  };
+
   const tagCount = nodeTags.length + inheritedTags.length;
 
   return (
     <>
       <div className="mc-tree-overlay-backdrop" onMouseDown={onClose} />
       <div
+        ref={menuRef}
         className="mc-tree-context-menu"
         role="menu"
         tabIndex={-1}
@@ -173,23 +211,59 @@ export function CategoryContextMenu({
             <div className="mc-tree-context-tags">
               {nodeTags.map((tag) => (
                 <span key={tag.id} className="mc-tree-context-tag" title="Direct tag">
-                  <span className="mc-tree-context-tag__main" title="Direct tag">
-                    <i aria-hidden="true">
-                      <IconTag />
-                    </i>
-                    <span>{tag.name}</span>
-                  </span>
-                  <button
-                    type="button"
-                    className="mc-tree-context-tag__remove"
-                    title="Remove from this category"
-                    aria-label="Remove tag from this category"
-                    onClick={() => onRemoveTag(tag.id)}
-                  >
-                    <i aria-hidden="true">
-                      <IconX />
-                    </i>
-                  </button>
+                  {editingTagId === tag.id ? (
+                    <form
+                      className="mc-tree-context-tag__edit"
+                      onSubmit={(event) => {
+                        event.preventDefault();
+                        submitTagRename();
+                      }}
+                    >
+                      <input
+                        value={editingTagName}
+                        autoFocus
+                        aria-label={`Edit tag ${tag.name}`}
+                        onChange={(event) => setEditingTagName(event.target.value)}
+                        onKeyDown={(event) => {
+                          if (event.key === 'Escape') {
+                            setEditingTagId(null);
+                            setEditingTagName('');
+                          }
+                        }}
+                      />
+                      <button type="submit" className="mc-tree-context-tag__save" aria-label="Save tag">
+                        Save
+                      </button>
+                    </form>
+                  ) : (
+                    <>
+                      <button
+                        type="button"
+                        className="mc-tree-context-tag__main"
+                        title="Click to edit tag"
+                        onClick={() => {
+                          setEditingTagId(tag.id);
+                          setEditingTagName(tag.name);
+                        }}
+                      >
+                        <i aria-hidden="true">
+                          <IconTag />
+                        </i>
+                        <span>{tag.name}</span>
+                      </button>
+                      <button
+                        type="button"
+                        className="mc-tree-context-tag__remove"
+                        title="Remove from this category"
+                        aria-label="Remove tag from this category"
+                        onClick={() => onRemoveTag(tag.id)}
+                      >
+                        <i aria-hidden="true">
+                          <IconX />
+                        </i>
+                      </button>
+                    </>
+                  )}
                 </span>
               ))}
               {inheritedTags.map((row) => (

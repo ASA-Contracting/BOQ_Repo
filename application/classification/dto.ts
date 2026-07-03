@@ -130,6 +130,11 @@ export const createTagSchema = z.object({
   name: z.string().min(1).max(64),
 });
 
+export const updateTagSchema = z.object({
+  id: z.number().int().positive(),
+  name: z.string().min(1).max(64),
+});
+
 export const bulkMaterialTagSchema = z.object({
   materialNodeIds: z.array(z.number().int().positive()).min(1),
   tagId: z.number().int().positive(),

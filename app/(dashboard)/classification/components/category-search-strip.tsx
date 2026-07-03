@@ -2,7 +2,7 @@
 
 import { CategoryTreeFilter } from './category-tree-filter';
 import type { TreeFilterOptionMode } from '@/lib/category-tree-filter';
-import { IconClear, IconCollapseAll, IconSearch } from '@/components/explorer-tree/classification-icons';
+import { IconClear, IconCollapseAll, IconExpandAll, IconSearch } from '@/components/explorer-tree/classification-icons';
 
 type Props = {
   search: string;
@@ -21,7 +21,10 @@ type Props = {
   onClearFilterTags: () => void;
   isFilterOptionSelected: (option: TreeFilterOptionMode) => boolean;
   isFilterTagSelected: (tagName: string) => boolean;
-  onCollapseAll: () => void;
+  treeFullyExpanded: boolean;
+  onToggleExpandCollapse: () => void;
+  showParentContext: boolean;
+  onToggleShowParentContext: () => void;
 };
 
 export function CategorySearchStrip({
@@ -41,7 +44,10 @@ export function CategorySearchStrip({
   onClearFilterTags,
   isFilterOptionSelected,
   isFilterTagSelected,
-  onCollapseAll,
+  treeFullyExpanded,
+  onToggleExpandCollapse,
+  showParentContext,
+  onToggleShowParentContext,
 }: Props) {
   const hasQuery = search.trim().length > 0;
 
@@ -76,17 +82,25 @@ export function CategorySearchStrip({
         label={filterLabel}
         bulkActionLabel={bulkActionLabel}
         availableTags={availableTags}
+        showParentContext={showParentContext}
         isOptionSelected={isFilterOptionSelected}
         isTagSelected={isFilterTagSelected}
         onToggle={onToggleFilter}
         onToggleOption={onToggleFilterOption}
         onToggleBulkSelection={onToggleFilterBulkSelection}
+        onToggleShowParentContext={onToggleShowParentContext}
         onToggleTag={onToggleFilterTag}
         onClearTags={onClearFilterTags}
       />
       <span className="mc-tree-search-divider" aria-hidden="true" />
-      <button type="button" className="mc-tree-search-tool" title="Collapse all" onClick={onCollapseAll}>
-        <IconCollapseAll />
+      <button
+        type="button"
+        className="mc-tree-search-tool"
+        title={treeFullyExpanded ? 'Collapse all' : 'Expand all'}
+        aria-label={treeFullyExpanded ? 'Collapse all categories' : 'Expand all categories'}
+        onClick={onToggleExpandCollapse}
+      >
+        {treeFullyExpanded ? <IconCollapseAll /> : <IconExpandAll />}
       </button>
     </div>
   );

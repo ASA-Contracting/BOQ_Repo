@@ -158,12 +158,9 @@ export function BoqMasterList({ boqs, error = null }: Props) {
                   >
                     <td className="px-4 py-3">
                       <div className="font-semibold text-slate-900">{boq.projectName}</div>
-                      <div className="mt-0.5 text-xs text-muted-foreground">
-                        {boq.client ?? 'TBD'}
-                        {boq.externalSource === 'abrd' && boq.abrdProjectId
-                          ? ` · ABRD #${boq.abrdProjectId}`
-                          : null}
-                      </div>
+                      {boq.client ? (
+                        <div className="mt-0.5 text-xs text-muted-foreground">{boq.client}</div>
+                      ) : null}
                     </td>
                     <td className="px-4 py-3">
                       <div className="font-medium text-slate-900">{boq.name}</div>

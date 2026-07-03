@@ -64,6 +64,7 @@ export type BuildCategoryTreeParams = {
   search: string;
   filter: CategoryTreeFilter;
   tagFilterNames: Set<string>;
+  showParentContext: boolean;
   expandedIds: Set<number>;
   selectedId: number | null;
   selectedIds: Set<number>;
@@ -111,7 +112,8 @@ function normalizeTagNames(tags: string[]): string[] {
 
 function buildTagContext(
   state: ClassificationStateDto,
-  treeIndex: MaterialClassificationTreeIndex
+  treeIndex: MaterialClassificationTreeIndex,
+  showParentContext: boolean,
 ): Pick<
   NodeContext,
   | 'directTagsByNodeId'
@@ -145,12 +147,9 @@ function buildTagContext(
     }
     inheritedTagsByNodeId.set(option.id, inheritedRows);
 
-    const parentNameForSearch =
-      path.length >= 2 ? (path[path.length - 2]?.name?.trim() ?? '') : '';
     const searchTags = normalizeTagNames([
       ...direct,
       ...inheritedRows.map((row) => row.tag),
-      ...(parentNameForSearch ? [parentNameForSearch] : []),
     ]);
     searchTagsByNodeId.set(option.id, searchTags);
 
@@ -168,28 +167,25 @@ function buildTagContext(
         title: `Inherited from ${row.sourceLabel}`,
       }));
 
-    const parentContextBadges: CategoryTreeTagBadge[] = [];
-    if (path.length >= 2) {
-      const parentName = path[path.length - 2]?.name?.trim();
-      if (parentName) {
-        parentContextBadges.push({
-          label: parentName,
+    const parentContextBadges: CategoryTreeTagBadge[] = showParentContext
+      ? path.slice(0, -1).map((ancestor) => ({
+          label: ancestor.name,
           inherited: true,
           parentContext: true,
           title: 'Parent category',
-        });
-      }
-    }
+        }))
+      : [];
 
-    const all = [...directBadges, ...inheritedBadges, ...parentContextBadges];
-    const badges: CategoryTreeTagBadge[] = all.slice(0, 2);
-    const overflow = all.slice(2);
-    if (overflow.length) {
+    const tagItems = [...directBadges, ...inheritedBadges];
+    const visibleTags = tagItems.slice(0, 2);
+    const hiddenTags = tagItems.slice(2);
+    const badges: CategoryTreeTagBadge[] = [...visibleTags, ...parentContextBadges];
+    if (hiddenTags.length) {
       badges.push({
-        label: `+${overflow.length}`,
+        label: `+${hiddenTags.length}`,
         overflow: true,
-        inherited: overflow.every((tag) => tag.inherited),
-        title: overflow.map((tag) => tag.label).join(', '),
+        inherited: true,
+        title: hiddenTags.map((tag) => tag.label).join(', '),
       });
     }
     tagBadgesByNodeId.set(option.id, badges);
@@ -228,6 +224,8 @@ function buildNode(
     .map((child) => buildNode(child.id, ctx))
     .filter((child): child is CategoryExplorerTreeNode => !!child);
 
+  const hasDirectChildren = directChildren.length > 0;
+
   const pathLabel = ctx.treeIndex.pathLabelById.get(nodeId) ?? node.name;
   const summary = ctx.summaryById.get(nodeId);
   const materialItemCount = summary?.materialItemCount ?? 0;
@@ -263,6 +261,7 @@ function buildNode(
     matchesSearch,
     selected: isSelected,
     expanded: ctx.query ? true : ctx.expandedIds.has(nodeId),
+    canToggle: hasDirectChildren,
     canAdd: canAddChild(nodeId, ctx),
     canRename: true,
     canDelete: directChildren.length === 0,
@@ -278,7 +277,7 @@ function buildNode(
     inlineError:
       inline?.nodeId === nodeId || inline?.parentId === nodeId ? inline.error : null,
     inlinePlaceholder: inline?.mode === 'create' ? 'Add category' : 'Rename this node',
-    count: directChildren.length || null,
+    count: hasDirectChildren ? directChildren.length : null,
     recordCount: materialItemCount || null,
     priceRecordCount: summary?.priceRecordCount || null,
     dragging: ctx.dragSourceIds.includes(nodeId),
@@ -309,7 +308,7 @@ export function buildCategoryTreeRoot(params: BuildCategoryTreeParams): Category
     }))
   );
 
-  const tagContext = buildTagContext(params.state, treeIndex);
+  const tagContext = buildTagContext(params.state, treeIndex, params.showParentContext);
   const ctx: NodeContext = {
     treeIndex,
     summaryById: new Map(params.state.nodeSummaries.map((s) => [s.materialId, s])),
@@ -354,36 +353,56 @@ export function collectAvailableTags(
   state: ClassificationStateDto,
   schemaId: number
 ): Array<{ name: string; count: number }> {
-  const materials = state.materials.filter(
-    (m) => m.schemaId === schemaId && m.isActive,
+  const activeNodeIds = new Set(
+    state.materials
+      .filter((m) => m.schemaId === schemaId && m.isActive)
+      .map((m) => m.id),
   );
-  const treeIndex = buildMaterialClassificationTreeIndex(
-    materials.map((m) => ({
-      id: m.id,
-      name: m.name,
-      materialLevelTypeId: m.levelTypeId,
-      parentId: m.parentId,
-      schemaId: m.schemaId,
-      isActive: m.isActive,
-    })),
-  );
-  const { searchTagsByNodeId } = buildTagContext(state, treeIndex);
   const counts = new Map<string, { name: string; count: number }>();
 
-  for (const option of treeIndex.activeOptions) {
-    for (const tag of searchTagsByNodeId.get(option.id) ?? []) {
-      const key = tag.toLowerCase();
-      const current = counts.get(key);
-      counts.set(key, {
-        name: current?.name ?? tag,
-        count: (current?.count ?? 0) + 1,
-      });
-    }
+  for (const link of state.materialTags) {
+    if (!activeNodeIds.has(link.materialNodeId)) continue;
+    const key = link.tagName.toLowerCase();
+    const current = counts.get(key);
+    counts.set(key, {
+      name: current?.name ?? link.tagName,
+      count: (current?.count ?? 0) + 1,
+    });
   }
 
   return Array.from(counts.values()).sort((left, right) =>
     left.name.localeCompare(right.name, undefined, { sensitivity: 'base' }),
   );
+}
+
+export function getInheritedTagsForNode(
+  state: ClassificationStateDto,
+  treeIndex: MaterialClassificationTreeIndex,
+  nodeId: number,
+): Array<{ tag: string; sourceLabel: string }> {
+  const directTagsByNodeId = new Map<number, string[]>();
+  for (const link of state.materialTags) {
+    const bucket = directTagsByNodeId.get(link.materialNodeId) ?? [];
+    bucket.push(link.tagName);
+    directTagsByNodeId.set(link.materialNodeId, bucket);
+  }
+
+  const path = treeIndex.pathById.get(nodeId) ?? [];
+  const directLabels = new Set(
+    normalizeTagNames(directTagsByNodeId.get(nodeId) ?? []).map((tag) => tag.toLowerCase()),
+  );
+  const inheritedRows: Array<{ tag: string; sourceLabel: string }> = [];
+
+  for (let index = path.length - 2; index >= 0; index -= 1) {
+    const ancestor = path[index];
+    for (const tag of normalizeTagNames(directTagsByNodeId.get(ancestor.id) ?? [])) {
+      if (directLabels.has(tag.toLowerCase())) continue;
+      inheritedRows.push({ tag, sourceLabel: ancestor.name });
+      directLabels.add(tag.toLowerCase());
+    }
+  }
+
+  return inheritedRows;
 }
 
 export function getExistingCategoryPaths(

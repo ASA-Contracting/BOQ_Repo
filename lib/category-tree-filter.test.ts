@@ -18,7 +18,7 @@ describe('category-tree-filter', () => {
   it('toggles individual filter options', () => {
     const next = toggleTreeFilterOption('all', 'tagged');
     expect(getTreeFilterSelectedModes(next).has('tagged')).toBe(false);
-    expect(formatTreeFilterMode(getTreeFilterSelectedModes(next))).toBe('custom:untagged,material-records,price-records');
+    expect(formatTreeFilterMode(getTreeFilterSelectedModes(next))).toBe('untagged');
   });
 
   it('bulk toggles between all and none', () => {
@@ -27,8 +27,8 @@ describe('category-tree-filter', () => {
   });
 
   it('matches mode and tag filters', () => {
-    const modes = new Set(['material-records'] as const);
-    expect(matchesModeFilter(modes, ['hvac'], 2)).toBe(true);
+    const modes = new Set(['tagged'] as const);
+    expect(matchesModeFilter(modes, ['hvac'], 0)).toBe(true);
     expect(matchesModeFilter(modes, [], 0)).toBe(false);
     expect(matchesTagFilter(new Set(['hvac']), ['HVAC'])).toBe(true);
     expect(matchesTagFilter(new Set(['plumbing']), ['HVAC'])).toBe(false);

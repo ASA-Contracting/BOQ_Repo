@@ -25,10 +25,12 @@ import {
   normalizeTreeFilterMode,
   readStoredTreeFilter,
   readStoredTreeTagFilter,
+  readStoredShowParentContext,
   toggleTreeFilterBulkSelection,
   toggleTreeFilterOption,
   writeStoredTreeFilter,
   writeStoredTreeTagFilter,
+  writeStoredShowParentContext,
   type CategoryTreeFilter,
   type TreeFilterOptionMode,
   TREE_FILTER_OPTION_MODES,
@@ -82,6 +84,7 @@ export function useClassificationStore(initialSchemaId?: number) {
   const [filter, setFilter] = useState<CategoryTreeFilter>('all');
   const [filterOpen, setFilterOpen] = useState(false);
   const [filterTagNames, setFilterTagNames] = useState<Set<string>>(new Set());
+  const [showParentContext, setShowParentContextState] = useState(false);
   const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set());
   const [inline, setInline] = useState<CategoryInlineState>(null);
   const [bulkOpen, setBulkOpen] = useState(false);
@@ -98,12 +101,15 @@ export function useClassificationStore(initialSchemaId?: number) {
   const [exporting, setExporting] = useState(false);
   const [importing, setImporting] = useState(false);
   const [creatingChildNodes, setCreatingChildNodes] = useState(false);
+  const [updatingChildNodes, setUpdatingChildNodes] = useState(false);
+  const [deletingChildNodes, setDeletingChildNodes] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     setFilter(readStoredTreeFilter());
     setFilterTagNames(readStoredTreeTagFilter());
+    setShowParentContextState(readStoredShowParentContext());
   }, []);
 
   const refreshSchemas = useCallback(async () => {
@@ -203,6 +209,7 @@ export function useClassificationStore(initialSchemaId?: number) {
       search,
       filter,
       tagFilterNames: filterTagNames,
+      showParentContext,
       expandedIds,
       selectedId: selectedNodeId,
       selectedIds: selectedNodeIds,
@@ -218,6 +225,7 @@ export function useClassificationStore(initialSchemaId?: number) {
     search,
     filter,
     filterTagNames,
+    showParentContext,
     expandedIds,
     selectedNodeId,
     selectedNodeIds,
@@ -234,8 +242,8 @@ export function useClassificationStore(initialSchemaId?: number) {
 
   const filterLabel = useMemo(() => getTreeFilterLabel(filter), [filter]);
   const filterActive = useMemo(
-    () => isTreeFilterActive(filter, filterTagNames),
-    [filter, filterTagNames]
+    () => isTreeFilterActive(filter, filterTagNames) || showParentContext,
+    [filter, filterTagNames, showParentContext],
   );
 
   const filterBulkActionLabel = useMemo(() => {
@@ -255,6 +263,14 @@ export function useClassificationStore(initialSchemaId?: number) {
   const selectedPathLabel = selectedNodeId
     ? (treeIndex.pathLabelById.get(selectedNodeId) ?? '')
     : '';
+
+  const selectedPath = useMemo(() => {
+    if (!selectedNodeId) return [];
+    return (treeIndex.pathById.get(selectedNodeId) ?? []).map((node) => ({
+      id: node.id,
+      name: node.name,
+    }));
+  }, [selectedNodeId, treeIndex]);
 
   const selectedCode = useMemo(() => {
     if (!state || !selectedNodeId) return '';
@@ -282,11 +298,6 @@ export function useClassificationStore(initialSchemaId?: number) {
     });
   }, [state, selectedNodeId, treeIndex, chainSteps]);
 
-  const nodeItems = useMemo(() => {
-    if (!state || !selectedNodeId) return [];
-    return state.materialItems.filter((item) => item.materialNodeId === selectedNodeId);
-  }, [state, selectedNodeId]);
-
   const canAddChildAtSelected = useMemo(() => {
     if (!selectedNodeId) return false;
     if (!chainSteps.length) return true;
@@ -297,10 +308,10 @@ export function useClassificationStore(initialSchemaId?: number) {
     );
   }, [selectedNodeId, chainSteps, treeIndex]);
 
-  const existingSiblingNames = useMemo(() => {
+  const existingChildNodes = useMemo(() => {
     if (!selectedNodeId) return [];
     const children = treeIndex.childrenByParentId.get(selectedNodeId) ?? [];
-    return children.map((child) => child.name);
+    return children.map((child) => ({ id: child.id, name: child.name }));
   }, [selectedNodeId, treeIndex]);
 
   const categoryCount = useMemo(() => {
@@ -309,6 +320,24 @@ export function useClassificationStore(initialSchemaId?: number) {
   }, [state, schemaId]);
 
   const collapseAll = useCallback(() => setExpandedIds(new Set()), []);
+
+  const expandableNodeIds = useMemo(() => {
+    if (!state || !schemaId) return [];
+    const active = state.materials.filter((m) => m.schemaId === schemaId && m.isActive);
+    const parentIds = new Set<number>();
+    for (const node of active) {
+      if (node.parentId != null) {
+        parentIds.add(node.parentId);
+      }
+    }
+    return [...parentIds];
+  }, [state, schemaId]);
+
+  const treeFullyExpanded = useMemo(
+    () =>
+      expandableNodeIds.length > 0 && expandableNodeIds.every((id) => expandedIds.has(id)),
+    [expandableNodeIds, expandedIds],
+  );
 
   const closeOverlays = useCallback(() => {
     setFilterOpen(false);
@@ -361,6 +390,19 @@ export function useClassificationStore(initialSchemaId?: number) {
     writeStoredTreeTagFilter([]);
   }, []);
 
+  const setShowParentContext = useCallback((enabled: boolean) => {
+    setShowParentContextState(enabled);
+    writeStoredShowParentContext(enabled);
+  }, []);
+
+  const toggleShowParentContext = useCallback(() => {
+    setShowParentContextState((current) => {
+      const next = !current;
+      writeStoredShowParentContext(next);
+      return next;
+    });
+  }, []);
+
   const isFilterTagSelected = useCallback(
     (tagName: string) => filterTagNames.has(tagName.trim().replace(/^#+/, '').toLowerCase()),
     [filterTagNames]
@@ -382,6 +424,14 @@ export function useClassificationStore(initialSchemaId?: number) {
       .map((m) => m.id);
     setExpandedIds(new Set(ids));
   }, [state, schemaId]);
+
+  const toggleExpandCollapseAll = useCallback(() => {
+    if (treeFullyExpanded) {
+      collapseAll();
+    } else {
+      expandAll();
+    }
+  }, [treeFullyExpanded, collapseAll, expandAll]);
 
   const startInlineCreate = useCallback((parentId: number | null = null) => {
     setInline({ parentId, nodeId: null, mode: 'create', value: '', error: '' });
@@ -575,22 +625,19 @@ export function useClassificationStore(initialSchemaId?: number) {
     [schemaId, refreshState]
   );
 
-  const createMaterialItem = useCallback(
-    async (fullName: string) => {
-      if (!selectedNodeId || !schemaId) return;
-      const path = treeIndex.pathById.get(selectedNodeId) ?? [];
-      await fetchJson('/api/classification/material-items', {
-        method: 'POST',
+  const renameTag = useCallback(
+    async (tagId: number, name: string) => {
+      if (!schemaId) return;
+      const normalized = name.trim().replace(/^#+/, '');
+      if (!normalized) return;
+      await fetchJson('/api/classification/tags', {
+        method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          materialNodeId: selectedNodeId,
-          fullName,
-          pathIds: path.map((node) => node.id).join(','),
-        }),
+        body: JSON.stringify({ id: tagId, name: normalized }),
       });
       await refreshState(schemaId);
     },
-    [selectedNodeId, schemaId, treeIndex, refreshState]
+    [schemaId, refreshState]
   );
 
   const batchAddChildNodes = useCallback(
@@ -620,6 +667,37 @@ export function useClassificationStore(initialSchemaId?: number) {
       }
     },
     [selectedNodeId, schemaId, state, chainSteps, treeIndex, refreshState],
+  );
+
+  const batchRenameChildNodes = useCallback(
+    async (updates: Array<{ id: number; name: string }>) => {
+      if (!schemaId || !updates.length) return;
+      setUpdatingChildNodes(true);
+      try {
+        for (const update of updates) {
+          await renameNode(update.id, update.name);
+        }
+      } finally {
+        setUpdatingChildNodes(false);
+      }
+    },
+    [schemaId, renameNode],
+  );
+
+  const batchDeleteChildNodes = useCallback(
+    async (nodeIds: number[]) => {
+      if (!schemaId || !nodeIds.length) return;
+      setDeletingChildNodes(true);
+      try {
+        for (const nodeId of nodeIds) {
+          await fetchJson(`/api/classification/nodes?id=${nodeId}`, { method: 'DELETE' });
+        }
+        await refreshState(schemaId);
+      } finally {
+        setDeletingChildNodes(false);
+      }
+    },
+    [schemaId, refreshState],
   );
 
   const runImport = useCallback(
@@ -695,8 +773,18 @@ export function useClassificationStore(initialSchemaId?: number) {
     if (nodeId == null) return;
     setSelectedNodeId(nodeId);
     setSelectedNodeIds(new Set([nodeId]));
+    setExpandedIds((current) => {
+      const next = new Set(current);
+      const path = treeIndex.pathById.get(nodeId) ?? [];
+      for (const node of path) {
+        if (node.id !== nodeId) {
+          next.add(node.id);
+        }
+      }
+      return next;
+    });
     closeOverlays();
-  }, [closeOverlays]);
+  }, [closeOverlays, treeIndex]);
 
   const openContextMenu = useCallback((nodeId: number, label: string, x: number, y: number) => {
     setContextMenu({ nodeId, label, x, y });
@@ -755,6 +843,9 @@ export function useClassificationStore(initialSchemaId?: number) {
     filterActive,
     filterBulkActionLabel,
     filterTagNames,
+    showParentContext,
+    setShowParentContext,
+    toggleShowParentContext,
     availableTags,
     treeIndex,
     treeRoot,
@@ -763,15 +854,19 @@ export function useClassificationStore(initialSchemaId?: number) {
     toggleExpanded,
     expandAll,
     collapseAll,
+    treeFullyExpanded,
+    toggleExpandCollapseAll,
     selectedNodeId,
     setSelectedNodeId: selectNode,
     selectedNodeIds,
     selectedPathLabel,
+    selectedPath,
     selectedCode,
-    nodeItems,
     canAddChildAtSelected,
-    existingSiblingNames,
+    existingChildNodes,
     creatingChildNodes,
+    updatingChildNodes,
+    deletingChildNodes,
     inline,
     setInline,
     startInlineCreate,
@@ -807,8 +902,10 @@ export function useClassificationStore(initialSchemaId?: number) {
     reparentNode,
     assignTags,
     removeTag,
-    createMaterialItem,
+    renameTag,
     batchAddChildNodes,
+    batchRenameChildNodes,
+    batchDeleteChildNodes,
     runImport,
     submitBulkAdd,
     previewImportedRows,

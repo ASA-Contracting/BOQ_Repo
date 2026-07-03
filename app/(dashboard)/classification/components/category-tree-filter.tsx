@@ -5,9 +5,8 @@ import { TREE_FILTER_OPTION_MODES, type TreeFilterOptionMode } from '@/lib/categ
 import {
   IconArchive,
   IconBookmarkStar,
-  IconBoxSeam,
-  IconCashCoin,
   IconFilter,
+  IconParentTrail,
   IconTag,
 } from '@/components/explorer-tree/classification-icons';
 
@@ -17,11 +16,13 @@ type Props = {
   label: string;
   bulkActionLabel: string;
   availableTags: Array<{ name: string; count: number }>;
+  showParentContext: boolean;
   isOptionSelected: (option: TreeFilterOptionMode) => boolean;
   isTagSelected: (tagName: string) => boolean;
   onToggle: () => void;
   onToggleOption: (option: TreeFilterOptionMode) => void;
   onToggleBulkSelection: () => void;
+  onToggleShowParentContext: () => void;
   onToggleTag: (tagName: string) => void;
   onClearTags: () => void;
 };
@@ -29,8 +30,6 @@ type Props = {
 const OPTION_META: Record<TreeFilterOptionMode, { label: string; icon: ReactNode }> = {
   tagged: { label: 'Tagged', icon: <IconBookmarkStar /> },
   untagged: { label: 'No tags', icon: <IconArchive /> },
-  'material-records': { label: 'Material records', icon: <IconBoxSeam /> },
-  'price-records': { label: 'Price records', icon: <IconCashCoin /> },
 };
 
 export function CategoryTreeFilter({
@@ -39,11 +38,13 @@ export function CategoryTreeFilter({
   label,
   bulkActionLabel,
   availableTags,
+  showParentContext,
   isOptionSelected,
   isTagSelected,
   onToggle,
   onToggleOption,
   onToggleBulkSelection,
+  onToggleShowParentContext,
   onToggleTag,
   onClearTags,
 }: Props) {
@@ -81,6 +82,23 @@ export function CategoryTreeFilter({
               <span>{OPTION_META[option].label}</span>
             </button>
           ))}
+          <div className="mc-tree-filter__section">
+            <div className="mc-tree-filter__head mc-tree-filter__head--section">
+              <span>Display</span>
+            </div>
+            <button
+              type="button"
+              className={showParentContext ? 'is-active' : ''}
+              role="menuitemcheckbox"
+              aria-checked={showParentContext}
+              onClick={onToggleShowParentContext}
+            >
+              <i aria-hidden="true">
+                <IconParentTrail />
+              </i>
+              <span>Parent categories</span>
+            </button>
+          </div>
           <div className="mc-tree-filter__section">
             <div className="mc-tree-filter__head mc-tree-filter__head--section">
               <span>Tags</span>

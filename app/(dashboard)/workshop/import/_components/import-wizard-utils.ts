@@ -74,8 +74,7 @@ export function buildImportRequestPayload(
   batchName: string,
   columnMappingByIndex: Record<number, BoqImportFieldKey>,
   projectOptions?: {
-    projectName?: string;
-    abrdProjectId?: number;
+    projectName: string;
     client?: string;
     boqId?: number;
   },
@@ -89,8 +88,7 @@ export function buildImportRequestPayload(
     columnMappingByIndex: Object.fromEntries(
       Object.entries(columnMappingByIndex).map(([index, field]) => [String(index), field]),
     ) as Record<string, BoqImportFieldKey>,
-    projectName: projectOptions?.projectName,
-    abrdProjectId: projectOptions?.abrdProjectId,
+    projectName: projectOptions.projectName,
     client: projectOptions?.client,
     boqId: projectOptions?.boqId,
   };

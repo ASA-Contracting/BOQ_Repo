@@ -15,10 +15,16 @@ function mapBatch(batch: import("@/domain/workshop/WorkshopBatch").WorkshopBatch
     id: batch.id as number,
     name: batch.name,
     status: batch.status,
+    workflowStage: batch.workflowStage,
     importItemCount: batch.importItemCount,
     itemsApprovedCount: batch.itemsApprovedCount,
     itemsPendingReviewCount: batch.itemsPendingReviewCount,
     latestAiAnalysisId: batch.latestAiAnalysisId,
+    linkedBoqVersionId: batch.linkedBoqVersionId,
+    versionName: null,
+    versionNumber: null,
+    approvalStatus: null,
+    returnToEngineerNotes: batch.returnToEngineerNotes,
   };
 }
 

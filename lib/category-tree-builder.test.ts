@@ -73,6 +73,7 @@ describe('category-tree-builder', () => {
       search: '',
       filter: 'all',
       tagFilterNames: new Set(),
+      showParentContext: false,
       expandedIds: new Set([1]),
       selectedId: 2,
       selectedIds: new Set(),
@@ -84,14 +85,15 @@ describe('category-tree-builder', () => {
     expect(root.children[0].children[0].tags?.[0].label).toBe('hvac');
   });
 
-  it('filters tree by material-records mode', () => {
+  it('filters tree by tagged mode', () => {
     const root = buildCategoryTreeRoot({
       state: sampleState,
       schemaId: 1,
       chainSteps: [],
       search: '',
-      filter: 'material-records',
+      filter: 'tagged',
       tagFilterNames: new Set(),
+      showParentContext: false,
       expandedIds: new Set([1]),
       selectedId: null,
       selectedIds: new Set(),
@@ -131,7 +133,7 @@ describe('category-tree-builder', () => {
 
     expect(collectAvailableTags(withInheritance, 1)).toEqual([
       { name: 'Electrical', count: 1 },
-      { name: 'hvac', count: 3 },
+      { name: 'hvac', count: 2 },
     ]);
   });
 });

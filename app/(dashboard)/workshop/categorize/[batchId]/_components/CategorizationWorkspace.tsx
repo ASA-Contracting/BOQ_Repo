@@ -601,7 +601,7 @@ export function CategorizationWorkspace({
             <Button
               size="sm"
               variant="secondary"
-              disabled={submittingReview || context.itemsPendingReviewCount > 0}
+              disabled={submittingReview || context.batch.itemsPendingReviewCount > 0}
               onClick={() => void handleSubmitEngineerReview()}
             >
               {submittingReview ? "Submitting…" : "Submit for section-head review"}

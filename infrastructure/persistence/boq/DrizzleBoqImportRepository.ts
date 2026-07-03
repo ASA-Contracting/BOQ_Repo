@@ -33,23 +33,20 @@ export class DrizzleBoqImportRepository
     lines: import("@/domain/boq/repositories/IBoqImportRepository").ImportBoqLineInput[];
     projectId?: number;
     boqId?: number;
-    abrdProjectId?: number;
-    externalSource?: "abrd" | "local";
     client?: string;
   }): Promise<ImportBoqSnapshotResult> {
     const now = new Date();
-    const externalSource = input.externalSource ?? (input.abrdProjectId ? "abrd" : "local");
     const client = input.client ?? "TBD";
 
     let projectId = input.projectId ?? null;
 
-    if (!projectId && input.abrdProjectId) {
+    if (!projectId) {
       const existingProject = await this.database
         .select({ id: projects.Id })
         .from(projects)
         .where(
           and(
-            eq(projects.AbdrProjectId, input.abrdProjectId),
+            eq(projects.Name, input.projectName),
             eq(projects.IsDeleted, false),
           ),
         )
@@ -62,9 +59,9 @@ export class DrizzleBoqImportRepository
         .insert(projects)
         .values({
           Name: input.projectName,
-          Description: `Imported for workshop batch: ${input.boqName}`,
-          AbdrProjectId: input.abrdProjectId ?? null,
-          ExternalSource: externalSource,
+          Description: `Project for BOQ: ${input.boqName}`,
+          AbdrProjectId: null,
+          ExternalSource: "local",
           Client: client,
           Status: "active",
           IsDeleted: false,
@@ -73,17 +70,6 @@ export class DrizzleBoqImportRepository
         })
         .returning({ id: projects.Id });
       projectId = projectRows[0]?.id ?? null;
-    } else if (input.abrdProjectId) {
-      await this.database
-        .update(projects)
-        .set({
-          Name: input.projectName,
-          AbdrProjectId: input.abrdProjectId,
-          ExternalSource: externalSource,
-          Client: client,
-          UpdatedAt: now,
-        })
-        .where(eq(projects.Id, projectId));
     }
 
     if (!projectId) {
