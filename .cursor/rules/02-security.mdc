@@ -1,0 +1,25 @@
+---
+description: Auth, secrets, and authorization boundaries
+alwaysApply: true
+---
+
+# Security
+
+Business authorization: `docs/MASTER_SPECIFICATION.md` §7.
+
+## Authentication (v1)
+
+- Supabase Auth — email/password at request boundary.
+- Build `RequestContext` from verified session — never trust client-supplied identity.
+
+## Secrets
+
+- Environment variables via `infrastructure/config/env.ts` — typed, fail fast.
+- Never commit `.env.local` · redact tokens/keys in logs.
+- AI keys server-side only.
+
+## Authorization
+
+- Enforce in use cases — UI hides, server enforces.
+- Publish: GM, Technical Office Manager, System Administrator only.
+- Fail closed: 403 for unauthorized.

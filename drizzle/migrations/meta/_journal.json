@@ -1,0 +1,34 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1783013353073,
+      "tag": "0000_workshop_v1_init",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1783013353074,
+      "tag": "0001_import_campaign",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1783013353075,
+      "tag": "0002_classification_init",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1783013353076,
+      "tag": "0003_boq_material_node_id",
+      "breakpoints": true
+    }
+  ]
+}

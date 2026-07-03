@@ -1,0 +1,2379 @@
+{
+  "id": "c3d5797a-e7ee-4da9-9d2d-34fc58e28e96",
+  "prevId": "00000000-0000-0000-0000-000000000000",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.AspNetUsers": {
+      "name": "AspNetUsers",
+      "schema": "",
+      "columns": {
+        "Id": {
+          "name": "Id",
+          "type": "varchar(450)",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "UserName": {
+          "name": "UserName",
+          "type": "varchar(256)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Email": {
+          "name": "Email",
+          "type": "varchar(256)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "FullName": {
+          "name": "FullName",
+          "type": "varchar(150)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "IsActive": {
+          "name": "IsActive",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "IsDeleted": {
+          "name": "IsDeleted",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "CreatedAt": {
+          "name": "CreatedAt",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "UpdatedAt": {
+          "name": "UpdatedAt",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.AuditTrails": {
+      "name": "AuditTrails",
+      "schema": "",
+      "columns": {
+        "Id": {
+          "name": "Id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "UserId": {
+          "name": "UserId",
+          "type": "varchar(450)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "UserName": {
+          "name": "UserName",
+          "type": "varchar(256)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "EntityName": {
+          "name": "EntityName",
+          "type": "varchar(200)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "EntityId": {
+          "name": "EntityId",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ActionType": {
+          "name": "ActionType",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "Description": {
+          "name": "Description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "OldValues": {
+          "name": "OldValues",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "NewValues": {
+          "name": "NewValues",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ChangedColumns": {
+          "name": "ChangedColumns",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Timestamp": {
+          "name": "Timestamp",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "AuditTrails_UserId_AspNetUsers_Id_fk": {
+          "name": "AuditTrails_UserId_AspNetUsers_Id_fk",
+          "tableFrom": "AuditTrails",
+          "tableTo": "AspNetUsers",
+          "columnsFrom": [
+            "UserId"
+          ],
+          "columnsTo": [
+            "Id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.BoqItemVersions": {
+      "name": "BoqItemVersions",
+      "schema": "",
+      "columns": {
+        "Id": {
+          "name": "Id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "BoqItemVersions_Id_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "BoqItemId": {
+          "name": "BoqItemId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "BoqVersionId": {
+          "name": "BoqVersionId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "Quantity": {
+          "name": "Quantity",
+          "type": "numeric(18, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "UnitRate": {
+          "name": "UnitRate",
+          "type": "numeric(18, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "TotalSale": {
+          "name": "TotalSale",
+          "type": "numeric(18, 4)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "CreatedBy": {
+          "name": "CreatedBy",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "CreatedAt": {
+          "name": "CreatedAt",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "IsDeleted": {
+          "name": "IsDeleted",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "Notes1": {
+          "name": "Notes1",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Notes2": {
+          "name": "Notes2",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "BoqItemVersions_BoqItemId_BoqItems_Id_fk": {
+          "name": "BoqItemVersions_BoqItemId_BoqItems_Id_fk",
+          "tableFrom": "BoqItemVersions",
+          "tableTo": "BoqItems",
+          "columnsFrom": [
+            "BoqItemId"
+          ],
+          "columnsTo": [
+            "Id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "BoqItemVersions_BoqVersionId_BoqVersions_Id_fk": {
+          "name": "BoqItemVersions_BoqVersionId_BoqVersions_Id_fk",
+          "tableFrom": "BoqItemVersions",
+          "tableTo": "BoqVersions",
+          "columnsFrom": [
+            "BoqVersionId"
+          ],
+          "columnsTo": [
+            "Id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.BoqItems": {
+      "name": "BoqItems",
+      "schema": "",
+      "columns": {
+        "Id": {
+          "name": "Id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "BoqItems_Id_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "BoqId": {
+          "name": "BoqId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "RowIndex": {
+          "name": "RowIndex",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ItemNo": {
+          "name": "ItemNo",
+          "type": "varchar(150)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Description": {
+          "name": "Description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Unit": {
+          "name": "Unit",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "IsHeader": {
+          "name": "IsHeader",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "IsMeasurable": {
+          "name": "IsMeasurable",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "FamilyId": {
+          "name": "FamilyId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "BuildingId": {
+          "name": "BuildingId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "IsDeleted": {
+          "name": "IsDeleted",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "UpdatedAt": {
+          "name": "UpdatedAt",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "BoqItems_BoqId_Boqs_Id_fk": {
+          "name": "BoqItems_BoqId_Boqs_Id_fk",
+          "tableFrom": "BoqItems",
+          "tableTo": "Boqs",
+          "columnsFrom": [
+            "BoqId"
+          ],
+          "columnsTo": [
+            "Id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "BoqItems_FamilyId_Families_Id_fk": {
+          "name": "BoqItems_FamilyId_Families_Id_fk",
+          "tableFrom": "BoqItems",
+          "tableTo": "Families",
+          "columnsFrom": [
+            "FamilyId"
+          ],
+          "columnsTo": [
+            "Id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.BoqVersions": {
+      "name": "BoqVersions",
+      "schema": "",
+      "columns": {
+        "Id": {
+          "name": "Id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "BoqVersions_Id_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "BoqId": {
+          "name": "BoqId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "VersionName": {
+          "name": "VersionName",
+          "type": "varchar(250)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Notes": {
+          "name": "Notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Source": {
+          "name": "Source",
+          "type": "varchar(200)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "CreatedBy": {
+          "name": "CreatedBy",
+          "type": "varchar(200)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "CreatedAt": {
+          "name": "CreatedAt",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "IsDeleted": {
+          "name": "IsDeleted",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "BoqVersions_BoqId_Boqs_Id_fk": {
+          "name": "BoqVersions_BoqId_Boqs_Id_fk",
+          "tableFrom": "BoqVersions",
+          "tableTo": "Boqs",
+          "columnsFrom": [
+            "BoqId"
+          ],
+          "columnsTo": [
+            "Id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.Boqs": {
+      "name": "Boqs",
+      "schema": "",
+      "columns": {
+        "Id": {
+          "name": "Id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "Boqs_Id_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "Name": {
+          "name": "Name",
+          "type": "varchar(150)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "Description": {
+          "name": "Description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ProjectId": {
+          "name": "ProjectId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "CreatedBy": {
+          "name": "CreatedBy",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "IsDeleted": {
+          "name": "IsDeleted",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "Boqs_ProjectId_Projects_Id_fk": {
+          "name": "Boqs_ProjectId_Projects_Id_fk",
+          "tableFrom": "Boqs",
+          "tableTo": "Projects",
+          "columnsFrom": [
+            "ProjectId"
+          ],
+          "columnsTo": [
+            "Id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.Families": {
+      "name": "Families",
+      "schema": "",
+      "columns": {
+        "Id": {
+          "name": "Id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "Families_Id_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "Name": {
+          "name": "Name",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ReferenceCode": {
+          "name": "ReferenceCode",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Description": {
+          "name": "Description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "FamilyLevelTypeId": {
+          "name": "FamilyLevelTypeId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ParentId": {
+          "name": "ParentId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "Families_FamilyLevelTypeId_FamilyLevelTypes_Id_fk": {
+          "name": "Families_FamilyLevelTypeId_FamilyLevelTypes_Id_fk",
+          "tableFrom": "Families",
+          "tableTo": "FamilyLevelTypes",
+          "columnsFrom": [
+            "FamilyLevelTypeId"
+          ],
+          "columnsTo": [
+            "Id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "Families_ParentId_Families_Id_fk": {
+          "name": "Families_ParentId_Families_Id_fk",
+          "tableFrom": "Families",
+          "tableTo": "Families",
+          "columnsFrom": [
+            "ParentId"
+          ],
+          "columnsTo": [
+            "Id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.FamilyLevelTypes": {
+      "name": "FamilyLevelTypes",
+      "schema": "",
+      "columns": {
+        "Id": {
+          "name": "Id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "FamilyLevelTypes_Id_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "Name": {
+          "name": "Name",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.Projects": {
+      "name": "Projects",
+      "schema": "",
+      "columns": {
+        "Id": {
+          "name": "Id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "Projects_Id_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "Name": {
+          "name": "Name",
+          "type": "varchar(150)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "Description": {
+          "name": "Description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "IsDeleted": {
+          "name": "IsDeleted",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "CreatedAt": {
+          "name": "CreatedAt",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "UpdatedAt": {
+          "name": "UpdatedAt",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.boq_work_ai_analysis": {
+      "name": "boq_work_ai_analysis",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "boq_work_ai_analysis_id_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "batch_id": {
+          "name": "batch_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "model_name": {
+          "name": "model_name",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "prompt_version": {
+          "name": "prompt_version",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "family_tree_snapshot_json": {
+          "name": "family_tree_snapshot_json",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "item_count": {
+          "name": "item_count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "uncategorized_item_count": {
+          "name": "uncategorized_item_count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "detected_patterns_json": {
+          "name": "detected_patterns_json",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "suggested_strategy_json": {
+          "name": "suggested_strategy_json",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "category_conflicts_json": {
+          "name": "category_conflicts_json",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "needs_human_attention_json": {
+          "name": "needs_human_attention_json",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "overall_confidence": {
+          "name": "overall_confidence",
+          "type": "numeric(5, 4)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "raw_response_json": {
+          "name": "raw_response_json",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "error_message": {
+          "name": "error_message",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "triggered_by": {
+          "name": "triggered_by",
+          "type": "varchar(450)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "started_at": {
+          "name": "started_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "completed_at": {
+          "name": "completed_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "boq_work_ai_analysis_batch_id_boq_work_batch_id_fk": {
+          "name": "boq_work_ai_analysis_batch_id_boq_work_batch_id_fk",
+          "tableFrom": "boq_work_ai_analysis",
+          "tableTo": "boq_work_batch",
+          "columnsFrom": [
+            "batch_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "boq_work_ai_analysis_triggered_by_AspNetUsers_Id_fk": {
+          "name": "boq_work_ai_analysis_triggered_by_AspNetUsers_Id_fk",
+          "tableFrom": "boq_work_ai_analysis",
+          "tableTo": "AspNetUsers",
+          "columnsFrom": [
+            "triggered_by"
+          ],
+          "columnsTo": [
+            "Id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.boq_work_ai_suggestion": {
+      "name": "boq_work_ai_suggestion",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "boq_work_ai_suggestion_id_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "workshop_item_id": {
+          "name": "workshop_item_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ai_analysis_id": {
+          "name": "ai_analysis_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "run_number": {
+          "name": "run_number",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "suggested_family_id": {
+          "name": "suggested_family_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "confidence": {
+          "name": "confidence",
+          "type": "numeric(5, 4)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "rationale": {
+          "name": "rationale",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "alternative_family_ids_json": {
+          "name": "alternative_family_ids_json",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "model_name": {
+          "name": "model_name",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "prompt_version": {
+          "name": "prompt_version",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "raw_response_json": {
+          "name": "raw_response_json",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "raw_response_reference": {
+          "name": "raw_response_reference",
+          "type": "varchar(500)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "status": {
+          "name": "status",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "error_message": {
+          "name": "error_message",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_by": {
+          "name": "created_by",
+          "type": "varchar(450)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "UX_boq_work_ai_suggestion_item_run": {
+          "name": "UX_boq_work_ai_suggestion_item_run",
+          "columns": [
+            {
+              "expression": "workshop_item_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "run_number",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "boq_work_ai_suggestion_workshop_item_id_boq_work_item_id_fk": {
+          "name": "boq_work_ai_suggestion_workshop_item_id_boq_work_item_id_fk",
+          "tableFrom": "boq_work_ai_suggestion",
+          "tableTo": "boq_work_item",
+          "columnsFrom": [
+            "workshop_item_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "boq_work_ai_suggestion_ai_analysis_id_boq_work_ai_analysis_id_fk": {
+          "name": "boq_work_ai_suggestion_ai_analysis_id_boq_work_ai_analysis_id_fk",
+          "tableFrom": "boq_work_ai_suggestion",
+          "tableTo": "boq_work_ai_analysis",
+          "columnsFrom": [
+            "ai_analysis_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "boq_work_ai_suggestion_suggested_family_id_Families_Id_fk": {
+          "name": "boq_work_ai_suggestion_suggested_family_id_Families_Id_fk",
+          "tableFrom": "boq_work_ai_suggestion",
+          "tableTo": "Families",
+          "columnsFrom": [
+            "suggested_family_id"
+          ],
+          "columnsTo": [
+            "Id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "boq_work_ai_suggestion_created_by_AspNetUsers_Id_fk": {
+          "name": "boq_work_ai_suggestion_created_by_AspNetUsers_Id_fk",
+          "tableFrom": "boq_work_ai_suggestion",
+          "tableTo": "AspNetUsers",
+          "columnsFrom": [
+            "created_by"
+          ],
+          "columnsTo": [
+            "Id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.boq_work_batch": {
+      "name": "boq_work_batch",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "boq_work_batch_id_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(150)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "scope_type": {
+          "name": "scope_type",
+          "type": "varchar(30)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "scope_project_id": {
+          "name": "scope_project_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "scope_boq_id": {
+          "name": "scope_boq_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "scope_filter_json": {
+          "name": "scope_filter_json",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "status": {
+          "name": "status",
+          "type": "varchar(30)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "latest_ai_analysis_id": {
+          "name": "latest_ai_analysis_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "import_snapshot_at": {
+          "name": "import_snapshot_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "import_item_count": {
+          "name": "import_item_count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "publish_policy": {
+          "name": "publish_policy",
+          "type": "varchar(30)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "publish_policy_options_json": {
+          "name": "publish_policy_options_json",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "items_pending_review_count": {
+          "name": "items_pending_review_count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "items_approved_count": {
+          "name": "items_approved_count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "items_published_count": {
+          "name": "items_published_count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "created_by": {
+          "name": "created_by",
+          "type": "varchar(450)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "updated_by": {
+          "name": "updated_by",
+          "type": "varchar(450)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "cancelled_by": {
+          "name": "cancelled_by",
+          "type": "varchar(450)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "cancelled_at": {
+          "name": "cancelled_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "cancellation_reason": {
+          "name": "cancellation_reason",
+          "type": "varchar(500)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "boq_work_batch_scope_project_id_Projects_Id_fk": {
+          "name": "boq_work_batch_scope_project_id_Projects_Id_fk",
+          "tableFrom": "boq_work_batch",
+          "tableTo": "Projects",
+          "columnsFrom": [
+            "scope_project_id"
+          ],
+          "columnsTo": [
+            "Id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "boq_work_batch_scope_boq_id_Boqs_Id_fk": {
+          "name": "boq_work_batch_scope_boq_id_Boqs_Id_fk",
+          "tableFrom": "boq_work_batch",
+          "tableTo": "Boqs",
+          "columnsFrom": [
+            "scope_boq_id"
+          ],
+          "columnsTo": [
+            "Id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "boq_work_batch_created_by_AspNetUsers_Id_fk": {
+          "name": "boq_work_batch_created_by_AspNetUsers_Id_fk",
+          "tableFrom": "boq_work_batch",
+          "tableTo": "AspNetUsers",
+          "columnsFrom": [
+            "created_by"
+          ],
+          "columnsTo": [
+            "Id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "boq_work_batch_updated_by_AspNetUsers_Id_fk": {
+          "name": "boq_work_batch_updated_by_AspNetUsers_Id_fk",
+          "tableFrom": "boq_work_batch",
+          "tableTo": "AspNetUsers",
+          "columnsFrom": [
+            "updated_by"
+          ],
+          "columnsTo": [
+            "Id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "boq_work_batch_cancelled_by_AspNetUsers_Id_fk": {
+          "name": "boq_work_batch_cancelled_by_AspNetUsers_Id_fk",
+          "tableFrom": "boq_work_batch",
+          "tableTo": "AspNetUsers",
+          "columnsFrom": [
+            "cancelled_by"
+          ],
+          "columnsTo": [
+            "Id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.boq_work_event_log": {
+      "name": "boq_work_event_log",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "bigint",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "boq_work_event_log_id_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "9223372036854775807",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "batch_id": {
+          "name": "batch_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "workshop_item_id": {
+          "name": "workshop_item_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "export_batch_id": {
+          "name": "export_batch_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ai_analysis_id": {
+          "name": "ai_analysis_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "event_type": {
+          "name": "event_type",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "varchar(450)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "payload_json": {
+          "name": "payload_json",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "boq_work_event_log_batch_id_boq_work_batch_id_fk": {
+          "name": "boq_work_event_log_batch_id_boq_work_batch_id_fk",
+          "tableFrom": "boq_work_event_log",
+          "tableTo": "boq_work_batch",
+          "columnsFrom": [
+            "batch_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "boq_work_event_log_workshop_item_id_boq_work_item_id_fk": {
+          "name": "boq_work_event_log_workshop_item_id_boq_work_item_id_fk",
+          "tableFrom": "boq_work_event_log",
+          "tableTo": "boq_work_item",
+          "columnsFrom": [
+            "workshop_item_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "boq_work_event_log_export_batch_id_boq_work_export_batch_id_fk": {
+          "name": "boq_work_event_log_export_batch_id_boq_work_export_batch_id_fk",
+          "tableFrom": "boq_work_event_log",
+          "tableTo": "boq_work_export_batch",
+          "columnsFrom": [
+            "export_batch_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "boq_work_event_log_ai_analysis_id_boq_work_ai_analysis_id_fk": {
+          "name": "boq_work_event_log_ai_analysis_id_boq_work_ai_analysis_id_fk",
+          "tableFrom": "boq_work_event_log",
+          "tableTo": "boq_work_ai_analysis",
+          "columnsFrom": [
+            "ai_analysis_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "boq_work_event_log_user_id_AspNetUsers_Id_fk": {
+          "name": "boq_work_event_log_user_id_AspNetUsers_Id_fk",
+          "tableFrom": "boq_work_event_log",
+          "tableTo": "AspNetUsers",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "Id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.boq_work_export_batch": {
+      "name": "boq_work_export_batch",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "boq_work_export_batch_id_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "batch_id": {
+          "name": "batch_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "varchar(30)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "started_at": {
+          "name": "started_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "completed_at": {
+          "name": "completed_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "requested_by": {
+          "name": "requested_by",
+          "type": "varchar(450)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "published_by": {
+          "name": "published_by",
+          "type": "varchar(450)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "total_items": {
+          "name": "total_items",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "succeeded_count": {
+          "name": "succeeded_count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "failed_count": {
+          "name": "failed_count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "skipped_count": {
+          "name": "skipped_count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "publish_policy_snapshot": {
+          "name": "publish_policy_snapshot",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "error_summary": {
+          "name": "error_summary",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "boq_work_export_batch_batch_id_boq_work_batch_id_fk": {
+          "name": "boq_work_export_batch_batch_id_boq_work_batch_id_fk",
+          "tableFrom": "boq_work_export_batch",
+          "tableTo": "boq_work_batch",
+          "columnsFrom": [
+            "batch_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "boq_work_export_batch_requested_by_AspNetUsers_Id_fk": {
+          "name": "boq_work_export_batch_requested_by_AspNetUsers_Id_fk",
+          "tableFrom": "boq_work_export_batch",
+          "tableTo": "AspNetUsers",
+          "columnsFrom": [
+            "requested_by"
+          ],
+          "columnsTo": [
+            "Id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "boq_work_export_batch_published_by_AspNetUsers_Id_fk": {
+          "name": "boq_work_export_batch_published_by_AspNetUsers_Id_fk",
+          "tableFrom": "boq_work_export_batch",
+          "tableTo": "AspNetUsers",
+          "columnsFrom": [
+            "published_by"
+          ],
+          "columnsTo": [
+            "Id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.boq_work_export_item": {
+      "name": "boq_work_export_item",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "boq_work_export_item_id_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "export_batch_id": {
+          "name": "export_batch_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "workshop_item_id": {
+          "name": "workshop_item_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "source_boq_item_id": {
+          "name": "source_boq_item_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "old_family_id": {
+          "name": "old_family_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "new_family_id": {
+          "name": "new_family_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "varchar(30)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "error_message": {
+          "name": "error_message",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "audit_trail_id": {
+          "name": "audit_trail_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "published_at": {
+          "name": "published_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "attempt_number": {
+          "name": "attempt_number",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        }
+      },
+      "indexes": {
+        "UX_boq_work_export_item_batch_item": {
+          "name": "UX_boq_work_export_item_batch_item",
+          "columns": [
+            {
+              "expression": "export_batch_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "workshop_item_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "boq_work_export_item_export_batch_id_boq_work_export_batch_id_fk": {
+          "name": "boq_work_export_item_export_batch_id_boq_work_export_batch_id_fk",
+          "tableFrom": "boq_work_export_item",
+          "tableTo": "boq_work_export_batch",
+          "columnsFrom": [
+            "export_batch_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "boq_work_export_item_workshop_item_id_boq_work_item_id_fk": {
+          "name": "boq_work_export_item_workshop_item_id_boq_work_item_id_fk",
+          "tableFrom": "boq_work_export_item",
+          "tableTo": "boq_work_item",
+          "columnsFrom": [
+            "workshop_item_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "boq_work_export_item_source_boq_item_id_BoqItems_Id_fk": {
+          "name": "boq_work_export_item_source_boq_item_id_BoqItems_Id_fk",
+          "tableFrom": "boq_work_export_item",
+          "tableTo": "BoqItems",
+          "columnsFrom": [
+            "source_boq_item_id"
+          ],
+          "columnsTo": [
+            "Id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "boq_work_export_item_old_family_id_Families_Id_fk": {
+          "name": "boq_work_export_item_old_family_id_Families_Id_fk",
+          "tableFrom": "boq_work_export_item",
+          "tableTo": "Families",
+          "columnsFrom": [
+            "old_family_id"
+          ],
+          "columnsTo": [
+            "Id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "boq_work_export_item_new_family_id_Families_Id_fk": {
+          "name": "boq_work_export_item_new_family_id_Families_Id_fk",
+          "tableFrom": "boq_work_export_item",
+          "tableTo": "Families",
+          "columnsFrom": [
+            "new_family_id"
+          ],
+          "columnsTo": [
+            "Id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "boq_work_export_item_audit_trail_id_AuditTrails_Id_fk": {
+          "name": "boq_work_export_item_audit_trail_id_AuditTrails_Id_fk",
+          "tableFrom": "boq_work_export_item",
+          "tableTo": "AuditTrails",
+          "columnsFrom": [
+            "audit_trail_id"
+          ],
+          "columnsTo": [
+            "Id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.boq_work_item": {
+      "name": "boq_work_item",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "boq_work_item_id_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "batch_id": {
+          "name": "batch_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "source_boq_item_id": {
+          "name": "source_boq_item_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "source_boq_id": {
+          "name": "source_boq_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "source_project_id": {
+          "name": "source_project_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "original_family_id": {
+          "name": "original_family_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "original_description": {
+          "name": "original_description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "original_unit": {
+          "name": "original_unit",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "original_item_no": {
+          "name": "original_item_no",
+          "type": "varchar(150)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "original_row_index": {
+          "name": "original_row_index",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "original_is_header": {
+          "name": "original_is_header",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "original_is_measurable": {
+          "name": "original_is_measurable",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "imported_at": {
+          "name": "imported_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "context_boq_version_id": {
+          "name": "context_boq_version_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "context_quantity": {
+          "name": "context_quantity",
+          "type": "numeric(18, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "context_unit_rate": {
+          "name": "context_unit_rate",
+          "type": "numeric(18, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "context_snapshot_json": {
+          "name": "context_snapshot_json",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "latest_suggested_family_id": {
+          "name": "latest_suggested_family_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "latest_ai_confidence": {
+          "name": "latest_ai_confidence",
+          "type": "numeric(5, 4)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "latest_ai_suggestion_id": {
+          "name": "latest_ai_suggestion_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ai_processed_at": {
+          "name": "ai_processed_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "final_family_id": {
+          "name": "final_family_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "review_status": {
+          "name": "review_status",
+          "type": "varchar(30)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "reviewed_by": {
+          "name": "reviewed_by",
+          "type": "varchar(450)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "reviewed_at": {
+          "name": "reviewed_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "review_notes": {
+          "name": "review_notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "published_at": {
+          "name": "published_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "published_by": {
+          "name": "published_by",
+          "type": "varchar(450)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "publish_error": {
+          "name": "publish_error",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "last_export_item_id": {
+          "name": "last_export_item_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "production_family_id_at_publish_check": {
+          "name": "production_family_id_at_publish_check",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "drift_detected_at": {
+          "name": "drift_detected_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "drift_reason": {
+          "name": "drift_reason",
+          "type": "varchar(500)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "UX_boq_work_item_batch_source": {
+          "name": "UX_boq_work_item_batch_source",
+          "columns": [
+            {
+              "expression": "batch_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "source_boq_item_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "boq_work_item_batch_id_boq_work_batch_id_fk": {
+          "name": "boq_work_item_batch_id_boq_work_batch_id_fk",
+          "tableFrom": "boq_work_item",
+          "tableTo": "boq_work_batch",
+          "columnsFrom": [
+            "batch_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "boq_work_item_source_boq_item_id_BoqItems_Id_fk": {
+          "name": "boq_work_item_source_boq_item_id_BoqItems_Id_fk",
+          "tableFrom": "boq_work_item",
+          "tableTo": "BoqItems",
+          "columnsFrom": [
+            "source_boq_item_id"
+          ],
+          "columnsTo": [
+            "Id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "boq_work_item_source_boq_id_Boqs_Id_fk": {
+          "name": "boq_work_item_source_boq_id_Boqs_Id_fk",
+          "tableFrom": "boq_work_item",
+          "tableTo": "Boqs",
+          "columnsFrom": [
+            "source_boq_id"
+          ],
+          "columnsTo": [
+            "Id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "boq_work_item_source_project_id_Projects_Id_fk": {
+          "name": "boq_work_item_source_project_id_Projects_Id_fk",
+          "tableFrom": "boq_work_item",
+          "tableTo": "Projects",
+          "columnsFrom": [
+            "source_project_id"
+          ],
+          "columnsTo": [
+            "Id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "boq_work_item_original_family_id_Families_Id_fk": {
+          "name": "boq_work_item_original_family_id_Families_Id_fk",
+          "tableFrom": "boq_work_item",
+          "tableTo": "Families",
+          "columnsFrom": [
+            "original_family_id"
+          ],
+          "columnsTo": [
+            "Id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "boq_work_item_context_boq_version_id_BoqVersions_Id_fk": {
+          "name": "boq_work_item_context_boq_version_id_BoqVersions_Id_fk",
+          "tableFrom": "boq_work_item",
+          "tableTo": "BoqVersions",
+          "columnsFrom": [
+            "context_boq_version_id"
+          ],
+          "columnsTo": [
+            "Id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "boq_work_item_latest_suggested_family_id_Families_Id_fk": {
+          "name": "boq_work_item_latest_suggested_family_id_Families_Id_fk",
+          "tableFrom": "boq_work_item",
+          "tableTo": "Families",
+          "columnsFrom": [
+            "latest_suggested_family_id"
+          ],
+          "columnsTo": [
+            "Id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "boq_work_item_final_family_id_Families_Id_fk": {
+          "name": "boq_work_item_final_family_id_Families_Id_fk",
+          "tableFrom": "boq_work_item",
+          "tableTo": "Families",
+          "columnsFrom": [
+            "final_family_id"
+          ],
+          "columnsTo": [
+            "Id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "boq_work_item_production_family_id_at_publish_check_Families_Id_fk": {
+          "name": "boq_work_item_production_family_id_at_publish_check_Families_Id_fk",
+          "tableFrom": "boq_work_item",
+          "tableTo": "Families",
+          "columnsFrom": [
+            "production_family_id_at_publish_check"
+          ],
+          "columnsTo": [
+            "Id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "boq_work_item_reviewed_by_AspNetUsers_Id_fk": {
+          "name": "boq_work_item_reviewed_by_AspNetUsers_Id_fk",
+          "tableFrom": "boq_work_item",
+          "tableTo": "AspNetUsers",
+          "columnsFrom": [
+            "reviewed_by"
+          ],
+          "columnsTo": [
+            "Id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "boq_work_item_published_by_AspNetUsers_Id_fk": {
+          "name": "boq_work_item_published_by_AspNetUsers_Id_fk",
+          "tableFrom": "boq_work_item",
+          "tableTo": "AspNetUsers",
+          "columnsFrom": [
+            "published_by"
+          ],
+          "columnsTo": [
+            "Id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.boq_work_review_action": {
+      "name": "boq_work_review_action",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "boq_work_review_action_id_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "workshop_item_id": {
+          "name": "workshop_item_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "action_type": {
+          "name": "action_type",
+          "type": "varchar(30)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "previous_family_id": {
+          "name": "previous_family_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "selected_family_id": {
+          "name": "selected_family_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "previous_review_status": {
+          "name": "previous_review_status",
+          "type": "varchar(30)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "new_review_status": {
+          "name": "new_review_status",
+          "type": "varchar(30)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "notes": {
+          "name": "notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "varchar(450)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "boq_work_review_action_workshop_item_id_boq_work_item_id_fk": {
+          "name": "boq_work_review_action_workshop_item_id_boq_work_item_id_fk",
+          "tableFrom": "boq_work_review_action",
+          "tableTo": "boq_work_item",
+          "columnsFrom": [
+            "workshop_item_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "boq_work_review_action_previous_family_id_Families_Id_fk": {
+          "name": "boq_work_review_action_previous_family_id_Families_Id_fk",
+          "tableFrom": "boq_work_review_action",
+          "tableTo": "Families",
+          "columnsFrom": [
+            "previous_family_id"
+          ],
+          "columnsTo": [
+            "Id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "boq_work_review_action_selected_family_id_Families_Id_fk": {
+          "name": "boq_work_review_action_selected_family_id_Families_Id_fk",
+          "tableFrom": "boq_work_review_action",
+          "tableTo": "Families",
+          "columnsFrom": [
+            "selected_family_id"
+          ],
+          "columnsTo": [
+            "Id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "boq_work_review_action_user_id_AspNetUsers_Id_fk": {
+          "name": "boq_work_review_action_user_id_AspNetUsers_Id_fk",
+          "tableFrom": "boq_work_review_action",
+          "tableTo": "AspNetUsers",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "Id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {},
+  "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

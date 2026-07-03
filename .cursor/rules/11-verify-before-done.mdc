@@ -1,0 +1,29 @@
+---
+description: Verify the app runs before marking work complete
+alwaysApply: true
+---
+
+# Verify Before Done
+
+Never tell the user a UI or server change is **done** until the app has been verified end-to-end.
+
+## Required checks (in order)
+
+1. **`npm run build`** — must pass with no TypeScript or compile errors.
+2. **Dev server** — ensure `npm run dev` is running on port 3000 (restart if stale/crashed).
+3. **Key routes respond** — at minimum:
+   - `/login` → 200
+   - `/boq` → 200 (no DB timeout / server error in output)
+   - `/boq/import` → 200
+4. **Dev log** — read `.next/dev/logs/next-development.log` or terminal output; fix any ERROR before claiming done.
+
+## When DB or auth is involved
+
+- Hit the affected page or API route and confirm a successful response (not 401/500/timeout).
+- If build logs show query timeouts or runtime exceptions, treat the task as **not done**.
+
+## Reporting
+
+- Only say "done" after checks pass.
+- If the dev server was restarted, tell the user the URL (`http://localhost:3000`).
+- If a check fails, fix it first — do not hand off a broken state.

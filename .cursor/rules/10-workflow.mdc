@@ -1,0 +1,13 @@
+---
+description: Git workflow
+alwaysApply: true
+---
+
+# Git
+
+- Branches: `feature/*`, `fix/*`, `chore/*`
+- Imperative commit messages; focused PRs
+- Never force-push `main`; never commit secrets or `.next/`
+- Migrations ship with schema changes
+
+Pre-PR: lint, types, tests — see `docs/standards/Coding.md`.

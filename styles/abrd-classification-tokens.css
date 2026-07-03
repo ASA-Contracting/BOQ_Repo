@@ -1,0 +1,541 @@
+/* ABRD theme tokens scoped to classification workspace */
+.cls-workspace {
+  --app-font-family-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', roboto, 'Helvetica Neue', helvetica, arial, sans-serif;
+  --app-font-family: var(--app-font-family-sans);
+  --primary: 132 199 24;
+  --info: 14 165 233;
+  --success: 34 197 94;
+  --warning: 245 158 11;
+  --danger: 239 68 68;
+  --bg0: 255 255 255;
+  --bg1: 249 249 249;
+  --surface: 255 255 255;
+  --border: 232 232 232;
+  --border-strong: 214 214 214;
+  --fg: 31 35 43;
+  --muted: 141 141 141;
+  --app-color-warning-text: rgb(var(--warning));
+  --app-color-primary: rgb(var(--primary));
+  --app-color-grid-header-bg: rgb(252 252 252);
+  --app-color-grid-line-soft: color-mix(in oklab, rgb(var(--border-strong)) 54%, transparent);
+  --app-color-grid-line: color-mix(in oklab, rgb(var(--border-strong)) 72%, transparent);
+  --app-color-grid-line-faint: color-mix(in oklab, rgb(var(--border-strong)) 36%, transparent);
+  --app-color-outline-stroke: rgb(var(--border-strong));
+}
+
+.cls-workspace[data-theme='light'],
+.cls-workspace {
+
+  color-scheme: light;
+  --bg0: 255 255 255;
+  --bg1: 249 249 249;
+  --app-palette-canvas: var(--bg0);
+  --app-palette-shell: var(--bg1);
+  --app-palette-chrome: 249 249 249;
+  --app-palette-panel-body: 255 255 255;
+  --app-header-bg: var(--app-palette-chrome);
+  --app-footer-bg: var(--app-palette-chrome);
+  --surface: 255 255 255;
+  --app-palette-surface: var(--surface);
+  --surfaceA: 1;
+  --border: 232 232 232;
+  --border-strong: 214 214 214;
+  --outline-soft: 232 232 232;
+  --app-palette-outline: var(--border);
+  --app-palette-outline-strong: var(--border-strong);
+  --app-outline-stroke-mix: 72%;
+  --app-outline-stroke-strong-mix: 84%;
+  --app-outline-soft-mix: 74%;
+  --app-outline-divider-mix: 78%;
+  --app-outline-grid-mix: 76%;
+  --app-outline-empty-mix: 68%;
+  --fg: 31 35 43;
+  --muted: 141 141 141;
+  --app-palette-text: var(--fg);
+  --app-palette-muted: var(--muted);
+  --hoverA: 0.08;
+  --app-bg-gradient: none;
+  --app-corner-primary: rgb(132 199 24 / 0.44);
+  --app-corner-secondary: rgb(255 255 255 / 0.62);
+  --app-corner-primary-blur: 150px;
+  --app-corner-secondary-blur: 110px;
+  --app-corner-primary-opacity: 0.95;
+  --app-corner-secondary-opacity: 0.86;
+  --tooltip-bg: var(--surface);
+  --tooltip-fg: var(--fg);
+  --tooltip-border: var(--border);
+  --tooltip-shadow: 0 10px 24px rgb(15 23 42 / 0.14);
+  --task-detail-site-bg: 255 255 255;
+  --task-detail-main-bg: 255 255 255;
+  --task-detail-activity-bg: 249 249 249;
+  --task-detail-activity-rail-bg: 255 255 255;
+  --app-color-card-bg: color-mix(
+    in oklab,
+    var(--app-color-panel-body) 98%,
+    var(--app-color-shell) 2%
+  );
+  --app-color-row-bg: color-mix(
+    in oklab,
+    var(--app-color-panel-body) 98%,
+    var(--app-color-shell) 2%
+  );
+  --app-color-control-bg: color-mix(
+    in oklab,
+    var(--app-color-panel-body) 96%,
+    var(--app-color-shell) 4%
+  );
+  --app-color-text-strong: rgb(24 28 36);
+  --app-color-text-high: rgb(31 35 43);
+  --app-color-text-body: rgb(76 84 96);
+  --app-color-text-soft: rgb(109 118 131);
+  --app-color-text-muted: rgb(141 141 141);
+  --app-color-text-faint: rgb(157 163 171);
+  --app-color-text-quiet: rgb(176 181 188);
+  --app-color-grid-checkbox-bg: rgb(255 255 255);
+  --app-color-grid-checkbox-bg-hover: rgb(248 250 252);
+  --app-color-grid-checkbox-border: rgb(148 156 169);
+  --app-color-grid-checkbox-border-strong: rgb(121 129 142);
+  --app-color-grid-checkbox-check: rgb(255 255 255);
+  --app-color-grid-checkbox-checked-bg: var(--app-color-primary);
+  --app-color-grid-header-bg: rgb(252 252 252);
+  --app-color-grid-row-hover: rgb(240 240 240);
+  --app-color-grid-header-cell-fg: rgb(32 32 32);
+  --app-color-grid-header-text-fg: rgb(131 131 131);
+  --app-color-grid-surface: color-mix(in oklab, white 97%, rgb(var(--bg0, 255 255 255)) 3%);
+  --app-color-grid-surface-raised: color-mix(in oklab, white 98%, rgb(var(--bg1, 248 250 252)) 2%);
+  --app-color-grid-outline: color-mix(
+    in oklab,
+    rgb(var(--border-strong, var(--border))) 48%,
+    transparent
+  );
+  --app-color-grid-line: color-mix(
+    in oklab,
+    rgb(var(--border-strong, var(--border))) 72%,
+    transparent
+  );
+  --app-color-grid-line-soft: color-mix(
+    in oklab,
+    rgb(var(--border-strong, var(--border))) 54%,
+    transparent
+  );
+  --app-color-grid-line-faint: color-mix(
+    in oklab,
+    rgb(var(--border-strong, var(--border))) 36%,
+    transparent
+  );
+  --app-color-grid-row-selected: color-mix(
+    in oklab,
+    rgb(var(--primary, 132 199 24)) 12%,
+    white 88%
+  );
+  --app-color-grid-body-text: #292d34;
+  --app-color-grid-body-text-soft: color-mix(in oklab, rgb(var(--fg, 15 23 42)) 68%, white 32%);
+  --app-color-grid-link: #292d34;
+  --app-color-grid-link-hover: #292d34;
+  --app-color-grid-pill-border: color-mix(
+    in oklab,
+    rgb(var(--border-strong, var(--border))) 40%,
+    transparent
+  );
+  --app-color-grid-pill-surface: color-mix(in oklab, white 96%, rgb(var(--bg1, 248 250 252)) 4%);
+  --app-color-grid-pill-text: color-mix(in oklab, rgb(var(--fg, 15 23 42)) 76%, transparent);
+  --app-color-grid-muted-label: color-mix(in oklab, rgb(var(--fg, 15 23 42)) 44%, transparent);
+  --app-color-grid-muted-value: color-mix(in oklab, rgb(var(--fg, 15 23 42)) 72%, transparent);
+  --app-color-grid-muted-placeholder: color-mix(
+    in oklab,
+    rgb(var(--fg, 15 23 42)) 50%,
+    transparent
+  );
+  --app-color-grid-selection-index: color-mix(in oklab, rgb(var(--fg, 15 23 42)) 54%, white 46%);
+  --app-color-pill-tone-green-rgb: 78 128 62;
+  --app-color-pill-tone-yellow-rgb: 160 117 36;
+  --app-color-pill-tone-red-rgb: 178 81 76;
+  --app-color-pill-tone-blue-rgb: 61 104 183;
+  --app-color-pill-tone-purple-rgb: 116 84 174;
+  --app-color-pill-tone-teal-rgb: 43 118 113;
+  --app-color-pill-tone-orange-rgb: 168 108 42;
+  --app-color-pill-tone-gray-rgb: 94 101 113;
+  --app-shadow-grid-group-card: 0 1px 0 rgb(15 23 42 / 0.035);
+  --app-color-heading: var(--app-color-text-high);
+  --app-color-subheading: var(--app-color-text-soft);
+  --app-color-body: var(--app-color-text-body);
+  --app-color-data-title: rgb(88 96 108);
+  --app-color-data-text: rgb(108 117 129);
+  --app-color-label: var(--app-color-text-muted);
+  --app-color-meta: var(--app-color-text-soft);
+  --app-color-empty-text: var(--app-color-text-quiet);
+  --app-color-toolbar-selected-bg: color-mix(
+    in oklab,
+    var(--app-color-toolbar-selected-accent) 10%,
+    rgb(255 255 255) 90%
+  );
+  --app-color-toolbar-selected-border: color-mix(
+    in oklab,
+    var(--app-color-toolbar-selected-accent) 30%,
+    rgb(255 255 255) 70%
+  );
+  --app-color-toolbar-selected-content: var(--app-color-toolbar-selected-accent);
+  --app-color-tab-inactive: var(--app-color-text-soft);
+  --app-color-tab-active: var(--app-color-text-high);
+  --app-color-scroll-thumb: rgb(148 163 184 / 0.34);
+  --app-color-scroll-thumb-hover: rgb(148 163 184 / 0.5);
+  --app-shadow-card: 0 2px 8px rgb(15 23 42 / 0.06);
+  --app-shadow-panel: 0 8px 18px rgb(15 23 42 / 0.08);
+  --app-shadow-panel-strong: 0 22px 60px rgb(15 23 42 / 0.14), 0 6px 20px rgb(15 23 42 / 0.08);
+  
+}
+
+.cls-workspace {
+  /* Theme foundations */
+  --app-font-family-sans:
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', roboto, 'Helvetica Neue', helvetica, arial,
+    sans-serif;
+  --app-theme-font-sans: var(--app-font-family-sans);
+  --app-grid-header-font-family: var(--app-theme-font-sans);
+  --app-grid-header-cell-height: 32px;
+  --app-grid-header-cell-padding-inline: 8px;
+  --app-grid-header-cell-font-size: 13px;
+  --app-grid-header-cell-font-weight: 700;
+  --app-grid-header-text-height: 16px;
+  --app-grid-header-text-size: 12px;
+  --app-grid-header-text-font-weight: 500;
+  --app-grid-header-text-line-height: 1.3333333333;
+  --app-grid-header-icon-gap: 4px;
+  --app-grid-header-icon-cluster-gap: 2px;
+  --app-grid-header-icon-button-size: 16px;
+  --app-grid-header-icon-size: 12px;
+  --app-grid-group-card-header-height: 40px;
+  --app-grid-group-card-row-height: 31px;
+  --app-grid-group-card-gap: 12px;
+  --app-grid-selection-column-width: 44px;
+  --app-grid-row-actions-column-width: 120px;
+  --app-grid-checkbox-size: 14px;
+  --app-grid-checkbox-radius: 4px;
+  --app-grid-pill-height: 21px;
+  --app-grid-pill-radius: 6px;
+  --app-grid-pill-padding-inline: 7px;
+  --app-grid-pill-gap: 4px;
+  --app-grid-pill-font-size: 10px;
+  --app-grid-pill-font-weight: 600;
+  --app-grid-pill-dot-size: 7px;
+  --app-grid-pill-dot-ring: 1.5px;
+  --app-pill-height: var(--app-grid-pill-height);
+  --app-pill-radius: var(--app-grid-pill-radius);
+  --app-pill-padding-inline: var(--app-grid-pill-padding-inline);
+  --app-pill-gap: var(--app-grid-pill-gap);
+  --app-pill-font-size: var(--app-grid-pill-font-size);
+  --app-pill-font-weight: var(--app-grid-pill-font-weight);
+  --app-pill-dot-size: var(--app-grid-pill-dot-size);
+  --app-pill-dot-ring: var(--app-grid-pill-dot-ring);
+  --app-color-grid-checkbox-bg: rgb(17 17 17);
+  --app-color-grid-checkbox-bg-hover: rgb(17 17 17);
+  --app-color-grid-checkbox-border: rgb(110 110 110);
+  --app-color-grid-checkbox-border-strong: rgb(110 110 110);
+  --app-color-grid-checkbox-check: rgb(255 255 255);
+  --app-color-grid-checkbox-checked-bg: var(--app-color-primary);
+  --app-color-grid-header-bg: rgb(25 25 25);
+  --app-color-grid-group-header-bg: var(--app-color-grid-header-bg);
+  --app-color-grid-row-hover: var(--app-color-grid-header-bg);
+  --app-color-grid-header-cell-fg: rgb(238 238 238);
+  --app-color-grid-header-text-fg: rgb(123 123 123);
+  --app-grid-group-header-accent-rgb: var(--primary);
+  --app-grid-group-footer-accent-rgb: var(--warning);
+  --app-grid-grand-total-accent-rgb: var(--success);
+  --app-color-grid-surface: color-mix(in oklab, rgb(var(--bg0, 17 18 20)) 96%, black 4%);
+  --app-color-grid-surface-raised: color-mix(
+    in oklab,
+    rgb(var(--bg1, 23 25 28)) 92%,
+    rgb(var(--fg, 255 255 255)) 8%
+  );
+  --app-color-grid-surface-footer: var(--app-color-grid-surface);
+  --app-color-grid-outline: color-mix(
+    in oklab,
+    rgb(var(--border-strong, var(--border))) 34%,
+    transparent
+  );
+  --app-color-grid-line: color-mix(
+    in oklab,
+    rgb(var(--border-strong, var(--border))) 56%,
+    transparent
+  );
+  --app-color-grid-line-soft: color-mix(
+    in oklab,
+    rgb(var(--border-strong, var(--border))) 38%,
+    transparent
+  );
+  --app-color-grid-line-faint: color-mix(
+    in oklab,
+    rgb(var(--border-strong, var(--border))) 24%,
+    transparent
+  );
+  --app-tree-connector-width: 1px;
+  --app-tree-connector-color: color-mix(
+    in oklab,
+    rgb(var(--fg, 255 255 255)) 42%,
+    transparent
+  );
+  --app-tree-connector-hover-color: var(--app-tree-connector-color);
+  --app-tree-connector-selected-color: var(--app-tree-connector-color);
+  --app-tree-connector-hitbox-width: 30px;
+  --app-tree-connector-elbow-height: 8px;
+  --app-tree-toggle-bg: rgb(var(--bg0, 12 13 14));
+  --app-tree-toggle-hover-bg: rgb(var(--bg1, 23 25 28));
+  --app-tree-card-fill: transparent;
+  --app-tree-card-outline: transparent;
+  --app-tree-card-hover-fill: transparent;
+  --app-tree-card-hover-outline: transparent;
+  --app-tree-card-selected-fill-start: color-mix(
+    in oklab,
+    rgb(var(--primary, 132 199 24)) 17%,
+    transparent
+  );
+  --app-tree-card-selected-fill-mid: color-mix(
+    in oklab,
+    rgb(var(--primary, 132 199 24)) 8%,
+    transparent
+  );
+  --app-tree-card-selected-fill-tail: color-mix(
+    in oklab,
+    rgb(var(--fg, 255 255 255)) 2%,
+    transparent
+  );
+  --app-tree-card-selected-outline: color-mix(
+    in oklab,
+    rgb(var(--primary, 132 199 24)) 38%,
+    transparent
+  );
+  --app-tree-card-hover-rail: color-mix(
+    in oklab,
+    rgb(var(--primary, 132 199 24)) 46%,
+    transparent
+  );
+  --app-tree-root-card-outline: var(--app-color-grid-line-soft);
+  --app-tree-root-card-fill-top: var(--app-color-grid-header-bg);
+  --app-tree-root-card-fill-bottom: var(--app-color-grid-header-bg);
+  --app-tree-root-card-hover-fill-top: var(--app-tree-root-card-fill-top);
+  --app-tree-root-card-hover-fill-bottom: var(--app-tree-root-card-fill-bottom);
+  --app-tree-root-card-selected-fill-top: var(--app-tree-root-card-fill-top);
+  --app-tree-root-card-selected-fill-mid: var(--app-tree-root-card-fill-top);
+  --app-tree-root-card-selected-fill-tail: var(--app-tree-root-card-fill-bottom);
+  --app-tree-root-card-hover-ring: none;
+  --app-tree-root-card-selected-ring: inset 0 0 0 1px var(--app-tree-root-card-outline);
+  --app-tree-branch-card-outline: var(--app-color-grid-line-soft);
+  --app-tree-branch-card-fill-top: color-mix(
+    in oklab,
+    var(--app-color-grid-header-bg) 88%,
+    transparent
+  );
+  --app-tree-branch-card-fill-bottom: color-mix(
+    in oklab,
+    var(--app-color-grid-header-bg) 82%,
+    transparent
+  );
+  --app-tree-branch-card-inner-line: color-mix(
+    in oklab,
+    var(--app-color-grid-line-faint) 72%,
+    transparent
+  );
+  --app-tree-branch-card-inner-outline: color-mix(
+    in oklab,
+    var(--app-color-grid-line-faint) 56%,
+    transparent
+  );
+  --app-tree-branch-card-hover-outline: var(--app-color-grid-line);
+  --app-tree-branch-card-hover-fill-top: var(--app-tree-branch-card-fill-top);
+  --app-tree-branch-card-hover-fill-bottom: var(--app-tree-branch-card-fill-bottom);
+  --app-tree-branch-card-selected-outline: color-mix(
+    in oklab,
+    rgb(var(--primary, 132 199 24)) 44%,
+    transparent
+  );
+  --app-tree-branch-card-selected-fill-start: color-mix(
+    in oklab,
+    rgb(var(--primary, 132 199 24)) 17%,
+    transparent
+  );
+  --app-tree-branch-card-selected-fill-end: color-mix(
+    in oklab,
+    rgb(var(--fg, 255 255 255)) 4%,
+    transparent
+  );
+  --app-tree-branch-card-selected-ring: inset 0 0 0 1px
+    color-mix(in oklab, rgb(var(--primary, 132 199 24)) 22%, transparent);
+  --app-tree-nested-branch-outline: rgb(var(--fg, 255 255 255) / 0.12);
+  --app-tree-nested-branch-fill: rgb(var(--fg, 255 255 255) / 0.035);
+  --app-tree-nested-branch-hover-outline: var(--app-color-grid-line-soft);
+  --app-tree-nested-branch-selected-outline: color-mix(
+    in oklab,
+    rgb(var(--primary, 132 199 24)) 34%,
+    var(--app-color-grid-line-soft)
+  );
+  --app-tree-nested-branch-selected-fill: color-mix(
+    in oklab,
+    rgb(var(--primary, 132 199 24)) 5%,
+    var(--app-tree-nested-branch-fill)
+  );
+  --app-tree-nested-branch-open-fill: rgb(var(--primary, 132 199 24) / 0.045);
+  --app-tree-nested-branch-open-outline: rgb(var(--primary, 132 199 24) / 0.28);
+  --app-tree-label-text: color-mix(in oklab, rgb(var(--fg, 255 255 255)) 92%, transparent);
+  --app-tree-root-label-font-size: 14px;
+  --app-tree-root-label-font-weight: 820;
+  --app-tree-level-1-label-font-size: 12.15px;
+  --app-tree-level-1-label-font-weight: 640;
+  --app-tree-level-1-branch-label-font-size: 12.85px;
+  --app-tree-level-1-branch-label-font-weight: 780;
+  --app-tree-level-2-label-font-size: 11.55px;
+  --app-tree-level-2-label-font-weight: 590;
+  --app-tree-level-2-branch-label-font-size: 12.1px;
+  --app-tree-level-2-branch-label-font-weight: 740;
+  --app-tree-level-deep-label-font-size: 11px;
+  --app-tree-level-deep-label-font-weight: 560;
+  --app-tree-root-label-text: rgb(var(--fg, 255 255 255));
+  --app-tree-branch-label-text: color-mix(
+    in oklab,
+    rgb(var(--fg, 255 255 255)) 88%,
+    transparent
+  );
+  --app-tree-level-1-label-text: color-mix(
+    in oklab,
+    rgb(var(--fg, 255 255 255)) 76%,
+    transparent
+  );
+  --app-tree-level-1-branch-label-text: color-mix(
+    in oklab,
+    rgb(var(--fg, 255 255 255)) 88%,
+    transparent
+  );
+  --app-tree-level-2-label-text: color-mix(
+    in oklab,
+    rgb(var(--fg, 255 255 255)) 68%,
+    transparent
+  );
+  --app-tree-level-2-branch-label-text: color-mix(
+    in oklab,
+    rgb(var(--fg, 255 255 255)) 82%,
+    transparent
+  );
+  --app-tree-level-deep-label-text: color-mix(
+    in oklab,
+    rgb(var(--fg, 255 255 255)) 60%,
+    transparent
+  );
+  --app-tree-active-label-text: rgb(var(--primary, 132 199 24));
+  --app-tree-leaf-label-text: color-mix(
+    in oklab,
+    rgb(var(--fg, 255 255 255)) 78%,
+    transparent
+  );
+  --app-tree-count-bg: color-mix(in oklab, rgb(var(--fg, 255 255 255)) 5.5%, transparent);
+  --app-tree-count-text: color-mix(in oklab, rgb(var(--fg, 255 255 255)) 80%, transparent);
+  --app-tree-count-root-bg: color-mix(in oklab, rgb(var(--bg1, 23 25 28)) 78%, transparent);
+  --app-tree-branch-count-bg: color-mix(
+    in oklab,
+    rgb(var(--fg, 255 255 255)) 5.5%,
+    transparent
+  );
+  --app-tree-branch-count-text: color-mix(
+    in oklab,
+    rgb(var(--fg, 255 255 255)) 82%,
+    transparent
+  );
+  --app-tree-record-count-bg: color-mix(
+    in oklab,
+    rgb(var(--primary, 132 199 24)) 10%,
+    transparent
+  );
+  --app-tree-record-count-text: color-mix(
+    in oklab,
+    rgb(var(--primary, 132 199 24)) 88%,
+    transparent
+  );
+  --app-tree-price-record-count-bg: color-mix(
+    in oklab,
+    rgb(var(--info, 99 179 237)) 10%,
+    transparent
+  );
+  --app-tree-price-record-count-text: color-mix(
+    in oklab,
+    rgb(var(--info, 99 179 237)) 88%,
+    rgb(var(--fg, 255 255 255)) 12%
+  );
+  --app-tree-count-selected-bg: color-mix(
+    in oklab,
+    rgb(var(--primary, 132 199 24)) 20%,
+    transparent
+  );
+  --app-tree-tag-row-extra: 13px;
+  --app-tree-tag-list-gap: 7px;
+  --app-tree-tag-height: 14px;
+  --app-tree-tag-padding-inline: 0;
+  --app-tree-tag-gap: 1px;
+  --app-tree-tag-radius: 0;
+  --app-tree-tag-max-width: 92px;
+  --app-tree-tag-overflow-max-width: 94px;
+  --app-tree-tag-font-size: 9.8px;
+  --app-tree-tag-font-weight: 740;
+  --app-tree-tag-bg: transparent;
+  --app-tree-tag-border: transparent;
+  --app-tree-tag-text: color-mix(
+    in oklab,
+    var(--app-color-warning-text, rgb(var(--warning, 245 158 11))) 88%,
+    rgb(var(--fg, 255 255 255)) 12%
+  );
+  --app-tree-tag-inherited-bg: color-mix(
+    in oklab,
+    rgb(var(--fg, 255 255 255)) 4%,
+    transparent
+  );
+  --app-tree-tag-inherited-border: color-mix(
+    in oklab,
+    rgb(var(--fg, 255 255 255)) 0%,
+    transparent
+  );
+  --app-tree-tag-inherited-text: color-mix(
+    in oklab,
+    rgb(var(--fg, 255 255 255)) 62%,
+    transparent
+  );
+  --app-tree-tag-inherited-opacity: 0.72;
+  --app-tree-search-match-text: rgb(var(--fg, 255 255 255));
+  --app-tree-search-highlight-bg: color-mix(
+    in oklab,
+    rgb(var(--primary, 132 199 24)) 20%,
+    transparent
+  );
+  --app-tree-search-highlight-text: rgb(var(--primary, 132 199 24));
+  --app-tree-search-bg: rgb(var(--fg, 255 255 255) / 0.03);
+  --app-tree-search-bg-focus: rgb(var(--fg, 255 255 255) / 0.04);
+  --app-tree-search-text: rgb(var(--fg, 255 255 255) / 0.88);
+  --app-tree-search-muted-text: rgb(var(--fg, 255 255 255) / 0.62);
+  --app-tree-search-icon-text: rgb(var(--fg, 255 255 255) / 0.86);
+  --app-tree-toolbar-action-text: rgb(var(--fg, 255 255 255) / 0.56);
+  --app-tree-toolbar-action-hover-text: rgb(var(--fg, 255 255 255) / 0.88);
+  --app-tree-toolbar-action-disabled-text: rgb(var(--fg, 255 255 255) / 0.22);
+  --app-tree-toolbar-divider: rgb(var(--fg, 255 255 255) / 0.1);
+  --app-tree-header-text: rgb(var(--fg, 255 255 255) / 0.96);
+  --app-tree-header-muted-text: rgb(var(--fg, 255 255 255) / 0.6);
+  --app-tree-header-count-bg: rgb(var(--fg, 255 255 255) / 0.055);
+  --app-tree-header-count-text: rgb(var(--fg, 255 255 255) / 0.84);
+  --app-tree-more-text: color-mix(in oklab, rgb(var(--fg, 255 255 255)) 55%, transparent);
+  --app-tree-more-hover-fill: color-mix(
+    in oklab,
+    rgb(var(--fg, 255 255 255)) 8%,
+    transparent
+  );
+  --app-tree-more-hover-text: rgb(var(--primary, 132 199 24));
+  --app-tree-context-bg: rgb(var(--bg0) / 0.98);
+  --app-tree-context-border: rgb(var(--fg) / 0.1);
+  --app-tree-context-divider: rgb(var(--fg) / 0.08);
+  --app-tree-context-hover-bg: rgb(var(--fg) / 0.045);
+  --app-tree-context-muted-text: rgb(var(--fg) / 0.48);
+  --app-tree-context-action-text: rgb(var(--fg) / 0.86);
+  --app-tree-context-action-hover-text: rgb(var(--fg));
+  --app-tree-context-focus-outline: rgb(var(--primary, 132 199 24) / 0.36);
+  --app-tree-context-danger-text: rgb(254 202 202);
+  --app-tree-context-danger-bg: rgb(248 113 113 / 0.1);
+  --app-tree-context-input-bg: rgb(var(--fg) / 0.045);
+  --app-tree-context-input-border: rgb(var(--fg) / 0.1);
+  --app-tree-root-bg: color-mix(in oklab, rgb(var(--primary, 132 199 24)) 8%, transparent);
+  --app-tree-root-selected-bg-end: color-mix(in oklab, rgb(var(--surface, 255 255 255)) 82%, transparent);
+  --app-tree-editor-bg: color-mix(in oklab, rgb(var(--surface, 255 255 255)) 90%, transparent);
+}

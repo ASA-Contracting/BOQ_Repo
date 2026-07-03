@@ -1,0 +1,33 @@
+/* BOQ-specific additions on top of ABRD parity CSS */
+.cls-workspace.mc-root {
+  flex: 1 1 auto;
+  min-height: calc(100vh - 4rem);
+  height: calc(100vh - 4rem);
+}
+
+.cls-workspace .mc-dual-shell__main-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px 0;
+  color: rgb(var(--fg) / 0.72);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.cls-workspace .mc-dual-shell__main-toolbar select {
+  min-height: 32px;
+  padding: 0 10px;
+  border: 1px solid rgb(var(--border-strong) / 0.72);
+  border-radius: 8px;
+  background: rgb(var(--bg0));
+  color: rgb(var(--fg));
+  font-size: 12px;
+}
+
+.cls-workspace .mc-dual-shell__main-toolbar label {
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: 10px;
+  color: rgb(var(--fg) / 0.52);
+}

@@ -1,0 +1,14 @@
+---
+description: Frontend — Next.js, React, UI
+globs: app/**/*,components/**/*
+alwaysApply: false
+---
+
+# Frontend
+
+See `docs/standards/UI.md` and `docs/MASTER_SPECIFICATION.md` §8.4 (AI suggestion UI).
+
+- Server Components by default; `"use client"` only when needed.
+- shadcn/ui in `components/ui/` — no domain imports in components.
+- Zod schemas from `application/dto/` for forms.
+- Read `node_modules/next/dist/docs/` — Next.js 16 breaking changes.
