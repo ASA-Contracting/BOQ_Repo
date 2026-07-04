@@ -3229,6 +3229,10 @@ material-price-page {
   transform-origin: 50% 50%;
 }
 
+.mc-tree-search-tool--static svg {
+  transform: none;
+}
+
 .mc-tree-search-tool.is-expanded svg {
   transform: rotate(0deg);
 }
@@ -4096,6 +4100,14 @@ material-price-page {
 .cls-workspace .mc-tree-canvas .explorer-tree__tag.is-inherited {
   color: var(--app-tree-tag-inherited-text) !important;
   -webkit-text-fill-color: var(--app-tree-tag-inherited-text) !important;
+}
+
+.cls-workspace .mc-tree-canvas .explorer-tree__tag.is-parent-context {
+  border-color: var(--app-tree-parent-context-border) !important;
+  background: var(--app-tree-parent-context-bg) !important;
+  color: var(--app-tree-parent-context-text) !important;
+  -webkit-text-fill-color: var(--app-tree-parent-context-text) !important;
+  font-weight: var(--app-tree-parent-context-font-weight) !important;
 }
 
 .cls-workspace .mc-tree-canvas .explorer-tree__tag::before {

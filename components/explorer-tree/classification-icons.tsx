@@ -202,6 +202,46 @@ export function IconX({ className }: IconProps) {
   );
 }
 
+export function IconDots({ className }: IconProps) {
+  return (
+    <svg className={className} viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+      <circle cx="3.5" cy="8" r="1.1" fill="currentColor" />
+      <circle cx="8" cy="8" r="1.1" fill="currentColor" />
+      <circle cx="12.5" cy="8" r="1.1" fill="currentColor" />
+    </svg>
+  );
+}
+
+export function IconGear({ className }: IconProps) {
+  return (
+    <svg className={className} viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+      <path
+        d="M6.4 2.5h3.2l.35 1.45 1.2.45 1.25-.85 2.25 2.25-.85 1.25.45 1.2 1.45.35v3.2l-1.45.35-.45 1.2.85 1.25-2.25 2.25-1.25-.85-1.2.45-.35 1.45H6.4l-.35-1.45-1.2-.45-1.25.85L2.15 12.1l.85-1.25-.45-1.2L1.1 9.3V6.1l1.45-.35.45-1.2L2.15 3.3l2.25-2.25 1.25.85 1.2-.45.35-1.45Z"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.05"
+        strokeLinejoin="round"
+      />
+      <circle cx="8" cy="8" r="2" fill="none" stroke="currentColor" strokeWidth="1.05" />
+    </svg>
+  );
+}
+
+export function IconTrash({ className }: IconProps) {
+  return (
+    <svg className={className} viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+      <path
+        d="M3.5 4.5h9M6 4.5V3.75A.75.75 0 0 1 6.75 3h2.5a.75.75 0 0 1 .75.75V4.5M6.25 7v4.75M9.75 7v4.75M4.75 4.5l.45 7.5a1 1 0 0 0 1 .85h3.6a1 1 0 0 0 1-.85l.45-7.5"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.15"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 export function IconBranchCount({ className }: IconProps) {
   return (
     <svg className={className} viewBox="0 0 16 16" fill="none" aria-hidden="true">

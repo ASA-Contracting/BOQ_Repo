@@ -52,7 +52,8 @@ Read `node_modules/next/dist/docs/` — Next.js 16 breaking changes.
 
 ## Tables
 
-- Shell: `components/shared/DataTable/`
+- Default shell: `SimpleDataGrid` / `DataGrid` in `components/ui/`
+- Filter workspace: `FilterableDataGrid` in `components/filter-engine/`
 - Columns in feature files
 - Right-align numeric columns
 - Stable row keys — not array index for editable rows

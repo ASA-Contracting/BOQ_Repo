@@ -29,8 +29,7 @@ function getGlobalDb(): GlobalDb {
 function createClient(databaseUrl: string): ReturnType<typeof postgres> {
   return postgres(databaseUrl, {
     prepare: false,
-    // Allow parallel RSC queries (e.g. Families page Promise.all).
-    max: 3,
+    max: 10,
     idle_timeout: 20,
     connect_timeout: 10,
     max_lifetime: 60 * 30,
@@ -59,6 +58,17 @@ function getDbCache(): DbCache {
 
   globalDb[GLOBAL_DB_KEY] = cache;
   return cache;
+}
+
+export function resetDbAfterError(error: unknown): void {
+  if (
+    typeof error === 'object' &&
+    error !== null &&
+    'code' in error &&
+    (error as { code: string }).code === '57014'
+  ) {
+    resetDbForTests();
+  }
 }
 
 export function getDb(): Db {

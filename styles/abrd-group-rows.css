@@ -1,0 +1,152 @@
+/* Plain gray group dividers — no decorative color blocking */
+
+.abrd-grouped-table tr.group-row > td.group-row-cell {
+  padding: 0 12px;
+  background: var(--background);
+  border: 0;
+}
+
+.abrd-grouped-table .group-row-content {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  min-height: 32px;
+  height: 32px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  border-radius: 0;
+  cursor: pointer;
+  user-select: none;
+}
+
+.abrd-grouped-table tr.group-row.is-expanded-group .group-row-content {
+  border-bottom: 1px solid var(--border);
+}
+
+.abrd-grouped-table .group-row-main {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.abrd-grouped-table .group-toggle {
+  width: 16px;
+  height: 16px;
+  color: var(--muted-foreground);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.abrd-grouped-table .group-row-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted-foreground);
+}
+
+.abrd-grouped-table .group-row-pill {
+  display: inline;
+  height: auto;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--foreground);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.abrd-grouped-table .group-row-pill::before {
+  content: none;
+}
+
+.abrd-grouped-table .pill__label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.abrd-grouped-table .group-row-count {
+  display: inline;
+  min-width: 0;
+  height: auto;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--muted-foreground);
+  font-size: 11px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.abrd-grouped-table .group-row-count::before {
+  content: "·";
+  margin-inline-end: 4px;
+  font-size: 11px;
+  opacity: 0.6;
+}
+
+.abrd-grouped-table tbody.grouped-display-body tr.grouped-data-row > td {
+  background: var(--background);
+}
+
+.abrd-grouped-table tr.group-footer-row > td {
+  background: color-mix(in oklab, var(--muted-foreground) 6%, var(--background));
+  border-top: 1px solid var(--border);
+  height: 32px;
+}
+
+.abrd-grouped-table tr.group-footer-row .aggregate-value {
+  display: inline-flex;
+  align-items: center;
+  min-height: 20px;
+  padding: 0 6px;
+  border-radius: 4px;
+  background: color-mix(in oklab, var(--muted-foreground) 8%, var(--background));
+  border: 0;
+  color: var(--foreground);
+  font-size: 11px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Column resize handle */
+.abrd-col-resize-handle {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 7px;
+  cursor: col-resize;
+  touch-action: none;
+  user-select: none;
+  z-index: 2;
+}
+
+.abrd-col-resize-handle::after {
+  content: "";
+  position: absolute;
+  top: 20%;
+  right: 3px;
+  bottom: 20%;
+  width: 1px;
+  border-radius: 1px;
+  background: transparent;
+  transition: background-color 150ms ease;
+}
+
+.abrd-col-resize-handle:hover::after,
+.abrd-col-resize-handle:active::after {
+  background: color-mix(in oklab, rgb(132 199 24) 55%, rgb(160 160 160));
+}

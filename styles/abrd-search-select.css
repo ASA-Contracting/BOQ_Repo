@@ -1,0 +1,260 @@
+/* Portaled search-select overlay — matches ABRD CDK overlay pane + inner ss-panel */
+
+.proj-filter-select-overlay {
+  --primary: 132 199 24;
+  --bg0: 255 255 255;
+  --bg1: 249 249 249;
+  --surface: 255 255 255;
+  --border: 232 232 232;
+  --border-strong: 214 214 214;
+  --fg: 31 35 43;
+  --muted: 141 141 141;
+  --proj-outline-color: rgb(var(--border-strong));
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  pointer-events: auto;
+}
+
+.proj-filter-select-overlay .ss-panel {
+  border: 0;
+  outline: 0;
+  border-radius: 10px;
+  background: color-mix(in oklab, rgb(var(--bg1)) 94%, rgb(var(--surface)) 6%);
+  color: rgb(var(--fg));
+  box-shadow: 0 14px 34px rgb(0 0 0 / 0.22);
+  overflow: hidden;
+}
+
+.proj-filter-select-overlay .ss-panel.hybrid-panel.button-panel {
+  padding: 0;
+}
+
+.proj-filter-select-overlay .ss-search {
+  width: 100%;
+  height: 42px;
+  border: 0;
+  border-bottom: 1px solid rgb(var(--fg) / 0.08);
+  border-radius: 0;
+  background: color-mix(in oklab, rgb(var(--bg1)) 96%, rgb(var(--surface)) 4%);
+  color: rgb(var(--fg));
+  padding: 0 14px;
+  font-size: 12px;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.proj-filter-select-overlay .ss-search::placeholder {
+  color: rgb(var(--fg) / 0.45);
+}
+
+.proj-filter-select-overlay .ss-list {
+  max-height: min(42vh, 300px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overscroll-behavior: contain;
+}
+
+.proj-filter-select-overlay .ss-item {
+  min-height: 32px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: rgb(var(--fg) / 0.9);
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 8px 9px;
+  font-size: 12px;
+  line-height: 1.35;
+  text-align: left;
+  cursor: pointer;
+  box-shadow: none;
+}
+
+.proj-filter-select-overlay .ss-item:hover,
+.proj-filter-select-overlay .ss-item.active,
+.proj-filter-select-overlay .ss-item.selected {
+  background: color-mix(in oklab, rgb(var(--surface)) 82%, rgb(var(--bg1)) 18%);
+  color: rgb(var(--fg));
+}
+
+.proj-filter-select-overlay .ss-item.selected {
+  color: rgb(var(--primary));
+  box-shadow: inset 2px 0 0 rgb(var(--primary));
+}
+
+.proj-filter-select-overlay .ss-item-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.proj-filter-select-overlay .ss-empty {
+  min-height: 30px;
+  border-radius: 8px;
+  color: rgb(var(--fg) / 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+}
+
+.proj-filter-select-overlay--compact .ss-search {
+  display: none;
+}
+
+.proj-filter-select-overlay--compact .ss-panel {
+  min-width: 92px;
+}
+
+/* Inline trigger styles inside filter panel */
+
+.abrd-filter-engine .ss {
+  position: relative;
+  width: 100%;
+}
+
+.abrd-filter-engine .ss-origin {
+  position: relative;
+  width: 100%;
+}
+
+.abrd-filter-engine .ss-inline-trigger {
+  width: 100%;
+  height: 36px;
+  border-radius: 11px;
+  border: 1px solid rgb(var(--fg) / 0.09);
+  background: color-mix(in oklab, rgb(var(--bg1)) 92%, rgb(var(--surface)) 8%);
+  color: rgb(var(--fg) / 0.88);
+  display: flex;
+  align-items: stretch;
+  overflow: hidden;
+}
+
+.abrd-filter-engine .ss-inline-trigger.focused {
+  border-color: color-mix(in oklab, rgb(var(--fg)) 16%, transparent);
+}
+
+.abrd-filter-engine .ss-inline-input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  border: none;
+  background: transparent;
+  color: rgb(var(--fg) / 0.88);
+  padding: 0 11px;
+  font-size: 13px;
+  font-weight: 600;
+  outline: none;
+}
+
+.abrd-filter-engine .ss-inline-input::placeholder {
+  color: rgb(var(--fg) / 0.52);
+}
+
+.abrd-filter-engine .ss-caret-trigger {
+  margin-left: auto;
+  width: 30px;
+  min-width: 30px;
+  height: 100%;
+  border: none;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.abrd-filter-engine .ss-caret-box {
+  width: 30px;
+  height: 100%;
+  border-left: 1px solid rgb(var(--fg) / 0.09);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-top-right-radius: 11px;
+  border-bottom-right-radius: 11px;
+}
+
+.abrd-filter-engine .ss-caret {
+  width: 8px;
+  height: 8px;
+  border-right: 1.5px solid rgb(var(--fg) / 0.5);
+  border-bottom: 1.5px solid rgb(var(--fg) / 0.5);
+  transform: rotate(45deg);
+  display: inline-block;
+  transition: transform 0.12s ease-out;
+}
+
+.abrd-filter-engine .ss-caret.open {
+  transform: rotate(-135deg);
+}
+
+.abrd-shared-filter-menu .proj-filter-select-control .ss,
+.abrd-shared-filter-menu .proj-filter-select-control .ss-origin {
+  width: 100%;
+  min-width: 0;
+}
+
+.abrd-shared-filter-menu .proj-filter-select-control .ss-inline-trigger {
+  width: 100%;
+  height: 36px;
+  min-height: 36px;
+  border-radius: 11px;
+  border: 1px solid rgb(var(--fg) / 0.09);
+  background: color-mix(in oklab, rgb(var(--bg1)) 92%, rgb(var(--surface)) 8%);
+  color: rgb(var(--fg) / 0.88);
+  box-shadow: none;
+  display: flex;
+  align-items: stretch;
+  overflow: hidden;
+}
+
+.abrd-shared-filter-menu .proj-filter-select-control .ss-inline-input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  border: none;
+  background: transparent;
+  color: rgb(var(--fg) / 0.88);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1;
+  padding-inline: 11px 6px;
+  outline: none;
+}
+
+.abrd-shared-filter-menu .proj-filter-select-control .ss-inline-input::placeholder {
+  color: rgb(var(--fg) / 0.52);
+}
+
+.abrd-shared-filter-menu .proj-filter-select-control .ss-caret-trigger {
+  position: relative;
+  width: 30px;
+  min-width: 30px;
+}
+
+.abrd-shared-filter-menu .proj-filter-select-control .ss-caret-trigger::before {
+  content: "";
+  position: absolute;
+  inset: -1px auto -1px 0;
+  width: 1px;
+  background: rgb(var(--fg) / 0.09);
+}
+
+.abrd-shared-filter-menu .proj-filter-join-select .ss-inline-trigger {
+  min-width: 70px;
+  width: 70px;
+}
+
+.abrd-shared-filter-menu .proj-filter-join-select--bridge .ss-inline-trigger {
+  min-width: 66px;
+  width: 66px;
+}
+
+.abrd-shared-filter-menu .proj-filter-join-select .ss-inline-input {
+  font-size: 12px;
+  font-weight: 700;
+}

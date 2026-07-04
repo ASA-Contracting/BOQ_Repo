@@ -1,0 +1,361 @@
+/* ABRD data-grid column header context menu — ported from shared/data-grid/styles/structure/_menus.scss
+ *
+ * ABRD uses bare RGB triplets (--bg1: 249 249 249) with rgb(var(--bg1)).
+ * BOQ uses complete oklch() tokens (--popover, --foreground). Never wrap them in rgb(). */
+
+.abrd-column-context {
+  --dg-overlay-bg: var(--popover);
+  --dg-overlay-border: var(--border);
+  --dg-overlay-divider: var(--border);
+  --dg-overlay-shadow: var(--shadow-overlay);
+  --dg-fg-strong: var(--popover-foreground);
+  --dg-fg-soft: var(--muted-foreground);
+  --dg-primary-bg: color-mix(in oklab, var(--primary) 12%, var(--popover));
+  --dg-primary-bg-strong: color-mix(in oklab, var(--primary) 18%, var(--popover));
+  --dg-primary-text: var(--primary);
+  --dg-primary-border-strong: color-mix(in oklab, var(--primary) 62%, var(--border));
+  --dg-warning-bg: color-mix(in oklab, var(--warning) 12%, var(--popover));
+  --dg-warning-text: var(--warning-foreground);
+  --dg-warning-border: color-mix(in oklab, var(--warning) 45%, var(--border));
+  --dg-danger-text: var(--destructive);
+  --dg-menu-scrollbar-track: transparent;
+  --dg-menu-scrollbar-thumb: color-mix(in oklab, var(--foreground) 18%, transparent);
+  --dg-menu-scrollbar-thumb-hover: color-mix(in oklab, var(--foreground) 28%, transparent);
+  --dg-success-text: var(--success);
+  --dg-success-border: color-mix(in oklab, var(--success) 45%, var(--border));
+  --dg-success-bg: color-mix(in oklab, var(--success) 8%, var(--popover));
+  --dg-menu-success-checked-inner: var(--success-foreground);
+  --dg-menu-success-hover-shadow: 0 0 0 2px color-mix(in oklab, var(--success) 18%, transparent);
+  --dg-menu-search-focus-shadow: 0 0 0 2px color-mix(in oklab, var(--primary) 28%, transparent);
+  --dg-menu-success-focus-shadow: 0 0 0 2px color-mix(in oklab, var(--success) 24%, transparent);
+}
+
+.abrd-column-context .column-context-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 10001;
+  background: transparent;
+  pointer-events: auto;
+}
+
+.abrd-column-context .column-context-menu {
+  position: fixed;
+  z-index: 10002;
+  pointer-events: auto;
+  overflow: visible;
+  min-width: 220px;
+  background-color: var(--dg-overlay-bg);
+  border: 1px solid var(--dg-overlay-border);
+  border-radius: 8px;
+  box-shadow: var(--dg-overlay-shadow);
+  padding: 6px;
+  animation: abrdColumnMenuFadeIn 0.15s ease-out;
+  font-family: var(--app-grid-header-font-family, ui-sans-serif, system-ui, sans-serif);
+  font-size: 13px;
+  color: var(--dg-fg-strong);
+  isolation: isolate;
+}
+
+@keyframes abrdColumnMenuFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.abrd-column-context .context-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+  color: var(--dg-fg-strong);
+  font-size: 13px;
+  font-weight: 500;
+  min-height: 32px;
+  border: none;
+  background: transparent;
+  width: 100%;
+  text-align: left;
+}
+
+.abrd-column-context .context-menu-item > .menu-icon {
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+  opacity: 0.7;
+  color: var(--dg-fg-soft);
+  transition: color 0.15s ease, opacity 0.15s ease;
+}
+
+.abrd-column-context .context-menu-item:hover:not(.disabled):not([aria-disabled='true']) {
+  background: var(--dg-primary-bg);
+  color: var(--dg-primary-text);
+}
+
+.abrd-column-context .context-menu-item:hover:not(.disabled):not([aria-disabled='true']) > .menu-icon {
+  opacity: 1;
+  color: var(--dg-primary-text);
+}
+
+.abrd-column-context .context-menu-item.active {
+  background: var(--dg-primary-bg-strong);
+  color: var(--dg-primary-text);
+}
+
+.abrd-column-context .context-menu-item.active > .menu-icon {
+  opacity: 1;
+  color: var(--dg-primary-text);
+}
+
+.abrd-column-context .context-menu-item.disabled,
+.abrd-column-context .context-menu-item[aria-disabled='true'] {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.abrd-column-context .context-menu-item.disabled:hover,
+.abrd-column-context .context-menu-item[aria-disabled='true']:hover {
+  background: transparent;
+  color: var(--dg-fg-strong);
+}
+
+.abrd-column-context .context-menu-item.caution:hover:not(.disabled) {
+  background: var(--dg-warning-bg);
+  color: var(--dg-warning-text);
+}
+
+.abrd-column-context .context-menu-item.danger:hover:not(.disabled) {
+  background: color-mix(in oklab, var(--destructive) 8%, var(--popover));
+  color: var(--destructive);
+}
+
+.abrd-column-context .context-menu-item.danger:hover:not(.disabled) > .menu-icon {
+  color: var(--dg-danger-text);
+}
+
+.abrd-column-context .menu-shortcut,
+.abrd-column-context .menu-meta {
+  margin-left: auto;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--dg-fg-soft);
+}
+
+.abrd-column-context .context-menu-divider {
+  height: 1px;
+  background: var(--dg-overlay-divider);
+  margin: 4px 0;
+}
+
+.abrd-column-context .context-menu-item.has-submenu {
+  position: relative;
+  justify-content: space-between;
+}
+
+.abrd-column-context .context-menu-item-wrap.has-submenu {
+  position: relative;
+}
+
+.abrd-column-context .context-menu-item-wrap.has-submenu > .context-menu-item {
+  justify-content: space-between;
+}
+
+.abrd-column-context .context-menu-item-wrap.has-submenu .submenu-arrow,
+.abrd-column-context .context-menu-item.has-submenu .submenu-arrow {
+  margin-left: auto;
+  opacity: 0.5;
+  width: 12px;
+  height: 12px;
+  transition: opacity 0.15s ease;
+}
+
+.abrd-column-context .context-menu-item-wrap.has-submenu:hover .submenu-arrow,
+.abrd-column-context .context-menu-item.has-submenu:hover .submenu-arrow {
+  opacity: 1;
+}
+
+.abrd-column-context .context-submenu {
+  position: absolute;
+  left: 100%;
+  top: 0;
+  margin-left: 12px;
+  min-width: 180px;
+  max-height: 320px;
+  overflow-y: auto;
+  color: var(--dg-fg-strong);
+  background-color: var(--dg-overlay-bg);
+  border: 1px solid var(--dg-overlay-border);
+  border-radius: 8px;
+  box-shadow: var(--dg-overlay-shadow);
+  padding: 6px;
+  z-index: 10003;
+  isolation: isolate;
+}
+
+.abrd-column-context .context-submenu.open-left {
+  left: auto;
+  right: 100%;
+  margin-left: 0;
+  margin-right: 12px;
+}
+
+.abrd-column-context .context-submenu.open-up {
+  top: auto;
+  bottom: 0;
+}
+
+.abrd-column-context .column-visibility-submenu {
+  min-width: 220px;
+  max-height: none;
+  overflow: visible;
+}
+
+.abrd-column-context .column-chooser-submenu {
+  min-width: 250px;
+  max-width: 300px;
+}
+
+.abrd-column-context .column-chooser-header {
+  padding: 8px;
+  display: grid;
+  gap: 8px;
+}
+
+.abrd-column-context .chooser-search-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 34px;
+  padding: 0 10px;
+  border-radius: 8px;
+  border: 1px solid var(--dg-overlay-border);
+  background-color: var(--muted);
+}
+
+.abrd-column-context .chooser-search-box:focus-within {
+  border-color: var(--dg-primary-border-strong);
+  box-shadow: var(--dg-menu-search-focus-shadow);
+}
+
+.abrd-column-context .chooser-search-input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: var(--dg-fg-strong);
+  font-size: 12px;
+  outline: none;
+}
+
+.abrd-column-context .chooser-search-input::placeholder {
+  color: var(--dg-fg-soft);
+}
+
+.abrd-column-context .chooser-info {
+  font-size: 11px;
+  color: var(--dg-fg-soft);
+}
+
+.abrd-column-context .column-chooser-list {
+  max-height: 280px;
+  overflow-y: auto;
+}
+
+.abrd-column-context .column-toggle {
+  gap: 8px;
+}
+
+.abrd-column-context .round-check {
+  position: relative;
+  width: 16px;
+  height: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.abrd-column-context .round-check input[type='checkbox'] {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.abrd-column-context .round-check__dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  border: 2px solid var(--dg-overlay-border);
+  background: var(--dg-overlay-bg);
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+.abrd-column-context .round-check__dot::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--dg-menu-success-checked-inner);
+  transform: translate(-50%, -50%) scale(0.2);
+  opacity: 0;
+  transition: all 0.2s ease;
+}
+
+.abrd-column-context .round-check input[type='checkbox']:checked + .round-check__dot {
+  background: var(--dg-success-text);
+  border-color: var(--dg-success-text);
+}
+
+.abrd-column-context .round-check input[type='checkbox']:checked + .round-check__dot::after {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+}
+
+.abrd-column-context .column-stat {
+  justify-content: space-between;
+  cursor: default;
+}
+
+.abrd-column-context .column-stat:hover {
+  background: transparent;
+  color: var(--dg-fg-strong);
+}
+
+.abrd-column-context .column-stat strong {
+  font-weight: 600;
+}
+
+.abrd-column-context .column-stats-title {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--dg-fg-soft);
+}
+
+.abrd-column-context .menu-empty {
+  justify-content: center;
+  color: var(--dg-fg-soft);
+  cursor: default;
+}
+
+.abrd-column-context .menu-empty:hover {
+  background: transparent;
+  color: var(--dg-fg-soft);
+}

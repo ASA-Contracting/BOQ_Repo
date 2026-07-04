@@ -81,6 +81,7 @@ export const tags = pgTable(
   {
     id: serial('id').primaryKey(),
     name: text('name').notNull(),
+    color: text('color'),
   },
   (table) => [uniqueIndex('tags_name_uq').on(table.name)]
 );

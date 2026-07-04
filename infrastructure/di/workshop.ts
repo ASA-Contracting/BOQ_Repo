@@ -27,6 +27,7 @@ import { ReturnBoqVersionToEngineerUseCase } from "@/application/use-cases/works
 import { SubmitEngineerReviewUseCase } from "@/application/use-cases/workshop/SubmitEngineerReviewUseCase";
 import { UploadCampaignZipUseCase } from "@/application/use-cases/workshop/UploadCampaignZipUseCase";
 import type { IBoqImportRepository } from "@/domain/boq/repositories/IBoqImportRepository";
+import type { IBoqReadRepository } from "@/application/ports/IBoqReadRepository";
 import type { IFamilyRepository } from "@/domain/family/repositories/IFamilyRepository";
 import type { IUnitOfWork } from "@/domain/shared/persistence/IUnitOfWork";
 import type { IImportCampaignRepository } from "@/domain/workshop/repositories/IImportCampaignRepository";
@@ -90,6 +91,7 @@ export type WorkshopServices = {
 export type CreateWorkshopServicesInput = {
   unitOfWork: IUnitOfWork;
   familyRepository: IFamilyRepository;
+  boqReadRepository: IBoqReadRepository;
 };
 
 export function createWorkshopServices(
@@ -190,6 +192,7 @@ export function createWorkshopServices(
       workshopBatchRepository,
       workshopItemRepository,
       workshopExportRepository,
+      boqReadRepository: deps.boqReadRepository,
       unitOfWork: deps.unitOfWork,
     }),
     bulkApproveSimilarUseCase: new BulkApproveSimilarUseCase({

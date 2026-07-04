@@ -10,6 +10,8 @@ import { CategorySearchStrip } from './category-search-strip';
 import { CategoryTreeHeader } from './category-tree-header';
 import type { CategoryExplorerTreeNode } from '@/lib/category-tree-builder';
 import { getInheritedTagsForNode } from '@/lib/category-tree-builder';
+import type { ClassificationStateDto } from '@/application/classification/dto';
+import type { LevelOrderEntity } from '@/domain/classification/entities';
 import { useClassificationStore } from '@/hooks/use-classification-store';
 
 function countSearchMatches(root: CategoryExplorerTreeNode | null): number {
@@ -24,14 +26,37 @@ function countSearchMatches(root: CategoryExplorerTreeNode | null): number {
   return total;
 }
 
-export function CategoryWorkspace() {
-  const store = useClassificationStore();
+type Props = {
+  initialSchemaId?: number | null;
+  initialSchemas?: Array<{ id: number; name: string }>;
+  initialState?: ClassificationStateDto | null;
+  initialChainSteps?: LevelOrderEntity[];
+};
+
+export function CategoryWorkspace({
+  initialSchemaId = null,
+  initialSchemas = [],
+  initialState = null,
+  initialChainSteps = [],
+}: Props = {}) {
+  const store = useClassificationStore({
+    initialSchemaId,
+    initialSchemas,
+    initialState,
+    initialChainSteps,
+  });
   const shellRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const onPointerDown = (event: MouseEvent) => {
       const target = event.target as HTMLElement | null;
-      if (target?.closest('.mc-tree-filter') || target?.closest('.mc-tree-context-menu')) {
+      if (
+        target?.closest('.mc-tree-filter') ||
+        target?.closest('.mc-tree-context-menu') ||
+        target?.closest('.mc-tree-tag-picker') ||
+        target?.closest('.mc-tree-tag-edit-popover') ||
+        target?.closest('.mc-tree-tag-overlay')
+      ) {
         return;
       }
       store.closeOverlays();
@@ -44,7 +69,14 @@ export function CategoryWorkspace() {
     store.contextMenu && store.state
       ? store.state.materialTags
           .filter((link) => link.materialNodeId === store.contextMenu?.nodeId)
-          .map((link) => ({ id: link.tagId, name: link.tagName }))
+          .map((link) => {
+            const tag = store.state?.tags.find((entry) => entry.id === link.tagId);
+            return {
+              id: link.tagId,
+              name: link.tagName,
+              color: tag?.color ?? null,
+            };
+          })
       : [];
 
   const contextInheritedTags =
@@ -52,9 +84,7 @@ export function CategoryWorkspace() {
       ? getInheritedTagsForNode(store.state, store.treeIndex, store.contextMenu.nodeId)
       : [];
 
-  const contextAvailableTags = store.availableTags
-    .map((tag) => tag.name)
-    .filter((name) => !contextNodeTags.some((direct) => direct.name === name));
+  const contextAllTags = store.state?.tags ?? [];
 
   const searchMatchCount = countSearchMatches(store.treeRoot);
   const rootDropActive = store.dragSourceIds.length > 0;
@@ -86,6 +116,7 @@ export function CategoryWorkspace() {
               filterLabel={store.filterLabel}
               bulkActionLabel={store.filterBulkActionLabel}
               availableTags={store.availableTags}
+              allTags={store.state?.tags ?? []}
               onSearchChange={store.setSearch}
               onClearSearch={() => store.setSearch('')}
               onToggleFilter={() => store.setFilterOpen(!store.filterOpen)}
@@ -95,6 +126,21 @@ export function CategoryWorkspace() {
               onClearFilterTags={store.clearFilterTags}
               isFilterOptionSelected={store.isFilterOptionSelected}
               isFilterTagSelected={store.isFilterTagSelected}
+              onUpdateTag={(tag) => {
+                void store.updateTag(tag.id, tag.name, tag.color ?? null);
+              }}
+              onDeleteTag={(tagId) => {
+                const tag = store.state?.tags.find((entry) => entry.id === tagId);
+                const label = tag?.name ?? 'this tag';
+                if (
+                  !window.confirm(
+                    `Delete tag "${label}" from all categories? This cannot be undone.`,
+                  )
+                ) {
+                  return;
+                }
+                void store.deleteTagById(tagId);
+              }}
               treeFullyExpanded={store.treeFullyExpanded}
               onToggleExpandCollapse={store.toggleExpandCollapseAll}
               showParentContext={store.showParentContext}
@@ -103,12 +149,20 @@ export function CategoryWorkspace() {
 
             {store.loading ? (
               <div className="mc-tree-empty">
-                <span>Loading...</span>
+                <span>Loading categories…</span>
+                <span className="text-xs text-muted-foreground">First load can take a few seconds.</span>
               </div>
-            ) : store.error && store.categoryCount === 0 ? (
+            ) : store.error && !store.state ? (
               <div className="mc-tree-empty">
                 <strong>Unable to load the hierarchy.</strong>
                 <span>{store.error}</span>
+                <button
+                  type="button"
+                  className="mc-link-btn mc-tree-link-btn"
+                  onClick={() => void store.refreshState()}
+                >
+                  Retry
+                </button>
               </div>
             ) : store.treeRoot && store.treeRoot.children.length === 0 && store.search.trim() ? (
               <div className="mc-tree-empty">
@@ -117,9 +171,16 @@ export function CategoryWorkspace() {
                   Clear search
                 </button>
               </div>
-            ) : store.treeRoot && store.treeRoot.children.length === 0 && store.filterActive ? (
+            ) : store.treeRoot && store.treeRoot.children.length === 0 && store.categoryCount === 0 ? (
               <div className="mc-tree-empty">
-                <span>No categories match the current filter.</span>
+                <span>No categories yet.</span>
+              </div>
+            ) : store.treeRoot && store.treeRoot.children.length === 0 ? (
+              <div className="mc-tree-empty">
+                <span>Categories are hidden by the current filters.</span>
+                <button type="button" className="mc-link-btn mc-tree-link-btn" onClick={store.resetTreeFilters}>
+                  Reset filters
+                </button>
               </div>
             ) : (
               <div
@@ -207,7 +268,17 @@ export function CategoryWorkspace() {
 
       <section className="mc-dual-shell__main">
         {store.error && store.categoryCount > 0 && (
-          <div className="mc-tree-context-error">{store.error}</div>
+          <div className="mc-tree-context-error" role="alert">
+            <span>{store.error}</span>
+            <button
+              type="button"
+              className="mc-tree-context-error__dismiss"
+              aria-label="Dismiss error"
+              onClick={() => store.setError(null)}
+            >
+              ×
+            </button>
+          </div>
         )}
         <div className="mc-level-panel-host">
           <CategoryLevelGridPanel
@@ -269,13 +340,22 @@ export function CategoryWorkspace() {
         menu={store.contextMenu}
         nodeTags={contextNodeTags}
         inheritedTags={contextInheritedTags}
-        availableTags={contextAvailableTags}
+        allTags={contextAllTags}
         onClose={() => store.setContextMenu(null)}
         onRename={() => {
           if (store.contextMenu) store.startInlineRename(store.contextMenu.nodeId);
         }}
         onDelete={() => {
-          if (store.contextMenu) void store.deleteNode(store.contextMenu.nodeId);
+          if (!store.contextMenu) return;
+          const label = store.contextMenu.label;
+          if (
+            !window.confirm(
+              `Delete "${label}" and all its children? This cannot be undone.`,
+            )
+          ) {
+            return;
+          }
+          void store.deleteNode(store.contextMenu.nodeId);
           store.setContextMenu(null);
         }}
         onAddChild={() => {
@@ -284,14 +364,14 @@ export function CategoryWorkspace() {
             store.setContextMenu(null);
           }
         }}
-        onAssignTag={(tagName) => {
-          if (store.contextMenu) void store.assignTags(store.contextMenu.nodeId, [tagName]);
+        onAssignTagById={(tagId) => {
+          if (store.contextMenu) void store.assignTagById(store.contextMenu.nodeId, tagId);
         }}
         onRemoveTag={(tagId) => {
           if (store.contextMenu) void store.removeTag(store.contextMenu.nodeId, tagId);
         }}
-        onRenameTag={(tagId, name) => {
-          void store.renameTag(tagId, name);
+        onCreateAndAssignTag={(name, color) => {
+          if (store.contextMenu) void store.createAndAssignTag(store.contextMenu.nodeId, name, color);
         }}
       />
     </div>

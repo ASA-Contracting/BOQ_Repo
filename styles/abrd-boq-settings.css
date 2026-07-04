@@ -1,0 +1,851 @@
+/* ABRD Tender Settings parity — scoped to BOQ settings modal */
+.boq-settings-panel {
+  --primary: 132 199 24;
+  --bg0: 255 255 255;
+  --bg1: 249 249 249;
+  --surface: 255 255 255;
+  --border: 232 232 232;
+  --border-strong: 214 214 214;
+  --fg: 31 35 43;
+  --muted: 141 141 141;
+  --boq-settings-tab-height: 42px;
+  --boq-settings-tabs-bar-height: 52px;
+  --boq-pill-tone-green: rgb(168 202 119);
+  --boq-pill-tone-yellow: rgb(224 185 94);
+  --boq-pill-tone-red: rgb(223 126 120);
+  --boq-pill-tone-blue: rgb(126 163 232);
+  --boq-pill-tone-purple: rgb(176 141 228);
+  --boq-pill-tone-teal: rgb(137 196 191);
+  --boq-pill-tone-orange: rgb(214 157 104);
+  --boq-pill-tone-gray: rgb(202 207 214);
+  --boq-pill-surface-base: color-mix(in oklab, white 96%, rgb(var(--bg1)) 4%);
+  --boq-pill-border-base: color-mix(in oklab, rgb(var(--border-strong)) 40%, transparent);
+
+  display: flex;
+  max-height: min(720px, 82vh);
+  width: min(980px, 94vw);
+  flex-direction: column;
+  overflow: hidden;
+  padding: 0;
+  border-radius: 14px;
+  box-shadow: none;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial,
+    sans-serif;
+  color: rgb(var(--fg));
+  background: rgb(var(--bg1));
+}
+
+.boq-settings-panel > button[aria-label="Close dialog"] {
+  top: 9px;
+  right: 10px;
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  border: 1px solid color-mix(in oklab, rgb(239 68 68) 35%, transparent);
+  background: color-mix(in oklab, rgb(239 68 68) 10%, white);
+  color: rgb(185 28 28);
+  opacity: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.boq-settings-panel > button[aria-label="Close dialog"] svg {
+  width: 14px;
+  height: 14px;
+}
+
+.boq-settings-panel > button[aria-label="Close dialog"]:hover {
+  background: color-mix(in oklab, rgb(239 68 68) 16%, white);
+}
+
+.boq-settings-panel .dialog-header-title {
+  font-size: clamp(1rem, 3.9vw, 1.14rem);
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  line-height: 1.08;
+  text-transform: uppercase;
+  color: rgb(var(--fg) / 0.72);
+}
+
+.boq-settings-panel .boq-settings-dialog-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  min-height: 48px;
+  justify-content: center;
+  padding: 0 48px 0 20px;
+  border-bottom: 1px solid color-mix(in oklab, rgb(var(--border)) 55%, transparent);
+}
+
+.boq-settings-wrap {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 12px;
+  height: 100%;
+  padding: 10px 8px 8px;
+}
+
+.boq-settings-sticky-top {
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Tabs */
+.boq-settings-tabs {
+  --stretch-tabs-current-inline-padding: 8px;
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 4px 8px 10px;
+  margin-inline: -8px;
+  flex-wrap: nowrap;
+  overflow: visible;
+  min-height: calc(var(--boq-settings-tab-height) + 14px);
+}
+
+.boq-settings-tabs::after {
+  content: "";
+  position: absolute;
+  right: calc(var(--stretch-tabs-current-inline-padding) * -1);
+  bottom: 0;
+  left: calc(var(--stretch-tabs-current-inline-padding) * -1);
+  border-bottom: 1px solid color-mix(in oklab, rgb(var(--border)) 55%, transparent);
+  pointer-events: none;
+}
+
+.boq-settings-stretch-tabs-indicator {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 2px;
+  border-radius: 999px;
+  background: rgb(var(--primary));
+  opacity: 0;
+  pointer-events: none;
+  z-index: 1;
+  will-change: left, width;
+}
+
+.boq-settings-stretch-tabs-indicator.is-visible {
+  opacity: 1;
+}
+
+.boq-settings-tab-list {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  position: relative;
+  z-index: 2;
+}
+
+.boq-settings-tab {
+  position: relative;
+  flex: 0 1 auto;
+  max-width: 124px;
+  min-width: 0;
+  height: var(--boq-settings-tab-height);
+  min-height: var(--boq-settings-tab-height);
+  padding: 0 8px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: color-mix(in oklab, rgb(var(--fg)) 72%, transparent);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  z-index: 2;
+  transition: color 0.18s ease;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.boq-settings-tab:hover,
+.boq-settings-tab:focus-visible {
+  outline: none;
+  color: color-mix(in oklab, rgb(var(--fg)) 92%, rgb(var(--primary)) 8%);
+}
+
+.boq-settings-tab.active {
+  color: rgb(var(--primary));
+}
+
+.boq-settings-tab-label {
+  display: block;
+  white-space: nowrap;
+  font-size: 10px;
+  font-weight: 650;
+  line-height: 1;
+  letter-spacing: 0.01em;
+  color: currentColor;
+}
+
+.boq-settings-quick-links {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  justify-content: flex-end;
+  flex: 0 0 auto;
+  min-width: fit-content;
+}
+
+.boq-settings-create-btn {
+  flex: 0 0 auto;
+  min-width: 150px;
+  height: var(--boq-settings-tab-height);
+  min-height: var(--boq-settings-tab-height);
+  border: 1px solid color-mix(in oklab, rgb(var(--primary)) 70%, transparent);
+  border-radius: 10px;
+  background: color-mix(in oklab, rgb(var(--primary)) 16%, rgb(var(--surface)));
+  color: rgb(var(--primary));
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  padding: 0 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.boq-settings-create-btn:hover {
+  background: color-mix(in oklab, rgb(var(--primary)) 22%, rgb(var(--surface)));
+  border-color: color-mix(in oklab, rgb(var(--primary)) 70%, transparent);
+}
+
+/* Form card */
+.boq-settings-form-card {
+  border: 1px solid rgb(var(--border-strong));
+  border-radius: 14px;
+  padding: 10px;
+  background: rgb(var(--bg1));
+}
+
+.boq-settings-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 140px auto;
+  gap: 8px;
+  align-items: end;
+  min-width: 0;
+}
+
+.boq-settings-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.boq-settings-field > span {
+  font-size: 11px;
+  opacity: 0.8;
+  color: rgb(var(--fg));
+}
+
+.boq-settings-field input[type="text"] {
+  height: 32px;
+  width: 100%;
+  border: 1px solid rgb(var(--border-strong));
+  border-radius: 10px;
+  background: rgb(var(--surface));
+  color: rgb(var(--fg));
+  padding: 0 10px;
+  font-size: 12.5px;
+  min-width: 0;
+}
+
+/* Tone combobox */
+.boq-settings-combo {
+  position: relative;
+}
+
+.boq-settings-combo.open .boq-settings-combo-btn {
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.28);
+}
+
+.boq-settings-combo-btn {
+  width: 100%;
+  height: 26px;
+  border-radius: 10px;
+  border: 1px solid color-mix(in oklab, rgb(var(--primary)) 60%, transparent);
+  background: rgb(var(--surface));
+  color: rgb(var(--fg));
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 6px;
+  font-size: 10.5px;
+  box-sizing: border-box;
+  cursor: pointer;
+}
+
+.boq-settings-combo-btn .boq-settings-tone-dot {
+  width: 8px;
+  height: 8px;
+}
+
+.boq-settings-combo-label {
+  flex: 1;
+  text-align: left;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.boq-settings-combo-chev {
+  opacity: 0.8;
+  font-size: 10px;
+  line-height: 1;
+}
+
+.boq-settings-tone-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  border: 1px solid rgb(var(--border-strong));
+  flex-shrink: 0;
+}
+
+.boq-settings-tone-dot.none {
+  background: transparent;
+}
+
+.boq-settings-tone-dot.tone-green { background: var(--boq-pill-tone-green); }
+.boq-settings-tone-dot.tone-yellow { background: var(--boq-pill-tone-yellow); }
+.boq-settings-tone-dot.tone-red { background: var(--boq-pill-tone-red); }
+.boq-settings-tone-dot.tone-blue { background: var(--boq-pill-tone-blue); }
+.boq-settings-tone-dot.tone-purple { background: var(--boq-pill-tone-purple); }
+.boq-settings-tone-dot.tone-teal { background: var(--boq-pill-tone-teal); }
+.boq-settings-tone-dot.tone-orange { background: var(--boq-pill-tone-orange); }
+.boq-settings-tone-dot.tone-gray { background: var(--boq-pill-tone-gray); }
+
+.boq-settings-combo-panel {
+  position: absolute;
+  inset: auto 0 0;
+  transform: translateY(calc(100% + 8px));
+  background: rgb(var(--surface));
+  color: rgb(var(--fg));
+  border: 1px solid rgb(var(--border-strong));
+  border-radius: 12px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+  padding: 8px;
+  z-index: 30;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+  animation: boq-settings-panel-in 0.14s ease-out both;
+}
+
+@keyframes boq-settings-panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(calc(100% + 4px));
+  }
+  to {
+    opacity: 1;
+    transform: translateY(calc(100% + 8px));
+  }
+}
+
+.boq-settings-mode-row {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.boq-settings-mode {
+  flex: 1;
+  height: 26px;
+  border-radius: 9px;
+  border: 1px solid rgb(var(--border-strong));
+  background: rgb(var(--bg1));
+  color: rgb(var(--fg));
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  justify-content: center;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.boq-settings-mode-radio {
+  width: 11px;
+  height: 11px;
+  border-radius: 999px;
+  border: 1px solid rgb(var(--border-strong));
+  background: transparent;
+  display: inline-block;
+}
+
+.boq-settings-mode.active {
+  border-color: color-mix(in oklab, rgb(var(--primary)) 65%, transparent);
+  background: color-mix(in oklab, rgb(var(--primary)) 12%, rgb(var(--bg1)));
+  color: rgb(var(--primary));
+}
+
+.boq-settings-mode.active .boq-settings-mode-radio {
+  background: rgb(var(--primary));
+  border-color: color-mix(in oklab, rgb(var(--primary)) 70%, transparent);
+}
+
+.boq-settings-tone-section {
+  border-top: 1px dashed rgb(var(--border) / 0.6);
+  padding-top: 10px;
+}
+
+.boq-settings-tone-chips {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.boq-settings-tone-chip {
+  height: 24px;
+  padding: 0 8px;
+  border-radius: 999px;
+  border: 1px solid rgb(var(--border-strong));
+  background: rgb(var(--bg1));
+  color: rgb(var(--fg));
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background 0.12s ease,
+    border-color 0.12s ease;
+}
+
+.boq-settings-tone-chip:hover {
+  background: color-mix(in oklab, rgb(var(--fg)) 6%, rgb(var(--bg1)));
+}
+
+.boq-settings-tone-chip.selected {
+  border-color: color-mix(in oklab, rgb(var(--primary)) 65%, transparent);
+  background: color-mix(in oklab, rgb(var(--primary)) 12%, rgb(var(--bg1)));
+  color: rgb(var(--primary));
+  font-weight: 600;
+}
+
+.boq-settings-swatches {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, 18px);
+  gap: 6px;
+  max-width: 100%;
+}
+
+.boq-settings-swatch {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  border: 1px solid rgb(var(--border-strong));
+  cursor: pointer;
+  padding: 0;
+}
+
+.boq-settings-swatch.active {
+  outline: 2px solid rgb(var(--primary));
+  outline-offset: 1px;
+}
+
+.boq-settings-pick-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-top: 8px;
+}
+
+.boq-settings-pick-row input[type="color"] {
+  width: 44px;
+  height: 30px;
+  padding: 0;
+  border-radius: 6px;
+  border: 1px solid rgb(var(--border-strong));
+  background: transparent;
+}
+
+.boq-settings-hex {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  opacity: 0.85;
+  font-size: 12px;
+}
+
+.boq-settings-form-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  white-space: nowrap;
+}
+
+.boq-settings-form-actions button {
+  height: 34px;
+  border-radius: 10px;
+  border: 1px solid rgb(var(--border-strong));
+  background: rgb(var(--surface));
+  color: rgb(var(--fg));
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 0 12px;
+}
+
+.boq-settings-form-actions button:hover {
+  background: color-mix(in oklab, rgb(var(--primary)) 10%, rgb(var(--surface)));
+  border-color: color-mix(in oklab, rgb(var(--primary)) 35%, rgb(var(--border-strong)));
+}
+
+.boq-settings-form-actions .primary {
+  border-color: color-mix(in oklab, rgb(var(--primary)) 70%, transparent);
+  background: color-mix(in oklab, rgb(var(--primary)) 16%, rgb(var(--surface)));
+  color: rgb(var(--primary));
+}
+
+.boq-settings-form-actions .primary:hover {
+  background: color-mix(in oklab, rgb(var(--primary)) 20%, rgb(var(--surface)));
+  border-color: color-mix(in oklab, rgb(var(--primary)) 70%, transparent);
+}
+
+.boq-settings-form-error {
+  grid-column: 1 / -1;
+  font-size: 12px;
+  color: rgb(255 120 120);
+}
+
+/* List */
+.boq-settings-list-card {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 10px;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.boq-settings-tbl {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  min-height: 0;
+  flex: 1 1 auto;
+}
+
+.boq-settings-scroll-area {
+  min-height: 0;
+  flex: 1 1 auto;
+  overflow: auto;
+}
+
+.boq-settings-thead {
+  display: grid;
+  grid-template-columns: 32px 1fr 140px 110px;
+  padding: 6px 12px;
+  border-bottom: 1px solid rgb(var(--border));
+  color: rgb(var(--fg) / 0.8);
+  font-weight: 700;
+  font-size: 11px;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: rgb(var(--bg1));
+}
+
+.boq-settings-th {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.boq-settings-th.handle-cell {
+  justify-content: center;
+}
+
+.boq-settings-th.label-cell {
+  justify-content: center;
+}
+
+.boq-settings-th.actions-head {
+  justify-content: flex-end;
+}
+
+.boq-settings-tbody {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 6px 0 8px;
+}
+
+.boq-settings-row {
+  position: relative;
+  display: grid;
+  grid-template-columns: 32px 1fr 140px 110px;
+  padding: 0 12px;
+  border: 1px solid color-mix(in oklab, rgb(var(--border)) 70%, transparent);
+  border-radius: 999px;
+  background: color-mix(in oklab, rgb(var(--bg1)) 88%, rgb(var(--surface)));
+  overflow: hidden;
+  min-height: 44px;
+  cursor: default;
+  transition:
+    background-color 0.18s ease,
+    border-color 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.boq-settings-row:hover {
+  background: color-mix(in oklab, rgb(var(--fg)) 4%, rgb(var(--bg1)));
+  border-color: color-mix(in oklab, rgb(var(--primary)) 25%, rgb(var(--border)));
+}
+
+.boq-settings-row.dragging {
+  opacity: 0.45;
+}
+
+.boq-settings-td {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  height: 100%;
+}
+
+.boq-settings-td.handle-cell {
+  justify-content: center;
+}
+
+.boq-settings-td.label-cell {
+  justify-content: center;
+  text-align: center;
+}
+
+.boq-settings-td.actions-cell {
+  justify-content: flex-end;
+  gap: 6px;
+  transition:
+    opacity 0.15s ease,
+    transform 0.15s ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .boq-settings-td.actions-cell {
+    opacity: 0;
+    pointer-events: none;
+    transform: translateX(6px);
+  }
+
+  .boq-settings-row:hover .boq-settings-td.actions-cell,
+  .boq-settings-row:focus-within .boq-settings-td.actions-cell {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateX(0);
+  }
+}
+
+.boq-settings-drag-handle {
+  cursor: grab;
+  font-size: 16px;
+  opacity: 0.35;
+  user-select: none;
+  line-height: 1;
+  color: rgb(var(--fg));
+  transition:
+    opacity 0.15s ease,
+    transform 0.15s ease;
+}
+
+.boq-settings-row:hover .boq-settings-drag-handle {
+  opacity: 0.85;
+}
+
+.boq-settings-drag-handle:active {
+  cursor: grabbing;
+}
+
+.boq-settings-pill {
+  --boq-pill-fg: color-mix(in oklab, rgb(var(--fg)) 76%, transparent);
+  --boq-pill-border: var(--boq-pill-border-base);
+  --boq-pill-bg: var(--boq-pill-surface-base);
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 4px;
+  height: 21px;
+  min-height: 21px;
+  max-height: 21px;
+  padding: 0 7px;
+  border-radius: 6px;
+  border: 1px solid var(--boq-pill-border);
+  background: var(--boq-pill-bg);
+  box-shadow: none;
+  outline: none;
+  color: var(--boq-pill-fg);
+  -webkit-text-fill-color: var(--boq-pill-fg);
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+  max-width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  vertical-align: middle;
+  box-sizing: border-box;
+}
+
+.boq-settings-pill.is-toned {
+  --boq-pill-border: color-mix(in oklab, var(--boq-pill-border-base) 80%, currentColor 20%);
+  --boq-pill-bg: color-mix(in oklab, var(--boq-pill-surface-base) 90%, currentColor 10%);
+}
+
+.boq-settings-pill__label {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: inherit !important;
+  -webkit-text-fill-color: currentColor !important;
+}
+
+.boq-settings-custom-label {
+  font-size: 12px;
+  opacity: 0.7;
+  font-style: italic;
+  color: rgb(var(--fg));
+}
+
+.boq-settings-icon-btn {
+  width: 30px;
+  height: 28px;
+  border-radius: 8px;
+  border: 1px solid color-mix(in oklab, rgb(var(--border-strong)) 65%, transparent);
+  background: color-mix(in oklab, rgb(var(--bg1)) 80%, transparent);
+  color: color-mix(in oklab, rgb(var(--fg)) 70%, transparent);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition:
+    transform 0.18s ease,
+    background-color 0.18s ease,
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    color 0.18s ease;
+}
+
+.boq-settings-icon-btn.edit {
+  border-color: color-mix(in oklab, rgb(var(--primary)) 55%, transparent);
+  background: color-mix(in oklab, rgb(var(--primary)) 14%, transparent);
+  color: color-mix(in oklab, rgb(var(--primary)) 90%, white 0%);
+  box-shadow: 0 6px 14px rgb(var(--primary) / 0.18);
+}
+
+.boq-settings-icon-btn.danger {
+  border-color: rgb(255 77 79 / 0.55);
+  background: rgb(255 77 79 / 0.14);
+  color: #ff6b6b;
+  box-shadow: 0 6px 14px rgb(255 77 79 / 0.18);
+}
+
+.boq-settings-icon-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 18px rgb(0 0 0 / 0.22);
+}
+
+.boq-settings-icon-btn.edit:hover {
+  background: color-mix(in oklab, rgb(var(--primary)) 22%, transparent);
+  border-color: color-mix(in oklab, rgb(var(--primary)) 70%, transparent);
+  box-shadow: 0 8px 18px rgb(var(--primary) / 0.28);
+}
+
+.boq-settings-icon-btn.danger:hover {
+  background: rgb(255 77 79 / 0.24);
+  border-color: rgb(255 77 79 / 0.8);
+  box-shadow: 0 8px 18px rgb(255 77 79 / 0.28);
+}
+
+.boq-settings-icon-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 4px 10px rgb(0 0 0 / 0.25) inset;
+}
+
+.boq-settings-empty {
+  padding: 12px;
+  opacity: 0.7;
+  text-align: center;
+  font-size: 13px;
+  color: rgb(var(--fg));
+}
+
+.boq-settings-toolbar-btn {
+  min-height: 30px;
+  border: 1px solid rgb(var(--border-strong));
+  border-radius: 8px;
+  background: transparent;
+  color: rgb(var(--fg) / 0.78);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 0 10px;
+  white-space: nowrap;
+}
+
+.boq-settings-toolbar-btn:hover {
+  border-color: color-mix(in oklab, rgb(var(--primary)) 35%, rgb(var(--border-strong)));
+  background: color-mix(in oklab, rgb(var(--primary)) 8%, rgb(var(--bg1)));
+  color: rgb(var(--fg));
+}
+
+@media (max-width: 768px) {
+  .boq-settings-form {
+    grid-template-columns: 1fr;
+  }
+
+  .boq-settings-form-actions {
+    justify-content: flex-end;
+  }
+
+  .boq-settings-thead,
+  .boq-settings-row {
+    grid-template-columns: 32px minmax(0, 1fr) 100px 88px;
+  }
+
+  .boq-settings-td.actions-cell {
+    opacity: 1;
+    pointer-events: auto;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .boq-settings-stretch-tabs-indicator,
+  .boq-settings-tab,
+  .boq-settings-row,
+  .boq-settings-icon-btn,
+  .boq-settings-combo-panel {
+    animation: none;
+    transition: none;
+  }
+}

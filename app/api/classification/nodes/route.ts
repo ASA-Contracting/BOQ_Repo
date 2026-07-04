@@ -42,7 +42,8 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     if (error instanceof ConflictError) return apiError(error.message, 409);
     if (error instanceof NotFoundError) return apiError(error.message, 404);
-    throw error;
+    console.error(error);
+    return apiError(error instanceof Error ? error.message : 'Failed to create node', 500);
   }
 }
 
@@ -59,7 +60,8 @@ export async function PUT(request: NextRequest) {
   } catch (error) {
     if (error instanceof ConflictError) return apiError(error.message, 409);
     if (error instanceof NotFoundError) return apiError(error.message, 404);
-    throw error;
+    console.error(error);
+    return apiError(error instanceof Error ? error.message : 'Failed to update node', 500);
   }
 }
 
@@ -75,6 +77,7 @@ export async function DELETE(request: NextRequest) {
   } catch (error) {
     if (error instanceof ConflictError) return apiError(error.message, 409);
     if (error instanceof NotFoundError) return apiError(error.message, 404);
-    throw error;
+    console.error(error);
+    return apiError(error instanceof Error ? error.message : 'Failed to delete node', 500);
   }
 }

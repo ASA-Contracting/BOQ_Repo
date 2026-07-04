@@ -1,5 +1,15 @@
 import { z } from "zod";
 
+/** MEP trade disciplines selectable at BOQ import (Master §1 — electromechanical scope). */
+export const BOQ_IMPORT_DISCIPLINES = [
+  "Electrical",
+  "HVAC",
+  "Plumbing",
+  "Fire Protection",
+] as const;
+
+export type BoqImportDiscipline = (typeof BOQ_IMPORT_DISCIPLINES)[number];
+
 export const BOQ_IMPORT_FIELD_KEYS = [
   "description",
   "unit",
@@ -41,6 +51,7 @@ export const importBoqSchema = z.object({
   projectId: z.number().int().positive().optional(),
   boqId: z.number().int().positive().optional(),
   projectName: z.string().trim().min(1).max(150),
+  discipline: z.string().trim().min(1).max(150).optional(),
   client: z.string().trim().max(150).optional(),
 });
 

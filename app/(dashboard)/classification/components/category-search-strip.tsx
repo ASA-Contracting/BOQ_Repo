@@ -2,7 +2,15 @@
 
 import { CategoryTreeFilter } from './category-tree-filter';
 import type { TreeFilterOptionMode } from '@/lib/category-tree-filter';
-import { IconClear, IconCollapseAll, IconExpandAll, IconSearch } from '@/components/explorer-tree/classification-icons';
+import {
+  IconClear,
+  IconCollapseAll,
+  IconExpandAll,
+  IconParentTrail,
+  IconSearch,
+} from '@/components/explorer-tree/classification-icons';
+
+import type { TagRecord } from '@/lib/tag-colors';
 
 type Props = {
   search: string;
@@ -12,6 +20,7 @@ type Props = {
   filterLabel: string;
   bulkActionLabel: string;
   availableTags: Array<{ name: string; count: number }>;
+  allTags: TagRecord[];
   onSearchChange: (value: string) => void;
   onClearSearch: () => void;
   onToggleFilter: () => void;
@@ -21,6 +30,8 @@ type Props = {
   onClearFilterTags: () => void;
   isFilterOptionSelected: (option: TreeFilterOptionMode) => boolean;
   isFilterTagSelected: (tagName: string) => boolean;
+  onUpdateTag: (tag: TagRecord) => void;
+  onDeleteTag: (tagId: number) => void;
   treeFullyExpanded: boolean;
   onToggleExpandCollapse: () => void;
   showParentContext: boolean;
@@ -35,6 +46,7 @@ export function CategorySearchStrip({
   filterLabel,
   bulkActionLabel,
   availableTags,
+  allTags,
   onSearchChange,
   onClearSearch,
   onToggleFilter,
@@ -44,6 +56,8 @@ export function CategorySearchStrip({
   onClearFilterTags,
   isFilterOptionSelected,
   isFilterTagSelected,
+  onUpdateTag,
+  onDeleteTag,
   treeFullyExpanded,
   onToggleExpandCollapse,
   showParentContext,
@@ -82,16 +96,28 @@ export function CategorySearchStrip({
         label={filterLabel}
         bulkActionLabel={bulkActionLabel}
         availableTags={availableTags}
-        showParentContext={showParentContext}
+        allTags={allTags}
         isOptionSelected={isFilterOptionSelected}
         isTagSelected={isFilterTagSelected}
         onToggle={onToggleFilter}
         onToggleOption={onToggleFilterOption}
         onToggleBulkSelection={onToggleFilterBulkSelection}
-        onToggleShowParentContext={onToggleShowParentContext}
         onToggleTag={onToggleFilterTag}
         onClearTags={onClearFilterTags}
+        onUpdateTag={onUpdateTag}
+        onDeleteTag={onDeleteTag}
       />
+      <span className="mc-tree-search-divider" aria-hidden="true" />
+      <button
+        type="button"
+        className={`mc-tree-search-tool mc-tree-search-tool--static mc-tree-search-tool--parent-context ${showParentContext ? 'is-active' : ''}`}
+        title={showParentContext ? 'Hide parent categories' : 'Show parent categories'}
+        aria-label={showParentContext ? 'Hide parent categories on tree rows' : 'Show parent categories on tree rows'}
+        aria-pressed={showParentContext}
+        onClick={onToggleShowParentContext}
+      >
+        <IconParentTrail />
+      </button>
       <span className="mc-tree-search-divider" aria-hidden="true" />
       <button
         type="button"

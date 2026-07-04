@@ -20,6 +20,8 @@ describe("dependency injection container", () => {
     expect(services.authorization).toBeDefined();
     expect(services.getHealthStatusUseCase).toBeDefined();
     expect(services.family).toBeDefined();
+    expect(services.project).toBeDefined();
+    expect(services.boq).toBeDefined();
     expect(services.family.listFamilyTreeUseCase).toBeDefined();
     expect(services.family.createFamilyUseCase).toBeDefined();
   });

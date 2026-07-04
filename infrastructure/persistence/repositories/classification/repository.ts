@@ -247,13 +247,21 @@ export async function listTags(db: Db) {
   return db.select().from(tags).orderBy(asc(tags.name), asc(tags.id));
 }
 
-export async function createTag(db: Db, name: string) {
-  const [row] = await db.insert(tags).values({ name }).returning();
+export async function createTag(db: Db, name: string, color?: string | null) {
+  const [row] = await db.insert(tags).values({ name, color: color ?? null }).returning();
   return row;
 }
 
-export async function updateTag(db: Db, id: number, name: string) {
-  const [row] = await db.update(tags).set({ name }).where(eq(tags.id, id)).returning();
+export async function updateTag(
+  db: Db,
+  id: number,
+  data: { name: string; color?: string | null },
+) {
+  const [row] = await db
+    .update(tags)
+    .set({ name: data.name, ...(data.color !== undefined ? { color: data.color } : {}) })
+    .where(eq(tags.id, id))
+    .returning();
   return row ?? null;
 }
 

@@ -1,0 +1,53 @@
+.app-shell-sidebar {
+  transition: width 200ms ease-out;
+}
+
+.app-shell-sidebar__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+}
+
+.app-shell-sidebar__header--collapsed {
+  flex-direction: column;
+  justify-content: center;
+  gap: 6px;
+  padding-block: 8px;
+  height: auto;
+  min-height: var(--topnav-height);
+}
+
+.app-shell-sidebar__brand {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.app-shell-sidebar__collapse-btn {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--sidebar-border);
+  border-radius: 6px;
+  background: var(--sidebar);
+  color: var(--muted-foreground);
+  cursor: pointer;
+  transition:
+    background-color 150ms ease,
+    border-color 150ms ease,
+    color 150ms ease;
+}
+
+.app-shell-sidebar__collapse-btn:hover {
+  border-color: var(--border);
+  background: var(--accent);
+  color: var(--foreground);
+}
+
+.app-shell-sidebar__collapse-btn:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}

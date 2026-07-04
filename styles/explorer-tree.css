@@ -898,10 +898,11 @@
 
       .explorer-tree__tag.is-parent-context {
         max-width: var(--app-tree-parent-context-max-width, 140px);
-        border-color: rgb(var(--fg) / 0.14);
-        background: rgb(var(--fg) / 0.06);
-        color: rgb(var(--fg) / 0.72);
-        font-weight: 650;
+        border-color: var(--app-tree-parent-context-border, rgb(199 210 254));
+        background: var(--app-tree-parent-context-bg, rgb(238 242 255));
+        color: var(--app-tree-parent-context-text, rgb(79 70 229));
+        -webkit-text-fill-color: var(--app-tree-parent-context-text, rgb(79 70 229));
+        font-weight: var(--app-tree-parent-context-font-weight, 650);
         opacity: 1;
       }
 

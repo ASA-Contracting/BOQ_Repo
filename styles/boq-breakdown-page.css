@@ -1,0 +1,21 @@
+.boq-breakdown-page {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  padding: var(--space-shell);
+}
+
+.boq-category-builder-dialog .cls-workspace {
+  height: 100%;
+  min-height: 0;
+}
+
+.boq-category-builder-dialog .cls-workspace.mc-root {
+  border-radius: 0;
+}
+
+.boq-projects-dialog .project-list--embedded {
+  border: 0;
+  box-shadow: none;
+}

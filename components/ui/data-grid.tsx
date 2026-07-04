@@ -1,25 +1,30 @@
 "use client";
 
-import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react";
 import * as React from "react";
 
-import { Checkbox } from "@/components/ui/checkbox";
 import {
-  DataTable,
-  type DataTableColumn,
-  type DataTableProps,
-} from "@/components/ui/data-table";
-import { IconButton } from "@/components/ui/icon-button";
+  SimpleDataGrid,
+  type ReactHeaderObject,
+  type TableAPI,
+} from "@/components/ui/simple-data-grid";
+import type { DataTableProps } from "@/components/ui/data-table";
+import { toSimpleTableHeaders } from "@/lib/design/simple-table-columns";
 import { cn } from "@/lib/utils";
 
 export type SortDirection = "asc" | "desc";
 
-export type DataGridColumn<T> = DataTableColumn<T> & {
+export type DataGridColumn<T> = {
+  id: string;
+  header: React.ReactNode;
+  cell: (row: T) => React.ReactNode;
+  className?: string;
+  headerClassName?: string;
+  align?: "left" | "right" | "center";
   sortable?: boolean;
   sortKey?: string;
 };
 
-export type DataGridProps<T> = Omit<DataTableProps<T>, "columns"> & {
+export type DataGridProps<T extends object> = Omit<DataTableProps<T>, "columns" | "stickyHeader"> & {
   columns: DataGridColumn<T>[];
   sortColumn?: string | null;
   sortDirection?: SortDirection;
@@ -27,39 +32,11 @@ export type DataGridProps<T> = Omit<DataTableProps<T>, "columns"> & {
   selectable?: boolean;
   selectedKeys?: Set<string>;
   onSelectionChange?: (keys: Set<string>) => void;
+  height?: string | number;
+  tableRef?: React.Ref<TableAPI>;
 };
 
-function SortButton({
-  direction,
-  onClick,
-  label,
-}: {
-  direction?: SortDirection | null;
-  onClick: () => void;
-  label: string;
-}) {
-  const icon =
-    direction === "asc" ? (
-      <ArrowUp className="h-3.5 w-3.5" />
-    ) : direction === "desc" ? (
-      <ArrowDown className="h-3.5 w-3.5" />
-    ) : (
-      <ArrowUpDown className="h-3.5 w-3.5 opacity-50" />
-    );
-
-  return (
-    <IconButton
-      label={`Sort by ${label}`}
-      icon={icon}
-      size="sm"
-      variant="ghost"
-      className="h-6 w-6"
-      onClick={onClick}
-    />
-  );
-}
-
-export function DataGrid<T>({
+export function DataGrid<T extends object>({
   columns,
   data,
   getRowKey,
@@ -69,104 +46,64 @@ export function DataGrid<T>({
   selectable = false,
   selectedKeys,
   onSelectionChange,
-  ...props
+  emptyMessage = "No results",
+  className,
+  onRowClick,
+  selectedRowKey,
+  height,
+  tableRef,
+  "aria-label": ariaLabel,
 }: DataGridProps<T>) {
-  const allKeys = data.map(getRowKey);
-  const allSelected =
-    selectable &&
-    allKeys.length > 0 &&
-    allKeys.every((key) => selectedKeys?.has(key));
+  const headers = React.useMemo(
+    () => toSimpleTableHeaders(columns),
+    [columns],
+  );
 
-  const toggleAll = () => {
-    if (!onSelectionChange) {
-      return;
-    }
-    if (allSelected) {
-      onSelectionChange(new Set());
-    } else {
-      onSelectionChange(new Set(allKeys));
-    }
-  };
+  const handleSortChange = React.useCallback(
+    (sort: { key: { accessor: string }; direction: SortDirection } | null) => {
+      if (!onSortChange || !sort) {
+        return;
+      }
+      onSortChange(String(sort.key.accessor), sort.direction);
+    },
+    [onSortChange],
+  );
 
-  const gridColumns: DataTableColumn<T>[] = [
-    ...(selectable
-      ? [
-          {
-            id: "__select",
-            header: (
-              <Checkbox
-                checked={allSelected}
-                onCheckedChange={toggleAll}
-                aria-label="Select all rows"
-              />
-            ),
-            cell: (row: T) => {
-              const key = getRowKey(row);
-              return (
-                <Checkbox
-                  checked={selectedKeys?.has(key) ?? false}
-                  onCheckedChange={(checked) => {
-                    if (!onSelectionChange || !selectedKeys) {
-                      return;
-                    }
-                    const next = new Set(selectedKeys);
-                    if (checked === true) {
-                      next.add(key);
-                    } else {
-                      next.delete(key);
-                    }
-                    onSelectionChange(next);
-                  }}
-                  aria-label={`Select row ${key}`}
-                  onClick={(event) => event.stopPropagation()}
-                />
-              );
-            },
-            className: "w-10",
-            headerClassName: "w-10",
-          } satisfies DataTableColumn<T>,
-        ]
-      : []),
-    ...columns.map((column) => ({
-      ...column,
-      header: column.sortable ? (
-        <div className="flex items-center gap-1">
-          <span>{column.header}</span>
-          <SortButton
-            label={String(column.header)}
-            direction={
-              sortColumn === (column.sortKey ?? column.id)
-                ? sortDirection
-                : null
-            }
-            onClick={() => {
-              if (!onSortChange) {
-                return;
-              }
-              const key = column.sortKey ?? column.id;
-              const nextDirection: SortDirection =
-                sortColumn === key && sortDirection === "asc" ? "desc" : "asc";
-              onSortChange(key, nextDirection);
-            }}
-          />
-        </div>
-      ) : (
-        column.header
-      ),
-      headerClassName: cn(column.headerClassName),
-    })),
-  ];
+  const handleRowSelectionChange = React.useCallback(
+    ({ selectedRows }: { selectedRows: Set<string> }) => {
+      onSelectionChange?.(selectedRows);
+    },
+    [onSelectionChange],
+  );
+
+  const emptyStateRenderer = React.useCallback(
+    () => <span className="text-sm text-muted-foreground">{emptyMessage}</span>,
+    [emptyMessage],
+  );
 
   return (
-    <DataTable
-      columns={gridColumns}
-      data={data}
-      getRowKey={getRowKey}
-      selectedRowKey={
-        props.selectedRowKey ??
-        (selectedKeys?.size === 1 ? [...selectedKeys][0] : null)
-      }
-      {...props}
-    />
+    <div aria-label={ariaLabel} className={cn("h-full min-h-0", className)}>
+      <SimpleDataGrid
+        ref={tableRef}
+        defaultHeaders={headers as ReactHeaderObject[]}
+        rows={data}
+        height={height}
+        getRowId={({ row }) => getRowKey(row as T)}
+        externalSortHandling={Boolean(onSortChange)}
+        initialSortColumn={sortColumn ?? undefined}
+        initialSortDirection={sortDirection}
+        onSortChange={handleSortChange}
+        enableRowSelection={selectable}
+        onRowSelectionChange={selectable ? handleRowSelectionChange : undefined}
+        emptyStateRenderer={emptyStateRenderer}
+        onCellClick={
+          onRowClick
+            ? ({ row }) => {
+                onRowClick(row as T);
+              }
+            : undefined
+        }
+      />
+    </div>
   );
 }

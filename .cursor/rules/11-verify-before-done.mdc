@@ -1,29 +1,61 @@
 ---
-description: Verify the app runs before marking work complete
+description: Hard gate — never claim done without running verification in this session
 alwaysApply: true
 ---
 
-# Verify Before Done
+# Verify Before Done (Hard Rule)
 
-Never tell the user a UI or server change is **done** until the app has been verified end-to-end.
+## Core Prohibition
 
-## Required checks (in order)
+**FORBIDDEN WORDS** unless every applicable check below was run in *this session* and its literal output is pasted as evidence: "done", "fixed", "ready", "should work", "verified", "this will work", "that resolves it".
 
-1. **`npm run build`** — must pass with no TypeScript or compile errors.
-2. **Dev server** — ensure `npm run dev` is running on port 3000 (restart if stale/crashed).
-3. **Key routes respond** — at minimum:
+**If you did not run a command and read its output, you did not verify it.** Describing what a check *would* show is not permitted. Only actual terminal/log output counts as evidence.
+
+If any check was skipped or failed, the required response format is:
+
+> **BLOCKED / INCOMPLETE** — [check name] not run/failed because [reason]. Feature is NOT confirmed working.
+
+Never soften this into a "done, but..." — blocked status goes first, not as a footnote.
+
+## Anti-patterns to catch yourself doing
+
+Before reporting done, check that you have NOT done any of the following:
+- Claimed success because the code *compiles in your head* rather than in the terminal.
+- Claimed a UI works because the JSX/HTML "looks like it should render that way."
+- Claimed parity with a reference by matching intent/vibe instead of actually opening the reference and comparing.
+- Silently narrowed scope (implemented a simpler version) and reported it as equivalent to what was asked.
+- Reported "no errors" based on absence of visible red text in what you wrote, instead of the actual log/console.
+
+If you notice yourself about to write "should," "likely," or "this looks correct" in a completion claim — stop, that is the signal you have not verified it.
+
+## Required checks (in order, every time)
+
+1. **Build** — `npm run build`. Paste the final lines of output. Zero TS/compile errors.
+2. **Dev server** — `npm run dev` on port 3000. If stale/crashed, restart. Paste confirmation it's running.
+3. **Key routes respond** — curl or fetch and paste status codes:
    - `/login` → 200
-   - `/boq` → 200 (no DB timeout / server error in output)
+   - `/boq` → 200 (not 500 / DB timeout)
    - `/boq/import` → 200
-4. **Dev log** — read `.next/dev/logs/next-development.log` or terminal output; fix any ERROR before claiming done.
+4. **Logs clean** — read `.next/dev/logs/next-development.log` or terminal output for the changed area. Paste the tail. Zero new ERROR lines.
 
-## When DB or auth is involved
+## UI / interaction changes (mandatory, build+200 is not enough)
 
-- Hit the affected page or API route and confirm a successful response (not 401/500/timeout).
-- If build logs show query timeouts or runtime exceptions, treat the task as **not done**.
+- Open the affected page/component.
+- Perform the actual primary user flow: click, type, select, submit — not a description of the flow, the actual action.
+- Confirm the observable outcome and state it concretely: what data appeared, what the dropdown listed, that there's no overlap/garbled text, no new console errors.
 
-## Reporting
+## Clone / parity tasks (e.g. "match ABRD exactly")
 
-- Only say "done" after checks pass.
-- If the dev server was restarted, tell the user the URL (`http://localhost:3000`).
-- If a check fails, fix it first — do not hand off a broken state.
+This is the failure mode that keeps recurring, so it gets its own explicit step:
+
+- Open the reference implementation and the new implementation **side by side**.
+- Diff structure, not vibe: same fields, same order, same conditional logic, same edge-case handling — not "a form with similar fields."
+- If the user provided a screenshot, re-check the new UI against that screenshot pixel-by-pixel for the specific elements shown (labels, counts, states) — not just "yes it has a dropdown."
+- State explicitly what was compared and what matched/differed. "Matches ABRD" without naming what was checked does not satisfy this rule.
+
+## API / DB changes
+
+- Hit the affected route; paste the actual status code (2xx required).
+- If migration required: run `npm run db:migrate` and paste output, or report it failed and the feature is still broken.
+
+## Reporting Format (required)

@@ -7,6 +7,7 @@ export type BoqListEntryDto = {
   name: string;
   projectId: number;
   projectName: string;
+  discipline: string | null;
   abrdProjectId: number | null;
   externalSource: string;
   client: string | null;
@@ -29,6 +30,8 @@ export type BoqListEntryDto = {
 export type BoqItemRowDto = {
   id: number;
   rowIndex: number;
+  /** Immutable import line number; null for rows added after initial import. */
+  masterNo: number | null;
   itemNo: string | null;
   description: string | null;
   unit: string | null;
@@ -40,6 +43,13 @@ export type BoqItemRowDto = {
   materialNodeId: number | null;
   categoryLabel: string | null;
   categoryPath: string | null;
+  /** Category-tree parent label shown on the BOQ section header row above categorized children. */
+  sectionParentLabel: string | null;
+};
+
+export type UpdateBoqItemCategoryDto = {
+  itemId: number;
+  materialNodeId: number | null;
 };
 
 export type BoqBreakdownDto = {
@@ -47,12 +57,15 @@ export type BoqBreakdownDto = {
   name: string;
   projectId: number;
   projectName: string;
+  discipline: string | null;
   versionId: number | null;
   versionName: string | null;
+  batchId: number | null;
+  workflowStage: string | null;
+  approvalStatus: string | null;
   items: BoqItemRowDto[];
 };
 
-export type UpdateBoqItemCategoryDto = {
-  itemId: number;
-  materialNodeId: number | null;
+export type GetBoqBreakdownInput = {
+  boqId: number;
 };

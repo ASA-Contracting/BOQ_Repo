@@ -1,299 +1,307 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import Link from "next/link";
+import { useCallback, useMemo, useState } from "react";
+import { ExternalLink, Layers, Upload } from "lucide-react";
+
+import type { BoqBreakdownDto, BoqItemRowDto } from "@/application/boq/dto";
+import { BoqBreakdownGrid } from "@/components/boq/BoqBreakdownGrid";
 import {
-  ArrowLeft,
-  CheckCircle2,
-  CircleDashed,
-  LayoutList,
-  Upload,
-} from 'lucide-react';
+  applySectionParentLabels,
+  insertBoqItemRowInOrder,
+  removeBoqItemRow,
+  withCalculatedTotal,
+} from "@/components/boq/boq-breakdown-utils";
+import { Select, SelectOption } from "@/components/ui/select";
+import { useBoqLookupOptions } from "@/hooks/use-boq-lookup-options";
+import {
+  buildCategoryOptionById,
+  type CategoryPickerOption,
+} from "@/lib/category-picker-options";
+import { cn } from "@/lib/utils";
 
-import type { BoqBreakdownDto } from '@/application/boq/dto';
-import { BoqCategoryPicker } from '@/components/boq/BoqCategoryPicker';
-import { Button } from '@/components/ui/button';
-import { Text } from '@/components/ui/typography';
-import type { CategoryPickerOption } from '@/lib/category-picker-options';
-import { cn } from '@/lib/utils';
-
-type ApiBreakdownResponse = {
-  success: boolean;
-  data?: BoqBreakdownDto;
-  message?: string;
-};
-
-type ApiOptionsResponse = {
-  success: boolean;
-  data?: { options: CategoryPickerOption[] };
-  message?: string;
-};
+import "@/styles/boq-breakdown.css";
 
 type Props = {
-  boqId: number;
+  breakdown: BoqBreakdownDto;
+  categoryOptions: CategoryPickerOption[];
+  onOpenCategoryBuilder?: () => void;
 };
 
-export function BoqBreakdownWorkspace({ boqId }: Props) {
-  const [breakdown, setBreakdown] = useState<BoqBreakdownDto | null>(null);
-  const [options, setOptions] = useState<CategoryPickerOption[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+function isWorkshopIncomplete(breakdown: BoqBreakdownDto): boolean {
+  if (!breakdown.batchId) return false;
+  const measurable = breakdown.items.filter((item) => item.isMeasurable && !item.isHeader);
+  const published = measurable.filter((item) => item.materialNodeId != null).length;
+  return published < measurable.length;
+}
+
+export function BoqBreakdownWorkspace({
+  breakdown,
+  categoryOptions,
+  onOpenCategoryBuilder,
+}: Props) {
+  const [items, setItems] = useState<BoqItemRowDto[]>(() =>
+    breakdown.items.map(withCalculatedTotal),
+  );
   const [savingItemId, setSavingItemId] = useState<number | null>(null);
-
-  const refresh = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const breakdownRes = await fetch(`/api/boq/${boqId}`);
-      const breakdownJson = (await breakdownRes.json()) as ApiBreakdownResponse;
-
-      if (!breakdownRes.ok || !breakdownJson.success || !breakdownJson.data) {
-        throw new Error(breakdownJson.message ?? 'Failed to load BOQ');
-      }
-
-      setBreakdown(breakdownJson.data);
-
-      try {
-        const optionsRes = await fetch('/api/boq/category-options');
-        const optionsJson = (await optionsRes.json()) as ApiOptionsResponse;
-        if (optionsRes.ok && optionsJson.success && optionsJson.data) {
-          setOptions(optionsJson.data.options);
-        } else {
-          setOptions([]);
-        }
-      } catch {
-        setOptions([]);
-      }
-    } catch (err) {
-      setBreakdown(null);
-      setError(err instanceof Error ? err.message : 'Failed to load BOQ');
-    } finally {
-      setLoading(false);
+  const [rowActionPending, setRowActionPending] = useState(false);
+  const [categoryError, setCategoryError] = useState<string | null>(null);
+  const [rowActionError, setRowActionError] = useState<string | null>(null);
+  const [discipline, setDiscipline] = useState(breakdown.discipline ?? "");
+  const { items: disciplineOptions, loading: disciplineLoading } = useBoqLookupOptions("discipline");
+  const disciplineChoices = useMemo(() => {
+    if (!discipline || disciplineOptions.some((option) => option.name === discipline)) {
+      return disciplineOptions;
     }
-  }, [boqId]);
+    return [{ id: -1, name: discipline, category: "discipline" as const }, ...disciplineOptions];
+  }, [discipline, disciplineOptions]);
 
-  useEffect(() => {
-    void refresh();
-  }, [refresh]);
+  const sections = useMemo(
+    () => items.filter((item) => item.isHeader).length,
+    [items],
+  );
+  const measurable = useMemo(
+    () => items.filter((item) => item.isMeasurable && !item.isHeader),
+    [items],
+  );
+  const published = useMemo(
+    () => measurable.filter((item) => item.materialNodeId != null).length,
+    [measurable],
+  );
+  const pending = measurable.length - published;
+  const showWorkshopCta = isWorkshopIncomplete(breakdown);
+
+  const categoryOptionById = useMemo(
+    () => buildCategoryOptionById(categoryOptions),
+    [categoryOptions],
+  );
+
+  const gridItems = useMemo(
+    () => applySectionParentLabels(items, categoryOptionById),
+    [items, categoryOptionById],
+  );
 
   const updateCategory = useCallback(
     async (itemId: number, materialNodeId: number | null) => {
+      setCategoryError(null);
+
+      let previousRow: BoqItemRowDto | undefined;
+      setItems((current) => {
+        previousRow = current.find((item) => item.id === itemId);
+        const option = materialNodeId ? categoryOptionById.get(materialNodeId) : null;
+        return current.map((item) => {
+          if (item.id !== itemId) return item;
+          return {
+            ...item,
+            materialNodeId,
+            categoryLabel: option?.label ?? null,
+            categoryPath: option?.path ?? null,
+          };
+        });
+      });
+
       setSavingItemId(itemId);
       try {
         const response = await fetch(`/api/boq/items/${itemId}/category`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ materialNodeId }),
         });
         const json = (await response.json()) as { success: boolean; message?: string };
         if (!response.ok || !json.success) {
-          throw new Error(json.message ?? 'Failed to save category');
+          throw new Error(json.message ?? "Failed to save category");
         }
-        setBreakdown((current) =>
-          current
-            ? {
-                ...current,
-                items: current.items.map((item) => {
-                  if (item.id !== itemId) return item;
-                  const option = materialNodeId
-                    ? options.find((entry) => entry.id === materialNodeId)
-                    : null;
-                  return {
-                    ...item,
-                    materialNodeId,
-                    categoryLabel: option?.label ?? null,
-                    categoryPath: option?.path ?? null,
-                  };
-                }),
-              }
-            : current,
-        );
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to save category');
+      } catch (error) {
+        if (previousRow) {
+          setItems((current) =>
+            current.map((item) => (item.id === itemId ? previousRow! : item)),
+          );
+        }
+        setCategoryError(error instanceof Error ? error.message : "Failed to save category");
       } finally {
         setSavingItemId(null);
       }
     },
-    [options],
+    [categoryOptionById],
   );
 
-  const stats = useMemo(() => {
-    if (!breakdown) {
-      return { total: 0, sections: 0, measurable: 0, categorized: 0, pending: 0 };
+  const insertRow = useCallback(
+    async (relativeToItemId: number, position: "before" | "after") => {
+      setRowActionError(null);
+      setRowActionPending(true);
+
+      let previousItems: BoqItemRowDto[] | undefined;
+      try {
+        const response = await fetch(`/api/boq/${breakdown.id}/items`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            relativeToItemId,
+            position,
+            versionId: breakdown.versionId,
+          }),
+        });
+        const json = (await response.json()) as {
+          success: boolean;
+          data?: BoqItemRowDto;
+          message?: string;
+        };
+
+        if (!response.ok || !json.success || !json.data) {
+          throw new Error(json.message ?? "Failed to insert row");
+        }
+
+        setItems((current) => {
+          previousItems = current;
+          return insertBoqItemRowInOrder(current, json.data!, relativeToItemId, position);
+        });
+      } catch (error) {
+        if (previousItems) {
+          setItems(previousItems);
+        }
+        setRowActionError(error instanceof Error ? error.message : "Failed to insert row");
+      } finally {
+        setRowActionPending(false);
+      }
+    },
+    [breakdown.id, breakdown.versionId],
+  );
+
+  const deleteRows = useCallback(async (itemIds: number[]) => {
+    if (itemIds.length === 0) return;
+
+    setRowActionError(null);
+    setRowActionPending(true);
+
+    let previousItems: BoqItemRowDto[] | undefined;
+    try {
+      for (const itemId of itemIds) {
+        const response = await fetch(`/api/boq/items/${itemId}`, { method: "DELETE" });
+        const json = (await response.json()) as { success: boolean; message?: string };
+
+        if (!response.ok || !json.success) {
+          throw new Error(json.message ?? "Failed to delete row");
+        }
+      }
+
+      setItems((current) => {
+        previousItems = current;
+        return itemIds.reduce((next, itemId) => removeBoqItemRow(next, itemId), current);
+      });
+    } catch (error) {
+      if (previousItems) {
+        setItems(previousItems);
+      }
+      setRowActionError(error instanceof Error ? error.message : "Failed to delete row");
+      throw error;
+    } finally {
+      setRowActionPending(false);
     }
-
-    const sections = breakdown.items.filter((item) => item.isHeader).length;
-    const measurable = breakdown.items.filter(
-      (item) => item.isMeasurable && !item.isHeader,
-    );
-    const categorized = measurable.filter((item) => item.materialNodeId != null).length;
-
-    return {
-      total: breakdown.items.length,
-      sections,
-      measurable: measurable.length,
-      categorized,
-      pending: measurable.length - categorized,
-    };
-  }, [breakdown]);
-
-  if (loading) {
-    return (
-      <div className="flex flex-1 items-center justify-center bg-slate-50 p-8">
-        <Text variant="muted">Loading BOQ breakdown…</Text>
-      </div>
-    );
-  }
-
-  if (error || !breakdown) {
-    return (
-      <div className="space-y-4 p-6">
-        <Button asChild variant="outline" size="sm">
-          <Link href="/boq">
-            <LayoutList className="mr-2 h-4 w-4" />
-            BOQ master list
-          </Link>
-        </Button>
-        <Text className="text-destructive">{error ?? 'BOQ not found'}</Text>
-      </div>
-    );
-  }
+  }, []);
 
   return (
-    <div className="boq-breakdown flex min-h-0 flex-1 flex-col bg-slate-100">
-      <div className="border-b border-slate-300 bg-white px-4 py-3 shadow-sm">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex min-w-0 items-center gap-3">
-            <Button asChild variant="outline" size="sm" className="border-slate-300 bg-slate-50">
-              <Link href="/boq">
-                <ArrowLeft className="mr-1 h-4 w-4" />
-                BOQ master list
-              </Link>
-            </Button>
-            <div className="min-w-0">
-              <Text size="sm" weight="semibold" className="truncate text-slate-900">
-                {breakdown.name}
-              </Text>
-              <Text variant="muted" size="xs">
-                {breakdown.projectName}
-                {breakdown.versionName ? ` · ${breakdown.versionName}` : ''}
-              </Text>
+    <div className="boq-breakdown">
+      <header className="boq-breakdown__header">
+        <div className="boq-breakdown__header-row">
+          <div className="boq-breakdown__nav-group">
+            <Link href="/boq" className="boq-breakdown__back-btn">
+              BOQ master list
+            </Link>
+
+            <div className="boq-breakdown__discipline">
+              <label
+                className="boq-breakdown__discipline-label"
+                htmlFor="boq-breakdown-discipline"
+              >
+                Discipline
+              </label>
+              <Select
+                id="boq-breakdown-discipline"
+                className="boq-breakdown__discipline-select"
+                inputSize="sm"
+                value={discipline}
+                onChange={(event) => setDiscipline(event.target.value)}
+                disabled={disciplineLoading || disciplineChoices.length === 0}
+              >
+                <SelectOption value="">
+                  {disciplineLoading ? "Loading disciplines…" : "Select discipline…"}
+                </SelectOption>
+                {disciplineChoices.map((option) => (
+                  <SelectOption key={option.id} value={option.name}>
+                    {option.name}
+                  </SelectOption>
+                ))}
+              </Select>
             </div>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <Button asChild variant="outline" size="sm">
-              <Link href="/classification">Category builder</Link>
-            </Button>
-            <Button asChild size="sm">
-              <Link href="/boq/import">
-                <Upload className="mr-1 h-4 w-4" />
-                Import Excel
+
+          <div className="boq-breakdown__title-block">
+            <h1 className="boq-breakdown__title">{breakdown.name}</h1>
+            <p className="boq-breakdown__subtitle">
+              {breakdown.projectName}
+              {breakdown.versionName ? ` · ${breakdown.versionName}` : ""}
+            </p>
+          </div>
+
+          <div className="boq-breakdown__stats">
+            <StatChip label="Total rows" value={items.length} tone="slate" />
+            <StatChip label="Sections" value={sections} tone="amber" />
+            <StatChip label="Published" value={published} tone="emerald" />
+            <StatChip label="Pending" value={pending} tone="rose" highlight={pending > 0} />
+          </div>
+
+          <div className="boq-breakdown__actions">
+            {onOpenCategoryBuilder ? (
+              <button
+                type="button"
+                className="boq-breakdown__action-btn"
+                onClick={onOpenCategoryBuilder}
+              >
+                <Layers size={14} aria-hidden />
+                Category builder
+              </button>
+            ) : null}
+            {showWorkshopCta && breakdown.batchId ? (
+              <Link
+                href={`/workshop/categorize/${breakdown.batchId}`}
+                className="boq-breakdown__action-btn boq-breakdown__action-btn--primary"
+              >
+                <ExternalLink size={14} aria-hidden />
+                Continue in Workshop
               </Link>
-            </Button>
+            ) : null}
+            <Link href="/boq/import" className="boq-breakdown__action-btn">
+              <Upload size={14} aria-hidden />
+              Import Excel
+            </Link>
           </div>
         </div>
 
-        <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
-          <StatChip label="Total rows" value={stats.total} tone="slate" />
-          <StatChip label="Sections" value={stats.sections} tone="amber" />
-          <StatChip label="Categorized" value={stats.categorized} tone="emerald" />
-          <StatChip label="Needs category" value={stats.pending} tone="rose" highlight={stats.pending > 0} />
-        </div>
-      </div>
+        {categoryError ? (
+          <p className="boq-breakdown__error" role="alert">
+            {categoryError}
+          </p>
+        ) : null}
+        {rowActionError ? (
+          <p className="boq-breakdown__error" role="alert">
+            {rowActionError}
+          </p>
+        ) : null}
+      </header>
 
-      <div className="min-h-0 flex-1 overflow-auto p-4">
-        <div className="overflow-hidden rounded-xl border-2 border-slate-300 bg-white shadow-sm">
-          <table className="w-full min-w-[960px] border-collapse text-sm">
-            <thead>
-              <tr className="border-b-2 border-indigo-200 bg-indigo-100 text-left text-[11px] font-bold uppercase tracking-wide text-indigo-950">
-                <th className="min-w-[240px] px-3 py-2.5">Category</th>
-                <th className="min-w-[90px] px-3 py-2.5">Item No.</th>
-                <th className="min-w-[300px] px-3 py-2.5">Description</th>
-                <th className="min-w-[72px] px-3 py-2.5">UoM</th>
-                <th className="min-w-[72px] px-3 py-2.5 text-right">Qty</th>
-                <th className="min-w-[72px] px-3 py-2.5 text-right">Rate</th>
-                <th className="min-w-[80px] px-3 py-2.5 text-right">Total</th>
-              </tr>
-            </thead>
-            <tbody>
-              {breakdown.items.length === 0 ? (
-                <tr>
-                  <td colSpan={7} className="px-4 py-12 text-center text-muted-foreground">
-                    No rows in this BOQ.
-                  </td>
-                </tr>
-              ) : (
-                breakdown.items.map((item) => {
-                  const isSection = item.isHeader;
-                  const isMeasurable = item.isMeasurable && !item.isHeader;
-                  const isCategorized = isMeasurable && item.materialNodeId != null;
-                  const isPending = isMeasurable && item.materialNodeId == null;
-
-                  return (
-                    <tr
-                      key={item.id}
-                      className={cn(
-                        'border-b border-slate-200',
-                        isSection && 'bg-amber-50/90 font-semibold text-amber-950',
-                        isCategorized && 'bg-emerald-50/40',
-                        isPending && 'bg-rose-50/30',
-                        !isSection && 'hover:bg-slate-50',
-                      )}
-                    >
-                      <td className="px-2 py-2 align-middle">
-                        {isSection ? (
-                          <span className="inline-flex rounded-md bg-amber-200/80 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-900">
-                            Section
-                          </span>
-                        ) : isMeasurable ? (
-                          <div className="space-y-1">
-                            <BoqCategoryPicker
-                              options={options}
-                              value={item.materialNodeId}
-                              disabled={savingItemId === item.id}
-                              onChange={(materialNodeId) =>
-                                void updateCategory(item.id, materialNodeId)
-                              }
-                              placeholder="Select category…"
-                            />
-                            {isCategorized ? (
-                              <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-700">
-                                <CheckCircle2 className="h-3 w-3" aria-hidden />
-                                Categorized
-                              </span>
-                            ) : (
-                              <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-rose-700">
-                                <CircleDashed className="h-3 w-3" aria-hidden />
-                                Needs category
-                              </span>
-                            )}
-                          </div>
-                        ) : (
-                          <span className="text-muted-foreground">—</span>
-                        )}
-                      </td>
-                      <td className="px-3 py-2 align-middle font-mono text-xs">
-                        {item.itemNo ?? '—'}
-                      </td>
-                      <td className="px-3 py-2 align-middle whitespace-pre-wrap">
-                        {item.description ?? '—'}
-                      </td>
-                      <td className="px-3 py-2 align-middle">{item.unit ?? '—'}</td>
-                      <td className="px-3 py-2 align-middle text-right tabular-nums">
-                        {item.quantity ?? '—'}
-                      </td>
-                      <td className="px-3 py-2 align-middle text-right tabular-nums">
-                        {item.rate ?? '0'}
-                      </td>
-                      <td className="px-3 py-2 align-middle text-right tabular-nums font-medium">
-                        {item.total ?? '0'}
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
+      <div className="boq-breakdown__grid-shell">
+        <div className="boq-breakdown__card">
+          <BoqBreakdownGrid
+            pageKey={`boq-breakdown-${breakdown.id}`}
+            items={gridItems}
+            categoryOptions={categoryOptions}
+            savingItemId={savingItemId}
+            rowActionPending={rowActionPending}
+            onCategoryChange={(itemId, materialNodeId) => void updateCategory(itemId, materialNodeId)}
+            onItemsChange={setItems}
+            onInsertRow={(itemId, position) => void insertRow(itemId, position)}
+            onDeleteRows={(itemIds) => deleteRows(itemIds)}
+          />
         </div>
       </div>
     </div>
@@ -308,26 +316,19 @@ function StatChip({
 }: {
   label: string;
   value: number;
-  tone: 'slate' | 'amber' | 'emerald' | 'rose';
+  tone: "slate" | "amber" | "emerald" | "rose";
   highlight?: boolean;
 }) {
-  const styles = {
-    slate: 'border-slate-300 bg-slate-50 text-slate-800',
-    amber: 'border-amber-300 bg-amber-50 text-amber-900',
-    emerald: 'border-emerald-300 bg-emerald-50 text-emerald-900',
-    rose: 'border-rose-300 bg-rose-50 text-rose-900',
-  } as const;
-
   return (
     <div
       className={cn(
-        'rounded-lg border-2 px-3 py-2',
-        styles[tone],
-        highlight && 'ring-2 ring-rose-400/50',
+        "boq-breakdown__stat",
+        `boq-breakdown__stat--${tone}`,
+        highlight && "boq-breakdown__stat--highlight",
       )}
     >
-      <div className="text-[10px] font-bold uppercase tracking-wide opacity-80">{label}</div>
-      <div className="text-lg font-bold tabular-nums">{value}</div>
+      <div className="boq-breakdown__stat-label">{label}</div>
+      <div className="boq-breakdown__stat-value">{value}</div>
     </div>
   );
 }

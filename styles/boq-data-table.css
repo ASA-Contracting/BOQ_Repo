@@ -1,0 +1,201 @@
+/* BOQ dense data table — token system (structure + status, no decorative color blocking) */
+
+.boq-data-table {
+  --boq-dt-bg: var(--background);
+  --boq-dt-border: var(--border);
+  --boq-dt-text-primary: var(--foreground);
+  --boq-dt-text-secondary: var(--muted-foreground);
+  --boq-dt-accent: var(--primary);
+
+  /* Status palette — each state: bg tint, text, progress fill */
+  --boq-dt-published-bg: color-mix(in oklab, #16a34a 12%, var(--boq-dt-bg));
+  --boq-dt-published-text: #15803d;
+  --boq-dt-published-fill: #22c55e;
+
+  --boq-dt-progress-bg: color-mix(in oklab, #d97706 12%, var(--boq-dt-bg));
+  --boq-dt-progress-text: #b45309;
+  --boq-dt-progress-fill: #f59e0b;
+
+  --boq-dt-pending-bg: color-mix(in oklab, var(--boq-dt-text-secondary) 10%, var(--boq-dt-bg));
+  --boq-dt-pending-text: var(--boq-dt-text-secondary);
+  --boq-dt-pending-fill: color-mix(in oklab, var(--boq-dt-text-secondary) 45%, transparent);
+
+  --boq-dt-draft-bg: color-mix(in oklab, var(--boq-dt-text-secondary) 8%, var(--boq-dt-bg));
+  --boq-dt-draft-text: var(--boq-dt-text-secondary);
+
+  --boq-dt-neutral-bg: color-mix(in oklab, var(--boq-dt-text-secondary) 8%, var(--boq-dt-bg));
+  --boq-dt-neutral-text: var(--boq-dt-text-secondary);
+  --boq-dt-neutral-fill: color-mix(in oklab, var(--boq-dt-text-secondary) 35%, transparent);
+}
+
+/* Typography hierarchy */
+.boq-data-table thead th {
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.06em !important;
+  text-transform: uppercase !important;
+  color: var(--boq-dt-text-secondary) !important;
+  background: var(--boq-dt-bg) !important;
+  border-bottom: 1px solid var(--boq-dt-border) !important;
+}
+
+.boq-data-table tbody td {
+  border-bottom: 1px solid var(--boq-dt-border);
+  vertical-align: middle;
+}
+
+.boq-dt-primary {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.35;
+  color: var(--boq-dt-text-primary);
+}
+
+.boq-dt-primary-link {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.35;
+  color: var(--boq-dt-text-primary);
+  text-decoration: none;
+}
+
+.boq-dt-primary-link:hover {
+  color: var(--boq-dt-text-primary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.boq-dt-secondary {
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.35;
+  color: var(--boq-dt-text-secondary);
+}
+
+.boq-dt-meta {
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.35;
+  color: var(--boq-dt-text-secondary);
+}
+
+.boq-dt-tabular {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+/* Single pill spec — 6px radius, tinted bg + matching text */
+.boq-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border-radius: 6px;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.35;
+  white-space: nowrap;
+  border: 0;
+}
+
+.boq-pill--published {
+  background: var(--boq-dt-published-bg);
+  color: var(--boq-dt-published-text);
+}
+
+.boq-pill--progress {
+  background: var(--boq-dt-progress-bg);
+  color: var(--boq-dt-progress-text);
+}
+
+.boq-pill--pending {
+  background: var(--boq-dt-pending-bg);
+  color: var(--boq-dt-pending-text);
+}
+
+.boq-pill--draft,
+.boq-pill--neutral {
+  background: var(--boq-dt-neutral-bg);
+  color: var(--boq-dt-neutral-text);
+}
+
+/* Progress bar */
+.boq-progress {
+  min-width: 9rem;
+  display: grid;
+  gap: 4px;
+}
+
+.boq-progress-labels {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--boq-dt-text-secondary);
+}
+
+.boq-progress-track {
+  height: 6px;
+  border-radius: 3px;
+  background: color-mix(in oklab, var(--boq-dt-text-secondary) 12%, var(--boq-dt-bg));
+  overflow: hidden;
+}
+
+.boq-progress-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.2s ease;
+}
+
+.boq-progress-fill--published {
+  background: var(--boq-dt-published-fill);
+}
+
+.boq-progress-fill--progress {
+  background: var(--boq-dt-progress-fill);
+}
+
+.boq-progress-fill--pending,
+.boq-progress-fill--draft,
+.boq-progress-fill--neutral {
+  background: var(--boq-dt-neutral-fill);
+}
+
+.boq-progress-percent {
+  text-align: right;
+  font-size: 11px;
+  color: var(--boq-dt-text-secondary);
+}
+
+/* Row action — ghost/outline, accent text only */
+.boq-row-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  height: 28px;
+  padding: 0 10px;
+  border-radius: 6px;
+  border: 1px solid var(--boq-dt-border);
+  background: transparent;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--boq-dt-accent);
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background-color 0.12s ease;
+}
+
+.boq-row-action:hover {
+  background: color-mix(in oklab, var(--boq-dt-accent) 6%, transparent);
+}
+
+.boq-row-action--urgent {
+  color: var(--boq-dt-progress-text);
+  border-color: color-mix(in oklab, var(--boq-dt-progress-text) 25%, var(--boq-dt-border));
+}
+
+.boq-row-action--urgent:hover {
+  background: var(--boq-dt-progress-bg);
+}

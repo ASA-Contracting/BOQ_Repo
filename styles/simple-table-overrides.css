@@ -1,0 +1,11 @@
+/* Bridge Simple Table tokens to BOQ design system variables. */
+.boq-simple-table.simple-table-root {
+  font-family: var(--font-sans), system-ui, sans-serif;
+  font-size: var(--text-sm);
+  border-radius: var(--radius-md);
+}
+
+.boq-simple-table .st-wrapper {
+  border-color: var(--border);
+  border-radius: var(--radius-md);
+}

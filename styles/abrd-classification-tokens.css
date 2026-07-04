@@ -496,6 +496,18 @@
     transparent
   );
   --app-tree-tag-inherited-opacity: 0.72;
+  --app-tree-parent-context-rgb: 79 70 229;
+  --app-tree-parent-context-text: rgb(79 70 229);
+  --app-tree-parent-context-border: rgb(199 210 254);
+  --app-tree-parent-context-bg: rgb(238 242 255);
+  --app-tree-parent-context-font-weight: 650;
+  --app-level-panel-link-text: rgb(79 70 229);
+  --app-level-panel-link-hover: rgb(67 56 202);
+  --app-level-panel-field-hover-border: rgb(199 210 254);
+  --app-level-panel-field-hover-bg: rgb(238 242 255);
+  --app-level-panel-field-focus-ring: rgb(99 102 241 / 0.35);
+  --app-level-panel-field-dirty-border: rgb(165 180 252);
+  --app-level-panel-field-dirty-bg: rgb(238 242 255);
   --app-tree-search-match-text: rgb(var(--fg, 255 255 255));
   --app-tree-search-highlight-bg: color-mix(
     in oklab,

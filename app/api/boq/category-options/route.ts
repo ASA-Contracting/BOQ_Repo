@@ -1,15 +1,15 @@
-import { NextRequest } from 'next/server';
+import { NextRequest } from "next/server";
 
-import { getClassificationState } from '@/application/classification/get-classification-state';
-import { buildCategoryPickerOptions } from '@/lib/category-picker-options';
-import { getDb } from '@/infrastructure/persistence/db';
-import { apiError, apiSuccess, requireAuthUserId } from '@/infrastructure/auth/api-auth';
+import { getClassificationState } from "@/application/classification/get-classification-state";
+import { apiError, apiSuccess, requireAuthUserId } from "@/infrastructure/auth/api-auth";
+import { getDb } from "@/infrastructure/persistence/db";
+import { buildCategoryPickerOptions } from "@/lib/category-picker-options";
 
 export async function GET(request: NextRequest) {
   const userId = await requireAuthUserId();
-  if (!userId) return apiError('Unauthorized', 401);
+  if (!userId) return apiError("Unauthorized", 401);
 
-  const schemaIdParam = request.nextUrl.searchParams.get('schemaId');
+  const schemaIdParam = request.nextUrl.searchParams.get("schemaId");
   const schemaId = schemaIdParam ? Number(schemaIdParam) : undefined;
 
   try {
@@ -32,10 +32,13 @@ export async function GET(request: NextRequest) {
         schemaId: state.schemaId,
         options,
       },
-      'Category picker options retrieved',
+      "Category picker options retrieved",
     );
   } catch (error) {
     console.error(error);
-    return apiError(error instanceof Error ? error.message : 'Failed to load category options', 500);
+    return apiError(
+      error instanceof Error ? error.message : "Failed to load category options",
+      500,
+    );
   }
 }

@@ -1,0 +1,180 @@
+@import "./abrd-filter-tokens.css";
+@import "./abrd-shared-filter-menu.css";
+
+.abrd-filter-engine .proj-page-tools {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+  box-sizing: border-box;
+  min-height: 41px;
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--proj-outline-color);
+}
+
+.abrd-filter-engine .proj-page-tools__right {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+  margin-left: auto;
+}
+
+.abrd-filter-engine .proj-cu-chip-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.abrd-filter-engine .proj-cu-chip {
+  min-height: 30px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: var(--proj-outline-w) solid var(--proj-outline-color);
+  background: color-mix(in oklab, rgb(var(--surface)) 88%, rgb(var(--bg1)) 12%);
+  color: var(--cu-chip-fg);
+  font-size: 12px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.abrd-filter-engine button.proj-cu-chip {
+  appearance: none;
+  cursor: pointer;
+  font: inherit;
+  line-height: inherit;
+}
+
+.abrd-filter-engine .proj-cu-chip:not(.proj-cu-chip--static):hover,
+.abrd-filter-engine .proj-cu-chip:not(.proj-cu-chip--static):focus-visible {
+  border-color: var(--proj-toolbar-hover-border);
+  background: var(--proj-toolbar-hover-bg);
+  color: var(--proj-toolbar-hover-fg);
+  outline: none;
+}
+
+.abrd-filter-engine .proj-cu-chip:not(.proj-cu-chip--static).is-active {
+  border-color: var(--proj-toolbar-active-border);
+  background: var(--proj-toolbar-active-bg);
+  color: var(--proj-toolbar-active-fg);
+}
+
+.abrd-filter-engine .proj-filter-menu {
+  position: relative;
+}
+
+.abrd-filter-engine .proj-filter-summary.is-active {
+  color: rgb(var(--primary));
+  border-color: var(--proj-outline-color);
+  background: color-mix(in oklab, rgb(var(--primary)) 14%, transparent);
+}
+
+.abrd-filter-engine .proj-filter-summary-count {
+  min-width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  border: var(--proj-outline-w) solid var(--proj-outline-color);
+  background: rgb(var(--primary) / 0.22);
+  color: rgb(var(--primary));
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 5px;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.abrd-filter-engine .proj-menu-list {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  left: auto;
+  z-index: 5000;
+  border: 1px solid var(--proj-outline-color);
+  border-radius: 12px;
+  background: var(--proj-popover-bg);
+  box-shadow: var(--proj-popover-shadow);
+}
+
+.abrd-filter-engine .proj-toolbar-search {
+  min-width: 30px;
+  min-height: 30px;
+  border-radius: 8px;
+  border: 1px solid var(--cu-chip-border);
+  background: transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 0 1px;
+  overflow: hidden;
+}
+
+.abrd-filter-engine .proj-toolbar-search.is-open {
+  width: min(280px, calc(100vw - 32px));
+  min-width: min(280px, calc(100vw - 32px));
+  justify-content: flex-start;
+  gap: 6px;
+  padding: 0 8px 0 2px;
+  border-color: var(--cu-chip-border);
+  background: var(--cu-chip-bg);
+}
+
+.abrd-filter-engine .proj-toolbar-search.has-value:not(.is-open) .proj-toolbar-search-toggle {
+  border-color: var(--proj-outline-color);
+  background: color-mix(in oklab, rgb(var(--primary)) 14%, transparent);
+  color: rgb(var(--primary));
+}
+
+.abrd-filter-engine .proj-toolbar-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  border: 1px solid var(--cu-chip-border);
+  background: transparent;
+  color: rgb(var(--fg) / 0.78);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.abrd-filter-engine .proj-toolbar-search-toggle.proj-toolbar-icon {
+  border-color: transparent;
+  background: transparent;
+}
+
+.abrd-filter-engine .proj-toolbar-search-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 30px;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: rgb(var(--fg));
+  font-size: 12.5px;
+  padding: 0 2px;
+}
+
+.abrd-filter-engine .proj-toolbar-search-input::placeholder {
+  color: rgb(var(--fg) / 0.5);
+}
+
+.abrd-filter-engine .proj-toolbar-search-clear {
+  width: 22px;
+  height: 22px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: rgb(var(--fg) / 0.55);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}

@@ -41,6 +41,14 @@ export class WorkshopNothingToPublishError extends DomainError {
   }
 }
 
+export class WorkshopEmptyBoqError extends DomainError {
+  readonly code = "WORKSHOP_EMPTY_BOQ";
+
+  constructor() {
+    super("Empty BOQs cannot be published.");
+  }
+}
+
 export class WorkshopPublishNotCompleteError extends DomainError {
   readonly code = "WORKSHOP_PUBLISH_NOT_COMPLETE";
 

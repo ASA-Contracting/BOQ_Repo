@@ -116,23 +116,25 @@ function buildNodeSummaries(
   });
 }
 
+type GetClassificationStateOptions = {
+  lite?: boolean;
+};
+
 export async function getClassificationState(
   db: Db,
-  schemaId?: number
+  schemaId?: number,
+  options: GetClassificationStateOptions = {}
 ): Promise<ClassificationStateDto> {
   const purpose = MaterialPurpose.SystemOption;
-  const [levelTypeRows, materialRows, tagRows] = await Promise.all([
-    listLevelTypes(db),
-    listMaterialNodesByPurpose(db, purpose, schemaId),
-    listTags(db),
-  ]);
+  // Sequential queries avoid exhausting the small dev connection pool (max 3).
+  const levelTypeRows = await listLevelTypes(db);
+  const materialRows = await listMaterialNodesByPurpose(db, purpose, schemaId);
+  const tagRows = await listTags(db);
 
   const nodeIds = materialRows.map((m) => m.id);
-  const [materialItemRows, materialTagRows, sheetSummaries] = await Promise.all([
-    listMaterialItemsForNodes(db, nodeIds),
-    listMaterialTagsForNodes(db, nodeIds),
-    listSheetSummaries(db, schemaId),
-  ]);
+  const materialTagRows = await listMaterialTagsForNodes(db, nodeIds);
+  const materialItemRows = options.lite ? [] : await listMaterialItemsForNodes(db, nodeIds);
+  const sheetSummaries = options.lite ? [] : await listSheetSummaries(db, schemaId);
 
   const parentNames = new Map(materialRows.map((m) => [m.id, m.name]));
 
@@ -169,7 +171,7 @@ export async function getClassificationState(
       fullName: item.fullName,
       pathIds: item.pathIds,
     })),
-    tags: tagRows.map((tag) => ({ id: tag.id, name: tag.name })),
+    tags: tagRows.map((tag) => ({ id: tag.id, name: tag.name, color: tag.color ?? null })),
     materialTags: materialTagRows.map((mt) => ({
       id: mt.id,
       materialNodeId: mt.materialNodeId,

@@ -1,0 +1,45 @@
+/* ABRD page-design filter tokens — scoped to filter engine shell */
+.abrd-filter-engine {
+  --primary: 132 199 24;
+  --bg0: 255 255 255;
+  --bg1: 249 249 249;
+  --surface: 255 255 255;
+  --border: 232 232 232;
+  --border-strong: 214 214 214;
+  --fg: 31 35 43;
+  --muted: 141 141 141;
+  --proj-outline-w: 1px;
+  --proj-outline-color: rgb(var(--border-strong));
+  --proj-popover-bg: rgb(var(--surface));
+  --proj-popover-shadow: 0 16px 40px rgba(0, 0, 0, 0.18);
+  --proj-link-color: rgb(var(--primary));
+  --proj-danger-fg: rgb(239 68 68);
+  --proj-toolbar-hover-border: color-mix(in oklab, rgb(var(--primary)) 35%, rgb(var(--border-strong)));
+  --proj-toolbar-hover-bg: color-mix(in oklab, rgb(var(--primary)) 8%, rgb(var(--bg1)));
+  --proj-toolbar-hover-fg: rgb(var(--fg));
+  --proj-toolbar-hover-icon: rgb(var(--primary));
+  --proj-toolbar-active-border: color-mix(in oklab, rgb(var(--primary)) 45%, rgb(var(--border-strong)));
+  --proj-toolbar-active-bg: color-mix(in oklab, rgb(var(--primary)) 14%, transparent);
+  --proj-toolbar-active-fg: rgb(var(--primary));
+  --proj-toolbar-active-icon: rgb(var(--primary));
+  --cu-chip-bg: color-mix(in oklab, rgb(var(--bg1)) 92%, rgb(var(--surface)) 8%);
+  --cu-chip-border: var(--proj-outline-color);
+  --cu-chip-fg: rgb(var(--fg) / 0.84);
+  --proj-filter-add-bg: rgb(var(--fg));
+  --proj-filter-add-bg-hover: color-mix(in oklab, rgb(var(--fg)) 88%, white);
+  --proj-filter-add-fg: rgb(var(--bg0));
+  --proj-filter-add-border: var(--proj-outline-color);
+  --proj-filter-panel-bg: var(--proj-popover-bg);
+  --proj-filter-panel-title-fg: rgb(var(--fg));
+  --proj-filter-panel-title-icon: rgb(var(--muted));
+  --proj-filter-panel-muted-fg: rgb(var(--fg) / 0.62);
+  --proj-filter-panel-muted-fg-weak: rgb(var(--fg) / 0.28);
+  --proj-filter-panel-label-fg: rgb(var(--muted));
+  --proj-filter-panel-control-bg: color-mix(in oklab, rgb(var(--surface)) 92%, rgb(var(--bg1)) 8%);
+  --proj-filter-panel-control-fg: rgb(var(--fg));
+  --proj-filter-group-border: color-mix(in oklab, rgb(var(--fg)) 7%, transparent);
+  --proj-filter-group-bg-start: color-mix(in oklab, rgb(var(--surface)) 75%, rgb(var(--bg1)) 25%);
+  --proj-filter-group-bg-end: color-mix(in oklab, rgb(var(--surface)) 71%, rgb(var(--bg1)) 29%);
+  --proj-filter-group-shadow: inset 0 1px 0 color-mix(in oklab, rgb(var(--fg)) 2.5%, transparent);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}

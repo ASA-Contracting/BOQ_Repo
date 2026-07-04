@@ -1,0 +1,272 @@
+/* ABRD Fields / Columns panel — toolbar popover */
+.abrd-filter-engine .proj-column-fields-menu {
+  position: relative;
+}
+
+.abrd-filter-engine .proj-column-fields-summary.is-active {
+  border-color: color-mix(in oklab, rgb(var(--primary)) 45%, rgb(var(--border-strong)));
+  background: color-mix(in oklab, rgb(var(--primary)) 14%, transparent);
+  color: rgb(var(--primary));
+}
+
+.abrd-filter-engine .proj-column-fields-panel {
+  width: min(360px, calc(100vw - 24px));
+  max-height: min(72vh, 560px);
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr);
+  gap: 0;
+  border-radius: 12px;
+  border: 1px solid rgb(var(--border-strong));
+  background: rgb(var(--surface));
+  box-shadow: var(--proj-popover-shadow, 0 16px 40px rgba(0, 0, 0, 0.18));
+  overflow: hidden;
+}
+
+.abrd-filter-engine .proj-column-fields-panel--portal {
+  position: fixed;
+}
+
+.abrd-filter-engine .proj-column-fields-panel__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 12px 12px 8px;
+}
+
+.abrd-filter-engine .proj-column-fields-panel__title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: rgb(var(--fg));
+}
+
+.abrd-filter-engine .proj-column-fields-panel__close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: rgb(var(--muted));
+  cursor: pointer;
+}
+
+.abrd-filter-engine .proj-column-fields-panel__close:hover {
+  background: color-mix(in oklab, rgb(var(--fg)) 6%, transparent);
+  color: rgb(var(--fg));
+}
+
+.abrd-filter-engine .proj-column-fields-search {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  margin: 0 12px 10px;
+  padding: 0 10px;
+  min-height: 36px;
+  border-radius: 10px;
+  border: 1px solid rgb(var(--border));
+  background: color-mix(in oklab, rgb(var(--surface)) 92%, rgb(var(--bg1)) 8%);
+}
+
+.abrd-filter-engine .proj-column-fields-search:focus-within {
+  border-color: color-mix(in oklab, rgb(var(--primary)) 35%, rgb(var(--border-strong)));
+}
+
+.abrd-filter-engine .proj-column-fields-search__icon {
+  color: rgb(var(--muted));
+  flex-shrink: 0;
+}
+
+.abrd-filter-engine .proj-column-fields-search__input {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: rgb(var(--fg));
+  font-size: 13px;
+  outline: none;
+}
+
+.abrd-filter-engine .proj-column-fields-search__input::placeholder {
+  color: rgb(var(--muted));
+}
+
+.abrd-filter-engine .proj-column-fields-search__reset {
+  border: 0;
+  background: transparent;
+  color: rgb(var(--muted));
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.abrd-filter-engine .proj-column-fields-search__reset:hover {
+  color: rgb(var(--fg));
+}
+
+.abrd-filter-engine .proj-column-fields-section {
+  min-height: 0;
+  overflow: auto;
+  padding-bottom: 8px;
+}
+
+.abrd-filter-engine .proj-column-fields-section__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 4px 12px 8px;
+}
+
+.abrd-filter-engine .proj-column-fields-section__toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 0;
+  background: transparent;
+  color: rgb(var(--fg));
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+}
+
+.abrd-filter-engine .proj-column-fields-section__chevron {
+  color: rgb(var(--muted));
+  transition: transform 150ms ease;
+}
+
+.abrd-filter-engine .proj-column-fields-section__chevron.is-collapsed {
+  transform: rotate(-90deg);
+}
+
+.abrd-filter-engine .proj-column-fields-section__action {
+  border: 0;
+  background: transparent;
+  color: rgb(var(--primary));
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+}
+
+.abrd-filter-engine .proj-column-fields-section__action:hover {
+  text-decoration: underline;
+}
+
+.abrd-filter-engine .proj-column-fields-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.abrd-filter-engine .proj-column-fields-empty {
+  padding: 12px 16px;
+  color: rgb(var(--muted));
+  font-size: 12px;
+}
+
+.abrd-filter-engine .proj-column-fields-item {
+  display: grid;
+  grid-template-columns: 20px 18px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  padding: 0 12px;
+  border-top: 1px solid transparent;
+  border-bottom: 1px solid transparent;
+  transition:
+    background-color 120ms ease,
+    border-color 120ms ease,
+    opacity 120ms ease;
+}
+
+.abrd-filter-engine .proj-column-fields-item.is-dragging {
+  opacity: 0.45;
+}
+
+.abrd-filter-engine .proj-column-fields-item.is-over {
+  border-top-color: rgb(var(--primary));
+  background: color-mix(in oklab, rgb(var(--primary)) 6%, transparent);
+}
+
+.abrd-filter-engine .proj-column-fields-item__grip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 28px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: rgb(var(--muted));
+  cursor: grab;
+  touch-action: none;
+}
+
+.abrd-filter-engine .proj-column-fields-item__grip:hover {
+  color: rgb(var(--fg));
+  background: color-mix(in oklab, rgb(var(--fg)) 5%, transparent);
+}
+
+.abrd-filter-engine .proj-column-fields-item__grip:active {
+  cursor: grabbing;
+}
+
+.abrd-filter-engine .proj-column-fields-item__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: rgb(var(--muted));
+}
+
+.abrd-filter-engine .proj-column-fields-item__label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+  font-weight: 500;
+  color: rgb(var(--fg));
+}
+
+/* ABRD lime-green toggle */
+.abrd-filter-engine .proj-fields-toggle {
+  position: relative;
+  width: 36px;
+  height: 20px;
+  border: 0;
+  border-radius: 999px;
+  background: color-mix(in oklab, rgb(var(--border-strong)) 70%, rgb(var(--bg1)));
+  cursor: pointer;
+  transition: background-color 150ms ease;
+  flex-shrink: 0;
+}
+
+.abrd-filter-engine .proj-fields-toggle:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.abrd-filter-engine .proj-fields-toggle.is-on {
+  background: rgb(var(--primary));
+}
+
+.abrd-filter-engine .proj-fields-toggle__thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  background: rgb(var(--surface));
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.18);
+  transition: transform 150ms ease;
+}
+
+.abrd-filter-engine .proj-fields-toggle.is-on .proj-fields-toggle__thumb {
+  transform: translateX(16px);
+}

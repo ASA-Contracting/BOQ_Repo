@@ -1,7 +1,3 @@
-import type { BoqBreakdownDto, BoqListEntryDto } from '@/application/boq/dto';
+import type { IBoqReadRepository } from "@/application/ports/IBoqReadRepository";
 
-export interface IBoqReadRepository {
-  listBoqs(): Promise<BoqListEntryDto[]>;
-  getBoqBreakdown(boqId: number): Promise<BoqBreakdownDto | null>;
-  updateItemMaterialNodeId(itemId: number, materialNodeId: number | null): Promise<void>;
-}
+export type { IBoqReadRepository };

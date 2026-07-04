@@ -18,7 +18,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useNotifications } from "@/components/ui/notifications-provider";
+import { Select, SelectOption } from "@/components/ui/select";
 import { Text } from "@/components/ui/typography";
+import { useBoqLookupOptions } from "@/hooks/use-boq-lookup-options";
 import { cn } from "@/lib/utils";
 
 import {
@@ -90,6 +92,8 @@ export function ImportWizard({
 
   const [projectName, setProjectName] = useState(initialProjectName);
   const [batchName, setBatchName] = useState(initialBatchName);
+  const [discipline, setDiscipline] = useState("");
+  const { items: disciplineOptions, loading: disciplineLoading } = useBoqLookupOptions("discipline");
   const [preview, setPreview] = useState<ExcelPreviewDto | null>(null);
   const [allRows, setAllRows] = useState<string[][]>([]);
   const [columnMappingByIndex, setColumnMappingByIndex] = useState<
@@ -147,7 +151,7 @@ export function ImportWizard({
   );
 
   const importPayload = useMemo(() => {
-    if (!preview || !batchName.trim() || !projectName.trim()) {
+    if (!preview || !batchName.trim() || !projectName.trim() || !discipline) {
       return null;
     }
     return buildImportRequestPayload(
@@ -157,11 +161,13 @@ export function ImportWizard({
       columnMappingByIndex,
       {
         projectName: projectName.trim(),
+        discipline,
       },
     );
-  }, [allRows, batchName, columnMappingByIndex, preview, projectName]);
+  }, [allRows, batchName, columnMappingByIndex, discipline, preview, projectName]);
 
-  const projectStepComplete = projectName.trim().length > 0 && batchName.trim().length > 0;
+  const projectStepComplete =
+    projectName.trim().length > 0 && batchName.trim().length > 0 && discipline.length > 0;
 
   const importableRowCount = useMemo(() => {
     if (!importPayload) {
@@ -261,11 +267,6 @@ export function ImportWizard({
 
       notify(`Imported ${result.data.itemCount} items`, "success");
 
-      if (redirectToBoq && result.data.boqId > 0) {
-        router.push(`/boq/${result.data.boqId}`);
-        return;
-      }
-
       router.push(`/workshop/categorize/${result.data.batchId}`);
     } catch (error) {
       notify(error instanceof Error ? error.message : "Import failed", "error");
@@ -299,7 +300,7 @@ export function ImportWizard({
       observer.disconnect();
       window.removeEventListener("resize", syncHeight);
     };
-  }, [batchName, preview, projectName, uploadedFile, loading]);
+  }, [batchName, discipline, preview, projectName, uploadedFile, loading]);
 
   return (
     <ShellContent className="mx-auto w-full min-w-0 max-w-7xl pb-10">
@@ -346,14 +347,35 @@ export function ImportWizard({
                     to the existing project.
                   </Text>
                 </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="batch-name">BOQ name</Label>
-                  <Input
-                    id="batch-name"
-                    value={batchName}
-                    onChange={(event) => setBatchName(event.target.value)}
-                    placeholder="Electrical BOQ Rev A"
-                  />
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="grid gap-2">
+                    <Label htmlFor="batch-name">BOQ name</Label>
+                    <Input
+                      id="batch-name"
+                      value={batchName}
+                      onChange={(event) => setBatchName(event.target.value)}
+                      placeholder="Electrical BOQ Rev A"
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="discipline">Discipline</Label>
+                    <Select
+                      id="discipline"
+                      value={discipline}
+                      onChange={(event) => setDiscipline(event.target.value)}
+                      required
+                      disabled={disciplineLoading || disciplineOptions.length === 0}
+                    >
+                      <SelectOption value="" disabled>
+                        {disciplineLoading ? "Loading disciplines…" : "Select discipline…"}
+                      </SelectOption>
+                      {disciplineOptions.map((option) => (
+                        <SelectOption key={option.id} value={option.name}>
+                          {option.name}
+                        </SelectOption>
+                      ))}
+                    </Select>
+                  </div>
                 </div>
               </div>
             </ImportWizardStep>
@@ -592,6 +614,7 @@ export function ImportWizard({
                   importableRowCount === 0 ||
                   importing ||
                   !batchName.trim() ||
+                  !discipline ||
                   loading
                 }
               >

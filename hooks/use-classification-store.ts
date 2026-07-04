@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ImportResultDto, ClassificationStateDto } from '@/application/classification/dto';
 import { buildCodeFromPath, getExpectedChildLevelTypeId } from '@/domain/classification/classification-policy';
 import {
@@ -45,39 +45,110 @@ export type CategoryContextMenuState = {
   y: number;
 } | null;
 
-async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(url, init);
-  const text = await response.text();
+export type ClassificationStoreInitial = {
+  initialSchemaId?: number | null;
+  initialSchemas?: Array<{ id: number; name: string }>;
+  initialState?: ClassificationStateDto | null;
+  initialChainSteps?: LevelOrderEntity[];
+};
 
-  if (!text.trim()) {
-    throw new Error(
-      response.ok
-        ? `Empty response from ${url}`
-        : `Request failed (${response.status} ${response.statusText})`,
-    );
-  }
+const STATE_FETCH_TIMEOUT_MS = 60000;
+const NETWORK_RETRY_DELAY_MS = 1500;
 
-  let payload: ApiResponse<T>;
-  try {
-    payload = JSON.parse(text) as ApiResponse<T>;
-  } catch {
-    throw new Error(
-      `Invalid JSON from ${url} (${response.status}): ${text.slice(0, 120)}`,
-    );
-  }
-
-  if (!response.ok || !payload.success) {
-    throw new Error(payload.message || `Request failed (${response.status})`);
-  }
-
-  return payload.data;
+function isTransientNetworkError(error: unknown): boolean {
+  if (!(error instanceof Error)) return false;
+  return (
+    error.message === 'Failed to fetch' ||
+    error.message.startsWith('Could not reach the server')
+  );
 }
 
-export function useClassificationStore(initialSchemaId?: number) {
-  const [schemaId, setSchemaId] = useState<number | null>(initialSchemaId ?? null);
-  const [schemas, setSchemas] = useState<Array<{ id: number; name: string }>>([]);
-  const [state, setState] = useState<ClassificationStateDto | null>(null);
-  const [chainSteps, setChainSteps] = useState<LevelOrderEntity[]>([]);
+async function fetchJson<T>(url: string, init?: RequestInit, timeoutMs = STATE_FETCH_TIMEOUT_MS): Promise<T> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const response = await fetch(url, { ...init, signal: controller.signal });
+    const text = await response.text();
+
+    if (!text.trim()) {
+      throw new Error(
+        response.ok
+          ? `Empty response from ${url}`
+          : `Request failed (${response.status} ${response.statusText})`,
+      );
+    }
+
+    let payload: ApiResponse<T>;
+    try {
+      payload = JSON.parse(text) as ApiResponse<T>;
+    } catch {
+      throw new Error(
+        `Invalid JSON from ${url} (${response.status}): ${text.slice(0, 120)}`,
+      );
+    }
+
+    if (!response.ok || !payload.success) {
+      throw new Error(payload.message || `Request failed (${response.status})`);
+    }
+
+    return payload.data;
+  } catch (error) {
+    if (error instanceof DOMException && error.name === 'AbortError') {
+      throw new Error('Request timed out. Try refreshing the page.');
+    }
+    if (error instanceof TypeError && error.message === 'Failed to fetch') {
+      throw new Error(
+        'Could not reach the server. Hard-refresh the page (Ctrl+Shift+R), especially after a dev server restart.',
+      );
+    }
+    throw error;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function fetchJsonWithRetry<T>(
+  url: string,
+  init?: RequestInit,
+  timeoutMs = STATE_FETCH_TIMEOUT_MS,
+): Promise<T> {
+  try {
+    return await fetchJson<T>(url, init, timeoutMs);
+  } catch (error) {
+    if (!isTransientNetworkError(error)) {
+      throw error;
+    }
+    await new Promise((resolve) => setTimeout(resolve, NETWORK_RETRY_DELAY_MS));
+    return fetchJson<T>(url, init, timeoutMs);
+  }
+}
+
+function classificationStateUrl(schemaId: number, lite = true): string {
+  const params = new URLSearchParams({
+    schemaId: String(schemaId),
+    ...(lite ? { lite: '1' } : {}),
+  });
+  return `/api/classification/state?${params.toString()}`;
+}
+
+export function useClassificationStore(initial?: ClassificationStoreInitial) {
+  const hasInitialSnapshot = initial?.initialState != null && initial.initialSchemaId != null;
+  const hasInitialSchemaContext =
+    initial?.initialSchemaId != null && (initial.initialSchemas?.length ?? 0) > 0;
+
+  const [schemaId, setSchemaId] = useState<number | null>(
+    initial?.initialSchemaId ?? null,
+  );
+  const [schemas, setSchemas] = useState<Array<{ id: number; name: string }>>(
+    initial?.initialSchemas ?? [],
+  );
+  const [state, setState] = useState<ClassificationStateDto | null>(
+    initial?.initialState ?? null,
+  );
+  const [chainSteps, setChainSteps] = useState<LevelOrderEntity[]>(
+    initial?.initialChainSteps ?? [],
+  );
   const [selectedNodeId, setSelectedNodeId] = useState<number | null>(null);
   const [selectedNodeIds, setSelectedNodeIds] = useState<Set<number>>(new Set());
   const [search, setSearch] = useState('');
@@ -103,8 +174,9 @@ export function useClassificationStore(initialSchemaId?: number) {
   const [creatingChildNodes, setCreatingChildNodes] = useState(false);
   const [updatingChildNodes, setUpdatingChildNodes] = useState(false);
   const [deletingChildNodes, setDeletingChildNodes] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!hasInitialSnapshot);
   const [error, setError] = useState<string | null>(null);
+  const loadedSchemaIdRef = useRef<number | null>(initial?.initialSchemaId ?? null);
 
   useEffect(() => {
     setFilter(readStoredTreeFilter());
@@ -140,6 +212,10 @@ export function useClassificationStore(initialSchemaId?: number) {
     );
   }, []);
 
+  const loadLiteState = useCallback(async (id: number) => {
+    return fetchJson<ClassificationStateDto>(classificationStateUrl(id));
+  }, []);
+
   const refreshState = useCallback(async (activeSchemaId?: number | null) => {
     const id = activeSchemaId ?? schemaId;
     if (!id) {
@@ -150,39 +226,127 @@ export function useClassificationStore(initialSchemaId?: number) {
     setLoading(true);
     setError(null);
     try {
-      const [next] = await Promise.all([
-        fetchJson<ClassificationStateDto>(`/api/classification/state?schemaId=${id}`),
-        refreshChainSteps(id),
-      ]);
+      const next = await loadLiteState(id);
       setState(next);
+      void refreshChainSteps(id).catch(() => undefined);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load classification state');
     } finally {
       setLoading(false);
     }
-  }, [schemaId, refreshChainSteps]);
+  }, [schemaId, loadLiteState, refreshChainSteps]);
 
   useEffect(() => {
+    if (hasInitialSnapshot) {
+      return;
+    }
+
     let cancelled = false;
-    setLoading(true);
-    refreshSchemas()
-      .catch((err) => {
-        if (!cancelled) {
-          setError(err instanceof Error ? err.message : 'Failed to load schemas');
+
+    async function bootstrap() {
+      setLoading(true);
+      setError(null);
+      try {
+        let activeSchemaId = initial?.initialSchemaId ?? loadedSchemaIdRef.current;
+
+        if (!hasInitialSchemaContext) {
+          const rows = await fetchJsonWithRetry<Array<{ id: number; name: string }>>(
+            '/api/classification/schemas',
+          );
+          if (cancelled) return;
+
+          setSchemas(rows);
+          activeSchemaId =
+            rows.find((row) => row.id === activeSchemaId)?.id ?? rows[0]?.id ?? null;
+          setSchemaId(activeSchemaId);
         }
-      })
-      .finally(() => {
+
+        loadedSchemaIdRef.current = activeSchemaId;
+
+        if (!activeSchemaId) {
+          setState(null);
+          return;
+        }
+
+        const next = await fetchJsonWithRetry<ClassificationStateDto>(
+          classificationStateUrl(activeSchemaId),
+        );
+        if (cancelled) return;
+        setState(next);
+        void refreshChainSteps(activeSchemaId).catch(() => undefined);
+      } catch (err) {
+        if (!cancelled) {
+          setError(err instanceof Error ? err.message : 'Failed to load classification data');
+        }
+      } finally {
         if (!cancelled) {
           setLoading(false);
         }
-      });
+      }
+    }
+
+    void bootstrap();
     return () => {
       cancelled = true;
     };
-  }, [refreshSchemas]);
+  }, [hasInitialSnapshot, hasInitialSchemaContext, initial?.initialSchemaId, refreshChainSteps]);
 
   useEffect(() => {
-    refreshState(schemaId).catch((err) => setError(err.message));
+    if (loading || !state || !schemaId) return;
+    const materialCount = state.materials.filter(
+      (material) => material.schemaId === schemaId && material.isActive,
+    ).length;
+    if (materialCount === 0) return;
+
+    const root = buildCategoryTreeRoot({
+      state,
+      schemaId,
+      chainSteps,
+      search,
+      filter,
+      tagFilterNames: filterTagNames,
+      showParentContext,
+      expandedIds,
+      selectedId: selectedNodeId,
+      selectedIds: selectedNodeIds,
+      inline,
+      dragSourceIds,
+      dropTargetId,
+      dropTargetInvalid,
+    });
+
+    if (root.children.length > 0) return;
+    if (filter === 'all' && filterTagNames.size === 0 && !search.trim()) return;
+
+    setFilter('all');
+    writeStoredTreeFilter('all');
+    setFilterTagNames(new Set());
+    writeStoredTreeTagFilter([]);
+    setSearch('');
+  }, [
+    loading,
+    state,
+    schemaId,
+    chainSteps,
+    search,
+    filter,
+    filterTagNames,
+    showParentContext,
+    expandedIds,
+    selectedNodeId,
+    selectedNodeIds,
+    inline,
+    dragSourceIds,
+    dropTargetId,
+    dropTargetInvalid,
+  ]);
+
+  useEffect(() => {
+    if (!schemaId || schemaId === loadedSchemaIdRef.current) {
+      return;
+    }
+    loadedSchemaIdRef.current = schemaId;
+    void refreshState(schemaId);
   }, [schemaId, refreshState]);
 
   const treeIndex = useMemo(() => {
@@ -242,8 +406,8 @@ export function useClassificationStore(initialSchemaId?: number) {
 
   const filterLabel = useMemo(() => getTreeFilterLabel(filter), [filter]);
   const filterActive = useMemo(
-    () => isTreeFilterActive(filter, filterTagNames) || showParentContext,
-    [filter, filterTagNames, showParentContext],
+    () => isTreeFilterActive(filter, filterTagNames),
+    [filter, filterTagNames],
   );
 
   const filterBulkActionLabel = useMemo(() => {
@@ -386,6 +550,14 @@ export function useClassificationStore(initialSchemaId?: number) {
   }, []);
 
   const clearFilterTags = useCallback(() => {
+    setFilterTagNames(new Set());
+    writeStoredTreeTagFilter([]);
+  }, []);
+
+  const resetTreeFilters = useCallback(() => {
+    setSearch('');
+    setFilter('all');
+    writeStoredTreeFilter('all');
     setFilterTagNames(new Set());
     writeStoredTreeTagFilter([]);
   }, []);
@@ -552,19 +724,24 @@ export function useClassificationStore(initialSchemaId?: number) {
           : getExpectedChildLevelTypeId(newParentId, chainSteps, (id) =>
               getNodePathLength(id, treeIndex)
             );
-      await fetchJson('/api/classification/nodes', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          id: nodeId,
-          schemaId: node.schemaId,
-          name: node.name,
-          parentId: newParentId,
-          levelTypeId,
-          isActive: node.isActive,
-        }),
-      });
-      await refreshState(schemaId);
+      try {
+        await fetchJson('/api/classification/nodes', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: nodeId,
+            schemaId: node.schemaId,
+            name: node.name,
+            parentId: newParentId,
+            levelTypeId,
+            isActive: node.isActive,
+          }),
+        });
+        await refreshState(schemaId);
+        setError(null);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to move category');
+      }
     },
     [schemaId, state, chainSteps, treeIndex, refreshState]
   );
@@ -572,70 +749,155 @@ export function useClassificationStore(initialSchemaId?: number) {
   const deleteNode = useCallback(
     async (nodeId: number) => {
       if (!schemaId) return;
-      await fetchJson(`/api/classification/nodes?id=${nodeId}`, { method: 'DELETE' });
-      if (selectedNodeId === nodeId) setSelectedNodeId(null);
-      setSelectedNodeIds((current) => {
-        const next = new Set(current);
-        next.delete(nodeId);
-        return next;
-      });
-      await refreshState(schemaId);
+      try {
+        await fetchJson(`/api/classification/nodes?id=${nodeId}`, { method: 'DELETE' });
+        if (selectedNodeId === nodeId) setSelectedNodeId(null);
+        setSelectedNodeIds((current) => {
+          const next = new Set(current);
+          next.delete(nodeId);
+          return next;
+        });
+        await refreshState(schemaId);
+        setError(null);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to delete category');
+      }
     },
     [schemaId, selectedNodeId, refreshState]
   );
 
-  const ensureTagId = useCallback(async (tagName: string): Promise<number> => {
-    const normalized = tagName.trim().replace(/^#+/, '');
-    const existing = state?.tags.find((tag) => tag.name.toLowerCase() === normalized.toLowerCase());
-    if (existing) return existing.id;
-    const created = await fetchJson<{ id: number; name: string }>('/api/classification/tags', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: normalized }),
-    });
-    return created.id;
-  }, [state]);
+  const createTag = useCallback(
+    async (name: string, color?: string | null): Promise<{ id: number; name: string; color?: string | null }> => {
+      const normalized = name.trim().replace(/^#+/, '');
+      if (!normalized) throw new Error('Tag name is required');
+      const existing = state?.tags.find((tag) => tag.name.toLowerCase() === normalized.toLowerCase());
+      if (existing) return existing;
+      return fetchJson<{ id: number; name: string; color?: string | null }>('/api/classification/tags', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: normalized, color: color ?? null }),
+      });
+    },
+    [state],
+  );
 
-  const assignTags = useCallback(
-    async (nodeId: number, tagNames: string[]) => {
-      if (!schemaId || !tagNames.length) return;
-      for (const tagName of tagNames) {
-        const tagId = await ensureTagId(tagName);
+  const ensureTagId = useCallback(
+    async (tagName: string, color?: string | null): Promise<number> => {
+      const created = await createTag(tagName, color);
+      return created.id;
+    },
+    [createTag],
+  );
+
+  const assignTagById = useCallback(
+    async (nodeId: number, tagId: number) => {
+      if (!schemaId) return;
+      try {
         await fetchJson('/api/classification/material-tags/bulk', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ materialNodeIds: [nodeId], tagId }),
         });
+        await refreshState(schemaId);
+        setError(null);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to assign tag');
+        throw err;
       }
-      await refreshState(schemaId);
     },
-    [schemaId, ensureTagId, refreshState]
+    [schemaId, refreshState],
+  );
+
+  const assignTags = useCallback(
+    async (nodeId: number, tagNames: string[], color?: string | null) => {
+      if (!schemaId || !tagNames.length) return;
+      try {
+        for (const tagName of tagNames) {
+          const tagId = await ensureTagId(tagName, color);
+          await fetchJson('/api/classification/material-tags/bulk', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ materialNodeIds: [nodeId], tagId }),
+          });
+        }
+        await refreshState(schemaId);
+        setError(null);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to assign tags');
+      }
+    },
+    [schemaId, ensureTagId, refreshState],
+  );
+
+  const createAndAssignTag = useCallback(
+    async (nodeId: number, name: string, color?: string | null) => {
+      if (!schemaId) return;
+      try {
+        const tag = await createTag(name, color);
+        await assignTagById(nodeId, tag.id);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to create and assign tag');
+      }
+    },
+    [schemaId, createTag, assignTagById],
   );
 
   const removeTag = useCallback(
     async (nodeId: number, tagId: number) => {
       if (!schemaId) return;
-      await fetchJson('/api/classification/material-tags/bulk', {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ materialNodeIds: [nodeId], tagId }),
-      });
-      await refreshState(schemaId);
+      try {
+        await fetchJson('/api/classification/material-tags/bulk', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ materialNodeIds: [nodeId], tagId }),
+        });
+        await refreshState(schemaId);
+        setError(null);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to remove tag');
+      }
     },
     [schemaId, refreshState]
   );
 
-  const renameTag = useCallback(
-    async (tagId: number, name: string) => {
+  const updateTag = useCallback(
+    async (tagId: number, name: string, color?: string | null) => {
       if (!schemaId) return;
       const normalized = name.trim().replace(/^#+/, '');
       if (!normalized) return;
-      await fetchJson('/api/classification/tags', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: tagId, name: normalized }),
-      });
-      await refreshState(schemaId);
+      try {
+        await fetchJson('/api/classification/tags', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: tagId, name: normalized, color: color ?? null }),
+        });
+        await refreshState(schemaId);
+        setError(null);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to update tag');
+      }
+    },
+    [schemaId, refreshState],
+  );
+
+  const renameTag = useCallback(
+    async (tagId: number, name: string) => {
+      const existing = state?.tags.find((tag) => tag.id === tagId);
+      await updateTag(tagId, name, existing?.color ?? null);
+    },
+    [state, updateTag],
+  );
+
+  const deleteTagById = useCallback(
+    async (tagId: number) => {
+      if (!schemaId) return;
+      try {
+        await fetchJson(`/api/classification/tags?id=${tagId}`, { method: 'DELETE' });
+        await refreshState(schemaId);
+        setError(null);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to delete tag');
+      }
     },
     [schemaId, refreshState]
   );
@@ -662,6 +924,10 @@ export function useClassificationStore(initialSchemaId?: number) {
         }
         setExpandedIds((current) => new Set([...current, selectedNodeId]));
         await refreshState(schemaId);
+        setError(null);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to create categories');
+        throw err;
       } finally {
         setCreatingChildNodes(false);
       }
@@ -677,6 +943,10 @@ export function useClassificationStore(initialSchemaId?: number) {
         for (const update of updates) {
           await renameNode(update.id, update.name);
         }
+        setError(null);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to rename categories');
+        throw err;
       } finally {
         setUpdatingChildNodes(false);
       }
@@ -693,6 +963,10 @@ export function useClassificationStore(initialSchemaId?: number) {
           await fetchJson(`/api/classification/nodes?id=${nodeId}`, { method: 'DELETE' });
         }
         await refreshState(schemaId);
+        setError(null);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to delete categories');
+        throw err;
       } finally {
         setDeletingChildNodes(false);
       }
@@ -732,6 +1006,9 @@ export function useClassificationStore(initialSchemaId?: number) {
       await runImport(bulkPreview.rows, false);
       setBulkOpen(false);
       setBulkText('');
+      setError(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Bulk import failed');
     } finally {
       setImporting(false);
     }
@@ -754,6 +1031,9 @@ export function useClassificationStore(initialSchemaId?: number) {
       setImportDrawerOpen(false);
       setImportRows([]);
       setImportPreview(null);
+      setError(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Import failed');
     } finally {
       setImporting(false);
     }
@@ -901,8 +1181,13 @@ export function useClassificationStore(initialSchemaId?: number) {
     deleteNode,
     reparentNode,
     assignTags,
+    assignTagById,
+    createAndAssignTag,
+    createTag,
     removeTag,
+    updateTag,
     renameTag,
+    deleteTagById,
     batchAddChildNodes,
     batchRenameChildNodes,
     batchDeleteChildNodes,
@@ -917,6 +1202,7 @@ export function useClassificationStore(initialSchemaId?: number) {
     isFilterOptionSelected,
     toggleFilterTag,
     clearFilterTags,
+    resetTreeFilters,
     isFilterTagSelected,
     openContextMenu,
     dragSourceIds,

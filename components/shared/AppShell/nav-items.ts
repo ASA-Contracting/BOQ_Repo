@@ -2,9 +2,11 @@ import type { LucideIcon } from "lucide-react";
 import {
   BarChart3,
   FileSpreadsheet,
-  Layers,
   Settings,
+  Users,
 } from "lucide-react";
+
+import type { Role } from "@/domain/shared/Role";
 
 export type ShellNavItem = {
   href: string;
@@ -21,19 +23,37 @@ export type ShellNavSection = {
 export const shellNavSections: ShellNavSection[] = [
   {
     title: "Workspace",
-    items: [
-      { href: "/boq", label: "BOQ", icon: FileSpreadsheet },
-      { href: "/classification", label: "Category builder", icon: Layers },
-    ],
+    items: [{ href: "/boq", label: "BOQ", icon: FileSpreadsheet }],
   },
   {
     title: "Business",
     items: [{ href: "/reports", label: "Reports", icon: BarChart3 }],
   },
   {
+    title: "Administration",
     items: [{ href: "/settings", label: "Settings", icon: Settings }],
   },
 ];
+
+export function getShellNavSections(roles: readonly Role[]): ShellNavSection[] {
+  const sections = shellNavSections.map((section) => ({
+    ...section,
+    items: [...section.items],
+  }));
+
+  if (roles.includes("system_administrator")) {
+    const adminSection = sections.find((section) => section.title === "Administration");
+    if (adminSection) {
+      adminSection.items.push({
+        href: "/settings/users",
+        label: "Users",
+        icon: Users,
+      });
+    }
+  }
+
+  return sections;
+}
 
 export const shellNavItems: ShellNavItem[] = shellNavSections.flatMap(
   (section) => section.items,
@@ -46,6 +66,8 @@ const routeLabels: Record<string, string> = Object.fromEntries(
 routeLabels["/"] = "Home";
 routeLabels["/families"] = "Families";
 routeLabels["/projects"] = "Projects";
+routeLabels["/boq/import"] = "Import BOQ";
+routeLabels["/settings/users"] = "Users";
 
 export function getRouteLabel(pathname: string): string {
   if (routeLabels[pathname]) {
@@ -62,7 +84,7 @@ export function getRouteLabel(pathname: string): string {
   }
 
   if (pathname.startsWith("/boq/")) {
-    return "BOQ";
+    return "Categorizing";
   }
 
   return "Page";

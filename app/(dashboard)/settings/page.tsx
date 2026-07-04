@@ -1,15 +1,18 @@
-import {
-  ShellContent,
-  ShellPlaceholder,
-} from "@/components/shared/AppShell";
+import { redirect } from "next/navigation";
 
-export default function SettingsPage() {
+import { SettingsWorkspace } from "@/app/(dashboard)/settings/_components/SettingsWorkspace";
+import { ShellContent } from "@/components/shared/AppShell";
+import { getSessionUser } from "@/infrastructure/auth/getSessionUser";
+
+export default async function SettingsPage() {
+  const user = await getSessionUser();
+  if (!user) {
+    redirect("/login");
+  }
+
   return (
-    <ShellContent>
-      <ShellPlaceholder
-        title="Settings"
-        description="Application settings — business logic not implemented."
-      />
+    <ShellContent flush className="h-full">
+      <SettingsWorkspace user={user} />
     </ShellContent>
   );
 }

@@ -56,6 +56,7 @@ export type CodingRulesEntity = {
 export type TagEntity = {
   id: number;
   name: string;
+  color?: string | null;
 };
 
 export type MaterialTagEntity = {

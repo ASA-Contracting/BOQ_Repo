@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import * as React from "react";
 
 import {
@@ -11,9 +12,11 @@ import {
   useAppShell,
 } from "@/components/shared/AppShell/AppShellContext";
 import {
+  getShellNavSections,
   shellNavSections,
   type ShellNavItem,
 } from "@/components/shared/AppShell/nav-items";
+import type { Role } from "@/domain/shared/Role";
 import { Text } from "@/components/ui/typography";
 import {
   navItemActive,
@@ -21,6 +24,8 @@ import {
   navItemInactive,
 } from "@/lib/design/interactive";
 import { cn } from "@/lib/utils";
+
+import "@/styles/app-shell-sidebar.css";
 
 function NavLink({
   item,
@@ -57,12 +62,14 @@ function NavLink({
 
 type AppShellSidebarProps = {
   footer: React.ReactNode;
+  roles: readonly Role[];
 };
 
-export function AppShellSidebar({ footer }: AppShellSidebarProps) {
+export function AppShellSidebar({ footer, roles }: AppShellSidebarProps) {
   const pathname = usePathname();
   const {
     collapsed,
+    toggleCollapsed,
     sidebarWidth,
     setSidebarWidth,
     mobileOpen,
@@ -106,15 +113,26 @@ export function AppShellSidebar({ footer }: AppShellSidebarProps) {
     setMobileOpen(false);
   }, [pathname, setMobileOpen]);
 
+  const navSections = React.useMemo(
+    () => getShellNavSections(roles),
+    [roles],
+  );
+
   const sidebarContent = (
     <>
       <div
         className={cn(
-          "flex h-[var(--topnav-height)] shrink-0 items-center border-b border-sidebar-border",
-          collapsed ? "justify-center px-2" : "px-3",
+          "app-shell-sidebar__header shrink-0 border-b border-sidebar-border px-2",
+          collapsed ? "app-shell-sidebar__header--collapsed" : "h-[var(--topnav-height)] px-3",
         )}
       >
-        <Link href="/projects" className="flex min-w-0 items-center gap-2">
+        <Link
+          href="/boq"
+          className={cn(
+            "app-shell-sidebar__brand flex min-w-0 items-center gap-2",
+            collapsed && "justify-center",
+          )}
+        >
           <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-primary text-[10px] font-bold text-primary-foreground">
             B
           </span>
@@ -124,10 +142,25 @@ export function AppShellSidebar({ footer }: AppShellSidebarProps) {
             </Text>
           ) : null}
         </Link>
+
+        <button
+          type="button"
+          className="app-shell-sidebar__collapse-btn hidden md:inline-flex"
+          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          aria-expanded={!collapsed}
+          title={collapsed ? "Expand sidebar ([)" : "Collapse sidebar ([)"}
+          onClick={toggleCollapsed}
+        >
+          {collapsed ? (
+            <ChevronRight className="h-3.5 w-3.5" aria-hidden />
+          ) : (
+            <ChevronLeft className="h-3.5 w-3.5" aria-hidden />
+          )}
+        </button>
       </div>
 
       <nav className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-2">
-        {shellNavSections.map((section, index) => (
+        {navSections.map((section, index) => (
           <div
             key={section.title ?? `section-${index}`}
             className="flex flex-col gap-0.5"
@@ -190,7 +223,8 @@ export function AppShellSidebar({ footer }: AppShellSidebarProps) {
       <aside
         style={{ width }}
         className={cn(
-          "relative flex h-full shrink-0 flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground",
+          "app-shell-sidebar relative flex h-full shrink-0 flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground",
+          collapsed && "app-shell-sidebar--collapsed",
           mobileOpen
             ? "fixed inset-y-0 left-0 z-50 flex shadow-lg"
             : "hidden md:flex",

@@ -154,13 +154,13 @@ Heights: `sm` (28px), `md` (32px), `lg` (36px).
 
 ### Tables
 
-Primitives: `Table`, `TableHeader`, `TableRow`, `TableHead`, `TableCell`  
-Shell: `DataTable` in `components/shared/DataTable.tsx`
+Default data grid: `SimpleDataGrid` in `components/ui/simple-data-grid.tsx` (`@simple-table/react`).
 
-- Sticky headers for long lists
-- Right-align numeric columns
-- Row hover: `hover:bg-muted/50`
-- Selected row: `data-state="selected"`
+- Built-in: column reorder, resize, column chooser, cell selection
+- Theme follows app light/dark via `modern-light` / `modern-dark`
+- Adapter: `DataGrid` maps legacy column defs to Simple Table headers
+- Filter shell: `FilterableDataGrid` in `components/filter-engine/` (toolbar + grouping)
+- Legacy primitives: `Table`, `TableHeader`, `TableRow`, `TableHead`, `TableCell`, `DataTable`
 
 ### Trees
 

@@ -14,6 +14,16 @@ type GridRow = {
   name: string;
 };
 
+const INITIAL_DRAFT_ROW_COUNT = 3;
+const NEXT_DRAFT_ROW_ID = INITIAL_DRAFT_ROW_COUNT + 1;
+
+function createInitialDraftRows(): GridRow[] {
+  return Array.from({ length: INITIAL_DRAFT_ROW_COUNT }, (_, index) => ({
+    id: `draft-${index + 1}`,
+    name: '',
+  }));
+}
+
 export type ExistingChildNode = {
   id: number;
   name: string;
@@ -37,10 +47,6 @@ type Props = {
   onSelectPathNode: (nodeId: number) => void;
 };
 
-function createEmptyRow(): GridRow {
-  return { id: crypto.randomUUID(), name: '' };
-}
-
 export function CategoryLevelGridPanel({
   parentPath,
   canAdd,
@@ -53,10 +59,22 @@ export function CategoryLevelGridPanel({
   onDeleteSelected,
   onSelectPathNode,
 }: Props) {
-  const [rows, setRows] = useState<GridRow[]>([createEmptyRow(), createEmptyRow(), createEmptyRow()]);
+  const nextDraftRowIdRef = useRef(NEXT_DRAFT_ROW_ID);
+  const createEmptyRow = useCallback((): GridRow => {
+    const id = `draft-${nextDraftRowIdRef.current}`;
+    nextDraftRowIdRef.current += 1;
+    return { id, name: '' };
+  }, []);
+  const resetDraftRows = useCallback((): GridRow[] => {
+    nextDraftRowIdRef.current = NEXT_DRAFT_ROW_ID;
+    return createInitialDraftRows();
+  }, []);
+
+  const [rows, setRows] = useState<GridRow[]>(createInitialDraftRows);
   const [selectedExistingIds, setSelectedExistingIds] = useState<Set<number>>(new Set());
   const [selectedNewRowIds, setSelectedNewRowIds] = useState<Set<string>>(new Set());
   const [editedNames, setEditedNames] = useState<Record<number, string>>({});
+  const [editingNodeId, setEditingNodeId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -64,6 +82,7 @@ export function CategoryLevelGridPanel({
     setSelectedExistingIds(new Set());
     setSelectedNewRowIds(new Set());
     setEditedNames(Object.fromEntries(existingChildNodes.map((node) => [node.id, node.name])));
+    setEditingNodeId(null);
     setError(null);
   }, [parentPath, existingChildNodes]);
 
@@ -129,18 +148,23 @@ export function CategoryLevelGridPanel({
     [namesToCreate, existingKeys],
   );
 
-  const appendNames = useCallback((names: string[]) => {
-    if (!names.length) return;
-    setRows((current) => {
-      const nonEmpty = current.filter((row) => row.name.trim());
-      return [
-        ...nonEmpty,
-        ...names.map((name) => ({ id: crypto.randomUUID(), name })),
-        createEmptyRow(),
-      ];
-    });
-    setError(null);
-  }, []);
+  const appendNames = useCallback(
+    (names: string[]) => {
+      if (!names.length) return;
+      setRows((current) => {
+        const nonEmpty = current.filter((row) => row.name.trim());
+        const importedRows = names.map((name) => {
+          const id = `draft-${nextDraftRowIdRef.current}`;
+          nextDraftRowIdRef.current += 1;
+          return { id, name };
+        });
+        const trailingRow = createEmptyRow();
+        return [...nonEmpty, ...importedRows, trailingRow];
+      });
+      setError(null);
+    },
+    [createEmptyRow],
+  );
 
   const handlePaste = useCallback(
     (event: React.ClipboardEvent) => {
@@ -236,7 +260,7 @@ export function CategoryLevelGridPanel({
     setError(null);
     try {
       await onApply(namesToCreate);
-      setRows([createEmptyRow(), createEmptyRow(), createEmptyRow()]);
+      setRows(resetDraftRows());
       setSelectedNewRowIds(new Set());
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create categories.');
@@ -245,6 +269,14 @@ export function CategoryLevelGridPanel({
 
   const handleDeleteSelected = async () => {
     if (!selectedExistingIds.size) return;
+    const count = selectedExistingIds.size;
+    if (
+      !window.confirm(
+        `Delete ${count} categor${count === 1 ? 'y' : 'ies'}? This cannot be undone.`,
+      )
+    ) {
+      return;
+    }
     setError(null);
     try {
       await onDeleteSelected(Array.from(selectedExistingIds));
@@ -397,28 +429,65 @@ export function CategoryLevelGridPanel({
                           {index + 1}
                         </td>
                         <td className="px-3 py-2" onClick={(event) => event.stopPropagation()}>
-                          <Input
-                            value={draftName}
-                            aria-label={`Edit ${node.name}`}
-                            disabled={saving}
-                            className={cn(
-                              'h-8 border-zinc-200 bg-white shadow-none focus-visible:ring-emerald-500/30',
-                              isDirty && 'border-emerald-400/70 bg-emerald-50/40',
-                            )}
-                            onChange={(event) => {
-                              const value = event.target.value;
-                              setEditedNames((current) => ({
-                                ...current,
-                                [node.id]: value,
-                              }));
-                            }}
-                            onKeyDown={(event) => {
-                              if (event.key === 'Enter') {
-                                event.preventDefault();
-                                void handleSaveRenames();
-                              }
-                            }}
-                          />
+                          {editingNodeId === node.id ? (
+                            <Input
+                              value={draftName}
+                              aria-label={`Edit ${node.name}`}
+                              disabled={saving}
+                              autoFocus
+                              className={cn(
+                                'h-8 border-zinc-200 bg-white shadow-none focus-visible:ring-indigo-500/30',
+                                isDirty && 'border-indigo-300 bg-indigo-50/80',
+                              )}
+                              onChange={(event) => {
+                                const value = event.target.value;
+                                setEditedNames((current) => ({
+                                  ...current,
+                                  [node.id]: value,
+                                }));
+                              }}
+                              onBlur={() => setEditingNodeId(null)}
+                              onKeyDown={(event) => {
+                                if (event.key === 'Enter') {
+                                  event.preventDefault();
+                                  setEditingNodeId(null);
+                                  void handleSaveRenames();
+                                }
+                                if (event.key === 'Escape') {
+                                  event.preventDefault();
+                                  setEditedNames((current) => ({
+                                    ...current,
+                                    [node.id]: node.name,
+                                  }));
+                                  setEditingNodeId(null);
+                                }
+                              }}
+                            />
+                          ) : (
+                            <div
+                              className={cn(
+                                'mc-level-panel__name-field',
+                                isDirty && 'mc-level-panel__name-field--dirty',
+                              )}
+                              role="group"
+                              aria-label={`Category ${node.name}`}
+                              onClick={() => setEditingNodeId(node.id)}
+                            >
+                              <button
+                                type="button"
+                                className="mc-level-panel__name-link-text"
+                                title="Open child categories"
+                                aria-label={`Open child categories for ${node.name}`}
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  onSelectPathNode(node.id);
+                                }}
+                              >
+                                {draftName}
+                              </button>
+                              <span className="mc-level-panel__name-field-spacer" aria-hidden="true" />
+                            </div>
+                          )}
                         </td>
                       </tr>
                     );
@@ -525,7 +594,7 @@ export function CategoryLevelGridPanel({
                         value={row.name}
                         placeholder="Category name"
                         disabled={!canAdd}
-                        className="h-8 border-zinc-200 bg-white shadow-none focus-visible:ring-emerald-500/30"
+                        className="h-8 border-zinc-200 bg-white shadow-none focus-visible:ring-indigo-500/30"
                         onChange={(event) => {
                           const value = event.target.value;
                           setRows((current) =>

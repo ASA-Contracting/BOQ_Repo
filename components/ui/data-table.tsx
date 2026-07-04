@@ -18,6 +18,7 @@ export type DataTableColumn<T> = {
   cell: (row: T) => React.ReactNode;
   className?: string;
   headerClassName?: string;
+  width?: string;
   align?: "left" | "right" | "center";
 };
 

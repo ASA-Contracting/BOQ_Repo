@@ -1,0 +1,85 @@
+/* ABRD Tender Grid tokens — scoped to BOQ grids (master list + breakdown) */
+.boq-master-list,
+.boq-breakdown {
+  --primary: 132 199 24;
+  --info: 14 165 233;
+  --success: 34 197 94;
+  --warning: 245 158 11;
+  --danger: 239 68 68;
+  --bg0: 255 255 255;
+  --bg1: 249 249 249;
+  --surface: 255 255 255;
+  --border: 232 232 232;
+  --border-strong: 214 214 214;
+  --fg: 31 35 43;
+  --muted: 141 141 141;
+
+  --app-color-primary: rgb(var(--primary));
+  --data-grid-link-color: rgb(var(--primary));
+  --data-grid-link-hover-color: color-mix(in oklab, rgb(var(--primary)) 88%, white 12%);
+
+  --app-color-grid-header-bg: rgb(252 252 252);
+  --app-color-grid-row-hover: rgb(240 240 240);
+  --app-color-grid-header-cell-fg: rgb(32 32 32);
+  --app-color-grid-header-text-fg: rgb(131 131 131);
+  --app-color-grid-surface: color-mix(in oklab, white 97%, rgb(var(--bg0)) 3%);
+  --app-color-grid-line: color-mix(in oklab, rgb(var(--border-strong)) 72%, transparent);
+  --app-color-grid-line-soft: color-mix(in oklab, rgb(var(--border-strong)) 54%, transparent);
+  --app-color-grid-body-text: #292d34;
+  --app-color-grid-body-text-soft: color-mix(in oklab, rgb(var(--fg)) 68%, white 32%);
+  --app-color-grid-link: var(--data-grid-link-color);
+  --app-color-grid-link-hover: var(--data-grid-link-hover-color);
+
+  --app-color-grid-pill-border: color-mix(in oklab, rgb(var(--border-strong)) 40%, transparent);
+  --app-color-grid-pill-surface: color-mix(in oklab, white 96%, rgb(var(--bg1)) 4%);
+  --app-color-grid-pill-text: color-mix(in oklab, rgb(var(--fg)) 76%, transparent);
+  --app-color-grid-pill-tone-border: color-mix(
+    in oklab,
+    var(--app-color-grid-pill-border) 80%,
+    currentColor 20%
+  );
+  --app-color-grid-pill-tone-bg: color-mix(
+    in oklab,
+    var(--app-color-grid-pill-surface) 90%,
+    currentColor 10%
+  );
+
+  --app-color-pill-tone-green-rgb: 78 128 62;
+  --app-color-pill-tone-yellow-rgb: 160 117 36;
+  --app-color-pill-tone-red-rgb: 178 81 76;
+  --app-color-pill-tone-blue-rgb: 61 104 183;
+  --app-color-pill-tone-purple-rgb: 116 84 174;
+  --app-color-pill-tone-teal-rgb: 43 118 113;
+  --app-color-pill-tone-orange-rgb: 168 108 42;
+  --app-color-pill-tone-gray-rgb: 94 101 113;
+
+  --app-color-grid-pill-tone-green: rgb(var(--app-color-pill-tone-green-rgb));
+  --app-color-grid-pill-tone-yellow: rgb(var(--app-color-pill-tone-yellow-rgb));
+  --app-color-grid-pill-tone-red: rgb(var(--app-color-pill-tone-red-rgb));
+  --app-color-grid-pill-tone-blue: rgb(var(--app-color-pill-tone-blue-rgb));
+  --app-color-grid-pill-tone-purple: rgb(var(--app-color-pill-tone-purple-rgb));
+  --app-color-grid-pill-tone-teal: rgb(var(--app-color-pill-tone-teal-rgb));
+  --app-color-grid-pill-tone-orange: rgb(var(--app-color-pill-tone-orange-rgb));
+  --app-color-grid-pill-tone-gray: rgb(var(--app-color-pill-tone-gray-rgb));
+
+  --app-grid-pill-height: 21px;
+  --app-grid-pill-radius: 6px;
+  --app-grid-pill-padding-inline: 7px;
+  --app-grid-pill-gap: 4px;
+  --app-grid-pill-font-size: 10px;
+  --app-grid-pill-font-weight: 600;
+  --app-grid-pill-dot-size: 7px;
+  --app-grid-pill-dot-ring: 1.5px;
+
+  --app-grid-header-cell-height: 32px;
+  --app-grid-header-cell-padding-inline: 8px;
+  --app-grid-header-cell-font-size: 13px;
+  --app-grid-header-cell-font-weight: 700;
+  --app-grid-header-text-size: 12px;
+  --app-grid-header-text-font-weight: 500;
+  --app-grid-header-text-line-height: 1.3333333333;
+
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial,
+    sans-serif;
+  color: rgb(var(--fg));
+}

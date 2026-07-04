@@ -100,6 +100,7 @@ export const boqItems = pgTable(
     Id: integer("Id").primaryKey().generatedAlwaysAsIdentity(),
     BoqId: integer("BoqId").notNull(),
     RowIndex: integer("RowIndex").notNull(),
+    OriginalRowIndex: integer("OriginalRowIndex"),
     ItemNo: varchar("ItemNo", { length: 150 }),
     Description: text("Description"),
     Unit: varchar("Unit", { length: 50 }),

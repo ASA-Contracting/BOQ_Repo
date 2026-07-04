@@ -1,15 +1,5 @@
-import {
-  ShellContent,
-  ShellPlaceholder,
-} from "@/components/shared/AppShell";
+import { redirect } from "next/navigation";
 
 export default function ProjectsPage() {
-  return (
-    <ShellContent>
-      <ShellPlaceholder
-        title="Projects"
-        description="Project workspace shell — business logic not implemented."
-      />
-    </ShellContent>
-  );
+  redirect("/boq?projects=1");
 }

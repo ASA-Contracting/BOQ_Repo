@@ -76,6 +76,7 @@ export class ProcessImportJobsUseCase
           headers: parsed.headers,
           rows: parsed.allRows,
           columnMapping,
+          projectName: campaign.name,
         });
 
         if (!importResult.ok) {

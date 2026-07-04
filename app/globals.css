@@ -1,4 +1,6 @@
 @import "tailwindcss";
+@import "@simple-table/react/styles.css";
+@import "../styles/simple-table-overrides.css";
 
 /* ─── BOQ Platform Design System ───────────────────────────────────────────
    Enterprise workspace UI. Tokens are the single source of truth.

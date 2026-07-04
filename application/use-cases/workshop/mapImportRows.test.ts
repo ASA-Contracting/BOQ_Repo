@@ -16,6 +16,8 @@ describe("mapImportRows", () => {
       ["2", "Check valve", "EA", "5"],
     ],
     columnMapping: {},
+    projectName: "Test Project",
+    discipline: "Plumbing" as const,
   };
 
   it("reads cells by column index when columnMappingByIndex is provided", () => {
@@ -80,5 +82,79 @@ describe("mapImportRows", () => {
     expect(lines).toHaveLength(2);
     expect(lines.every((line) => line.itemNo)).toBe(true);
     expect(lines.every((line) => !line.description)).toBe(true);
+  });
+
+  it("applies BOQ-level discipline to every imported row", () => {
+    const lines = mapImportRows({
+      ...baseInput,
+      discipline: "Electrical",
+      columnMappingByIndex: {
+        "0": "item_no",
+        "1": "description",
+        "2": "unit",
+        "3": "quantity",
+      },
+    });
+
+    expect(lines.every((line) => line.contextSnapshot?.discipline === "Electrical")).toBe(true);
+  });
+
+  it("prefers Excel discipline column over BOQ-level discipline", () => {
+    const lines = mapImportRows({
+      ...baseInput,
+      discipline: "Electrical",
+      headers: ["A · BOQ #", "B · Item Description", "C · Unit", "D · QTY", "E · Trade"],
+      rows: [
+        ["", "Section 15520 - (Valves)", "", "", "Plumbing"],
+        ["1", "Gate valve 2in", "EA", "10", "Plumbing"],
+      ],
+      columnMappingByIndex: {
+        "0": "item_no",
+        "1": "description",
+        "2": "unit",
+        "3": "quantity",
+        "4": "discipline",
+      },
+    });
+
+    expect(lines.every((line) => line.contextSnapshot?.discipline === "Plumbing")).toBe(true);
+  });
+
+  it("inherits section header description as parent section for child rows", () => {
+    const lines = mapImportRows({
+      ...baseInput,
+      columnMappingByIndex: {
+        "0": "item_no",
+        "1": "description",
+        "2": "unit",
+        "3": "quantity",
+      },
+    });
+
+    expect(lines[0]?.contextSnapshot?.sectionParent).toBe("Section 15520 - (Valves)");
+    expect(lines[1]?.contextSnapshot?.section).toBe("Section 15520 - (Valves)");
+    expect(lines[1]?.contextSnapshot?.sectionParent).toBe("Section 15520 - (Valves)");
+    expect(lines[2]?.contextSnapshot?.section).toBe("Section 15520 - (Valves)");
+  });
+
+  it("resets inherited section when a new section header appears", () => {
+    const lines = mapImportRows({
+      ...baseInput,
+      rows: [
+        ["", "Mechanical Works", "", ""],
+        ["1", "AHU", "EA", "2"],
+        ["", "Electrical Works", "", ""],
+        ["2", "Cable tray", "m", "50"],
+      ],
+      columnMappingByIndex: {
+        "0": "item_no",
+        "1": "description",
+        "2": "unit",
+        "3": "quantity",
+      },
+    });
+
+    expect(lines[1]?.contextSnapshot?.section).toBe("Mechanical Works");
+    expect(lines[3]?.contextSnapshot?.section).toBe("Electrical Works");
   });
 });

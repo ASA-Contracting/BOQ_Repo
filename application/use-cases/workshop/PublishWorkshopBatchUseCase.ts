@@ -1,17 +1,19 @@
+import type { IBoqReadRepository } from "@/application/ports/IBoqReadRepository";
 import type { PublishBatchInput } from "@/application/dto/workshop/importBoqSchema";
 import type { IUseCase } from "@/application/use-cases/IUseCase";
 import { authorizeWorkshopPublish } from "@/application/use-cases/workshop/authorizeWorkshopPublish";
+import { toBoqId, toBoqItemId } from "@/domain/boq/ids";
 import type { DomainError } from "@/domain/shared/errors/DomainError";
 import type { IUnitOfWork } from "@/domain/shared/persistence/IUnitOfWork";
 import type { RequestContext } from "@/domain/shared/RequestContext";
 import { err, ok, type Result } from "@/domain/shared/Result";
 import {
   WorkshopBatchNotFoundError,
+  WorkshopEmptyBoqError,
   WorkshopNothingToPublishError,
   WorkshopPublishNotCompleteError,
 } from "@/domain/workshop/errors/WorkshopErrors";
 import { toWorkshopBatchId } from "@/domain/workshop/ids";
-import { toBoqItemId } from "@/domain/boq/ids";
 import type { IWorkshopBatchRepository } from "@/domain/workshop/repositories/IWorkshopBatchRepository";
 import type { IWorkshopExportRepository } from "@/domain/workshop/repositories/IWorkshopExportRepository";
 import type { IWorkshopItemRepository } from "@/domain/workshop/repositories/IWorkshopItemRepository";
@@ -27,6 +29,7 @@ export type PublishWorkshopBatchDependencies = {
   workshopBatchRepository: IWorkshopBatchRepository;
   workshopItemRepository: IWorkshopItemRepository;
   workshopExportRepository: IWorkshopExportRepository;
+  boqReadRepository: IBoqReadRepository;
   unitOfWork: IUnitOfWork;
 };
 
@@ -48,6 +51,15 @@ export class PublishWorkshopBatchUseCase
     const batch = await this.deps.workshopBatchRepository.findById(batchId);
     if (!batch) {
       return err(new WorkshopBatchNotFoundError(batchId));
+    }
+
+    if (batch.scopeBoqId != null) {
+      const measurableCount = await this.deps.boqReadRepository.countMeasurableItems(
+        toBoqId(batch.scopeBoqId),
+      );
+      if (measurableCount === 0) {
+        return err(new WorkshopEmptyBoqError());
+      }
     }
 
     const publishPolicy = input.publishPolicy ?? "partial";

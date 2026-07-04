@@ -51,20 +51,21 @@ export function mapImportRows(input: ImportBoqInput): MappedImportLine[] {
     return row[index]?.trim() ?? "";
   };
 
-  return input.rows
+  const mapped = input.rows
     .map((row, index) => {
       const description = getCell(row, "description");
       const unit = getCell(row, "unit");
       const quantity = normalizeImportQuantity(getCell(row, "quantity"));
       const itemNo = getCell(row, "item_no");
       const section = getCell(row, "section");
-      const discipline = getCell(row, "discipline");
+      const rowDiscipline = getCell(row, "discipline");
       const familyHint = getCell(row, "family");
 
       const contextSnapshot: Record<string, string> = {};
       if (section) {
         contextSnapshot.section = section;
       }
+      const discipline = rowDiscipline || input.discipline;
       if (discipline) {
         contextSnapshot.discipline = discipline;
       }
@@ -86,6 +87,46 @@ export function mapImportRows(input: ImportBoqInput): MappedImportLine[] {
       };
     })
     .filter((line) => line.description || line.itemNo);
+
+  return applySectionInheritance(mapped);
+}
+
+/** Propagate section header rows as the inherited parent for following child rows. */
+export function applySectionInheritance(lines: MappedImportLine[]): MappedImportLine[] {
+  let currentSectionParent: string | null = null;
+
+  return lines.map((line) => {
+    if (line.isHeader) {
+      currentSectionParent =
+        line.description?.trim() ||
+        line.contextSnapshot?.section?.trim() ||
+        null;
+
+      const contextSnapshot = { ...(line.contextSnapshot ?? {}) };
+      if (currentSectionParent) {
+        contextSnapshot.sectionParent = currentSectionParent;
+        contextSnapshot.section = currentSectionParent;
+      }
+
+      return {
+        ...line,
+        contextSnapshot: Object.keys(contextSnapshot).length > 0 ? contextSnapshot : null,
+      };
+    }
+
+    const inheritedSection = currentSectionParent ?? line.contextSnapshot?.section ?? null;
+    const contextSnapshot = { ...(line.contextSnapshot ?? {}) };
+
+    if (inheritedSection) {
+      contextSnapshot.section = inheritedSection;
+      contextSnapshot.sectionParent = inheritedSection;
+    }
+
+    return {
+      ...line,
+      contextSnapshot: Object.keys(contextSnapshot).length > 0 ? contextSnapshot : null,
+    };
+  });
 }
 
 export function countMeasurableImportRows(input: ImportBoqInput): number {

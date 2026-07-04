@@ -4,17 +4,30 @@ import type { IUnitOfWork } from "@/domain/shared/persistence/IUnitOfWork";
 import type { IDatabaseHealthRepository } from "@/domain/shared/persistence/IDatabaseHealthRepository";
 import { AuthorizationService } from "@/infrastructure/auth/authorization/AuthorizationService";
 import { getAppConfig } from "@/infrastructure/config/appConfig";
+import { createBoqServices, type BoqServices } from "@/infrastructure/di/boq";
 import {
   createFamilyServices,
   type FamilyServices,
 } from "@/infrastructure/di/family";
 import {
+  createProjectServices,
+  type ProjectServices,
+} from "@/infrastructure/di/project";
+import {
   createWorkshopServices,
   type WorkshopServices,
 } from "@/infrastructure/di/workshop";
-import { ConsoleLogger } from "@/infrastructure/logging/ConsoleLogger";
+import {
+  createPreferencesServices,
+  type PreferencesServices,
+} from "@/infrastructure/di/preferences";
+import {
+  createUserAdminServices,
+  type UserAdminServices,
+} from "@/infrastructure/di/userAdmin";
 import { DrizzleDatabaseHealthRepository } from "@/infrastructure/persistence/repositories/DrizzleDatabaseHealthRepository";
 import { DrizzleUnitOfWork } from "@/infrastructure/persistence/unitOfWork/DrizzleUnitOfWork";
+import { ConsoleLogger } from "@/infrastructure/logging/ConsoleLogger";
 import { getSupabaseEnv } from "@/infrastructure/config/env";
 
 export type AppServices = {
@@ -24,7 +37,11 @@ export type AppServices = {
   authorization: AuthorizationService;
   getHealthStatusUseCase: GetHealthStatusUseCase;
   family: FamilyServices;
+  project: ProjectServices;
+  boq: BoqServices;
   workshop: WorkshopServices;
+  preferences: PreferencesServices;
+  userAdmin: UserAdminServices;
 };
 
 let appServices: AppServices | undefined;
@@ -44,6 +61,8 @@ export function createAppServices(): AppServices {
   const appConfig = getAppConfig();
   const unitOfWork = new DrizzleUnitOfWork();
   const family = createFamilyServices({ unitOfWork });
+  const project = createProjectServices();
+  const boq = createBoqServices();
 
   return {
     logger,
@@ -56,10 +75,15 @@ export function createAppServices(): AppServices {
       appVersion: appConfig.appVersion,
     }),
     family,
+    project,
+    boq,
     workshop: createWorkshopServices({
       unitOfWork,
       familyRepository: family.familyRepository,
+      boqReadRepository: boq.boqReadRepository,
     }),
+    preferences: createPreferencesServices(),
+    userAdmin: createUserAdminServices(),
   };
 }
 

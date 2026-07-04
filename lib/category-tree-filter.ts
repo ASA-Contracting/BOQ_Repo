@@ -213,10 +213,7 @@ export function matchesModeFilter(
   tagNames: string[],
   materialItemCount: number
 ): boolean {
-  if (selectedModes.size === 0) {
-    return false;
-  }
-  if (selectedModes.size === TREE_FILTER_OPTION_MODES.length) {
+  if (selectedModes.size === 0 || selectedModes.size === TREE_FILTER_OPTION_MODES.length) {
     return true;
   }
   return (

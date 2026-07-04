@@ -47,7 +47,7 @@ function AppShellInner({ user, children }: AppShellProps) {
 
   return (
     <div className="flex h-svh overflow-hidden bg-background">
-      <AppShellSidebar footer={<ShellSidebarFooter user={user} />} />
+      <AppShellSidebar footer={<ShellSidebarFooter user={user} />} roles={user.roles} />
 
       <div className="flex min-w-0 flex-1 flex-col">
         <CommandBar searchRef={searchRef} trailing={<WorkshopApprovalInbox />} />

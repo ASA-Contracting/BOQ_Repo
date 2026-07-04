@@ -2,9 +2,14 @@
 
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { ExplorerTree } from '@/components/explorer-tree/ExplorerTree';
-import { IconPen, IconPlus, IconTag, IconX } from '@/components/explorer-tree/classification-icons';
+import { IconDots, IconPen, IconPlus } from '@/components/explorer-tree/classification-icons';
 import type { CategoryExplorerTreeNode } from '@/lib/category-tree-builder';
 import type { CategoryContextMenuState } from '@/hooks/use-classification-store';
+import type { TagRecord } from '@/lib/tag-colors';
+import {
+  CategoryAssignedTagPill,
+  CategoryTagPickerPopover,
+} from './category-tag-picker';
 
 type StoreSlice = {
   expandedIds: Set<number>;
@@ -93,39 +98,36 @@ export function CategoryContextMenu({
   menu,
   nodeTags,
   inheritedTags,
-  availableTags,
+  allTags,
   onClose,
   onRename,
   onDelete,
   onAddChild,
-  onAssignTag,
+  onAssignTagById,
   onRemoveTag,
-  onRenameTag,
+  onCreateAndAssignTag,
 }: {
   menu: CategoryContextMenuState;
-  nodeTags: Array<{ id: number; name: string }>;
+  nodeTags: TagRecord[];
   inheritedTags: Array<{ tag: string; sourceLabel: string }>;
-  availableTags: string[];
+  allTags: TagRecord[];
   onClose: () => void;
   onRename: () => void;
   onDelete: () => void;
   onAddChild: () => void;
-  onAssignTag: (tagName: string) => void;
+  onAssignTagById: (tagId: number) => void;
   onRemoveTag: (tagId: number) => void;
-  onRenameTag: (tagId: number, name: string) => void;
+  onCreateAndAssignTag: (name: string, color: string) => void;
 }) {
-  const [tagInput, setTagInput] = useState('');
-  const [editingTagId, setEditingTagId] = useState<number | null>(null);
-  const [editingTagName, setEditingTagName] = useState('');
-  const tagInputRef = useRef<HTMLInputElement>(null);
+  const [tagPickerOpen, setTagPickerOpen] = useState(false);
+  const [tagQuery, setTagQuery] = useState('');
+  const tagPickerAnchorRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (menu) {
-      setTagInput('');
-      setEditingTagId(null);
-      setEditingTagName('');
-      queueMicrotask(() => tagInputRef.current?.focus());
+      setTagPickerOpen(false);
+      setTagQuery('');
     }
   }, [menu]);
 
@@ -135,38 +137,33 @@ export function CategoryContextMenu({
     const rect = el.getBoundingClientRect();
     let top = menu.y;
     let left = menu.x;
+    const margin = 12;
 
-    if (rect.bottom > window.innerHeight - 12) {
-      top = Math.max(12, menu.y - rect.height - 8);
+    if (rect.bottom > window.innerHeight - margin) {
+      top = Math.max(margin, window.innerHeight - rect.height - margin);
     }
-    if (rect.right > window.innerWidth - 12) {
-      left = Math.max(12, window.innerWidth - rect.width - 12);
+    if (rect.right > window.innerWidth - margin) {
+      left = Math.max(margin, window.innerWidth - rect.width - margin);
     }
-    if (top < 12) top = 12;
+    if (top < margin) top = margin;
+    if (left < margin) left = margin;
 
     el.style.top = `${top}px`;
     el.style.left = `${left}px`;
-  }, [menu, nodeTags.length, inheritedTags.length, editingTagId]);
+  }, [menu, nodeTags.length, inheritedTags.length, tagPickerOpen]);
 
   if (!menu) return null;
 
-  const submitTag = () => {
-    const trimmed = tagInput.trim().replace(/^#+/, '');
-    if (!trimmed) return;
-    onAssignTag(trimmed);
-    setTagInput('');
-  };
-
-  const submitTagRename = () => {
-    if (editingTagId == null) return;
-    const trimmed = editingTagName.trim().replace(/^#+/, '');
-    if (!trimmed) return;
-    onRenameTag(editingTagId, trimmed);
-    setEditingTagId(null);
-    setEditingTagName('');
-  };
-
+  const assignedTagIds = new Set(nodeTags.map((tag) => tag.id));
   const tagCount = nodeTags.length + inheritedTags.length;
+
+  const toggleTag = (tagId: number) => {
+    if (assignedTagIds.has(tagId)) {
+      onRemoveTag(tagId);
+      return;
+    }
+    onAssignTagById(tagId);
+  };
 
   return (
     <>
@@ -181,7 +178,13 @@ export function CategoryContextMenu({
         onMouseDown={(event) => event.stopPropagation()}
         onClick={(event) => event.stopPropagation()}
         onKeyDown={(event) => {
-          if (event.key === 'Escape') onClose();
+          if (event.key === 'Escape') {
+            if (tagPickerOpen) {
+              setTagPickerOpen(false);
+              return;
+            }
+            onClose();
+          }
         }}
       >
         <div className="mc-tree-context-menu__head">
@@ -208,77 +211,18 @@ export function CategoryContextMenu({
           </div>
 
           {nodeTags.length > 0 || inheritedTags.length > 0 ? (
-            <div className="mc-tree-context-tags">
+            <div className="mc-tree-context-tags mc-tree-context-tags--assigned">
               {nodeTags.map((tag) => (
-                <span key={tag.id} className="mc-tree-context-tag" title="Direct tag">
-                  {editingTagId === tag.id ? (
-                    <form
-                      className="mc-tree-context-tag__edit"
-                      onSubmit={(event) => {
-                        event.preventDefault();
-                        submitTagRename();
-                      }}
-                    >
-                      <input
-                        value={editingTagName}
-                        autoFocus
-                        aria-label={`Edit tag ${tag.name}`}
-                        onChange={(event) => setEditingTagName(event.target.value)}
-                        onKeyDown={(event) => {
-                          if (event.key === 'Escape') {
-                            setEditingTagId(null);
-                            setEditingTagName('');
-                          }
-                        }}
-                      />
-                      <button type="submit" className="mc-tree-context-tag__save" aria-label="Save tag">
-                        Save
-                      </button>
-                    </form>
-                  ) : (
-                    <>
-                      <button
-                        type="button"
-                        className="mc-tree-context-tag__main"
-                        title="Click to edit tag"
-                        onClick={() => {
-                          setEditingTagId(tag.id);
-                          setEditingTagName(tag.name);
-                        }}
-                      >
-                        <i aria-hidden="true">
-                          <IconTag />
-                        </i>
-                        <span>{tag.name}</span>
-                      </button>
-                      <button
-                        type="button"
-                        className="mc-tree-context-tag__remove"
-                        title="Remove from this category"
-                        aria-label="Remove tag from this category"
-                        onClick={() => onRemoveTag(tag.id)}
-                      >
-                        <i aria-hidden="true">
-                          <IconX />
-                        </i>
-                      </button>
-                    </>
-                  )}
-                </span>
+                <CategoryAssignedTagPill key={tag.id} tag={tag} onRemove={() => onRemoveTag(tag.id)} />
               ))}
               {inheritedTags.map((row) => (
                 <span
                   key={`${row.tag}-${row.sourceLabel}`}
-                  className="mc-tree-context-tag is-inherited"
+                  className="mc-tree-context-tag-pill is-inherited"
                   title={`Inherited from ${row.sourceLabel}`}
                 >
-                  <span className="mc-tree-context-tag__main is-static">
-                    <i aria-hidden="true">
-                      <IconTag />
-                    </i>
-                    <span>{row.tag}</span>
-                    <small>{row.sourceLabel}</small>
-                  </span>
+                  <span className="mc-tree-context-tag-pill__label">{row.tag}</span>
+                  <small className="mc-tree-context-tag-pill__source">{row.sourceLabel}</small>
                 </span>
               ))}
             </div>
@@ -286,47 +230,50 @@ export function CategoryContextMenu({
             <div className="mc-tree-context-empty">No tags on this category yet.</div>
           )}
 
-          <form
-            className="mc-tree-context-tag-form"
-            onSubmit={(event) => {
-              event.preventDefault();
-              submitTag();
-            }}
-          >
-            <input
-              ref={tagInputRef}
-              type="text"
-              name="categoryTag"
-              value={tagInput}
-              placeholder="Add tag, e.g. HVAC"
-              autoComplete="off"
-              onChange={(event) => setTagInput(event.target.value)}
-            />
-            <button type="submit" className="mc-tree-context-tag-submit" disabled={!tagInput.trim()}>
-              Apply
+          <div className="mc-tree-context-tag-trigger">
+            <button
+              type="button"
+              className="mc-tree-context-tag-trigger__field"
+              onClick={() => setTagPickerOpen(true)}
+            >
+              Select or create a tag
             </button>
-          </form>
-
-          {availableTags.length > 0 && (
-            <>
-              <span className="mc-tree-context-menu__section-title">Apply existing</span>
-              <div className="mc-tree-context-suggestions">
-                {availableTags.map((tag) => (
-                  <span key={tag} className="mc-tree-context-suggestion">
-                    <button type="button" className="mc-tree-context-suggestion__main" onClick={() => onAssignTag(tag)}>
-                      {tag}
-                    </button>
-                  </span>
-                ))}
-              </div>
-            </>
-          )}
+            <button
+              ref={tagPickerAnchorRef}
+              type="button"
+              className="mc-tree-context-tag-trigger__menu"
+              title="Select or create tags"
+              aria-label="Select or create tags"
+              aria-haspopup="dialog"
+              aria-expanded={tagPickerOpen}
+              onClick={() => setTagPickerOpen((open) => !open)}
+            >
+              <i aria-hidden="true">
+                <IconDots />
+              </i>
+            </button>
+          </div>
         </div>
 
         <button type="button" role="menuitem" className="is-danger" onClick={onDelete}>
           Delete
         </button>
       </div>
+
+      <CategoryTagPickerPopover
+        anchorRef={tagPickerAnchorRef}
+        open={tagPickerOpen}
+        tags={allTags}
+        assignedTagIds={assignedTagIds}
+        query={tagQuery}
+        onQueryChange={setTagQuery}
+        onToggleTag={toggleTag}
+        onCreateTag={(name, color) => {
+          onCreateAndAssignTag(name, color);
+          setTagQuery('');
+        }}
+        onClose={() => setTagPickerOpen(false)}
+      />
     </>
   );
 }

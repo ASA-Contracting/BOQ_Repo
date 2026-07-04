@@ -39,9 +39,16 @@ export const materialItemDtoSchema = z.object({
   pathIds: z.string().nullable().optional(),
 });
 
+export const tagColorSchema = z
+  .string()
+  .regex(/^#[0-9a-fA-F]{6}$/, 'Color must be a hex value like #22c55e')
+  .nullable()
+  .optional();
+
 export const tagDtoSchema = z.object({
   id: z.number(),
   name: z.string(),
+  color: tagColorSchema,
 });
 
 export const materialTagDtoSchema = z.object({
@@ -128,11 +135,13 @@ export const updateMaterialItemSchema = createMaterialItemSchema.extend({
 
 export const createTagSchema = z.object({
   name: z.string().min(1).max(64),
+  color: tagColorSchema,
 });
 
 export const updateTagSchema = z.object({
   id: z.number().int().positive(),
   name: z.string().min(1).max(64),
+  color: tagColorSchema,
 });
 
 export const bulkMaterialTagSchema = z.object({

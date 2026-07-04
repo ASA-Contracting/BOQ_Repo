@@ -5,16 +5,23 @@ import { cn } from "@/lib/utils";
 
 export function Table({
   className,
+  scrollWrapper = true,
+  children,
   ...props
-}: React.HTMLAttributes<HTMLTableElement>) {
-  return (
-    <div className="relative w-full overflow-auto">
-      <table
-        className={cn("w-full caption-bottom text-sm", className)}
-        {...props}
-      />
-    </div>
+}: React.HTMLAttributes<HTMLTableElement> & {
+  scrollWrapper?: boolean;
+}) {
+  const table = (
+    <table className={cn("w-full caption-bottom text-sm", className)} {...props}>
+      {children}
+    </table>
   );
+
+  if (!scrollWrapper) {
+    return table;
+  }
+
+  return <div className="relative w-full overflow-auto">{table}</div>;
 }
 
 export function TableHeader({

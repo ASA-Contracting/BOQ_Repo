@@ -136,6 +136,7 @@ export class DrizzleBoqImportRepository
           chunk.map((line) => ({
             BoqId: boqId,
             RowIndex: line.rowIndex,
+            OriginalRowIndex: line.rowIndex,
             ItemNo: line.itemNo,
             Description: line.description,
             Unit: line.unit,

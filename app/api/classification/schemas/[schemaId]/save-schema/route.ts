@@ -25,6 +25,7 @@ export async function POST(request: NextRequest, { params }: Params) {
     return apiSuccess(maps, 'Material schema saved');
   } catch (error) {
     if (error instanceof ConflictError) return apiError(error.message, 409);
-    throw error;
+    console.error(error);
+    return apiError(error instanceof Error ? error.message : 'Failed to save schema', 500);
   }
 }

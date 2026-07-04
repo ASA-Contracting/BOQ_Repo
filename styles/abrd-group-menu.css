@@ -1,0 +1,178 @@
+@import "./abrd-filter-tokens.css";
+
+.abrd-filter-engine .proj-group-menu {
+  position: relative;
+}
+
+.abrd-filter-engine .proj-group-menu.is-open > .proj-menu-summary {
+  border-color: var(--proj-toolbar-active-border);
+  background: var(--proj-toolbar-active-bg);
+  color: var(--proj-toolbar-active-fg);
+}
+
+.abrd-filter-engine .proj-group-summary-icon {
+  width: 16px;
+  min-width: 16px;
+  height: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.abrd-filter-engine .proj-group-menu-list {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 5000;
+  border: 1px solid var(--proj-outline-color);
+  border-radius: 12px;
+  background: var(--proj-popover-bg);
+  box-shadow: var(--proj-popover-shadow);
+  padding: 8px;
+  display: grid;
+  gap: 8px;
+  width: min(460px, calc(100vw - 34px));
+}
+
+.abrd-filter-engine .proj-group-menu-list.is-simple-mode {
+  width: min(205px, calc(100vw - 34px));
+}
+
+.abrd-filter-engine .proj-group-menu-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--foreground);
+}
+
+.abrd-filter-engine .proj-group-controls {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 128px auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.abrd-filter-engine .proj-group-simple-options {
+  display: grid;
+  gap: 2px;
+}
+
+.abrd-filter-engine .proj-group-simple-option {
+  width: 100%;
+}
+
+.abrd-filter-engine .proj-inline-select {
+  position: relative;
+}
+
+.abrd-filter-engine .proj-inline-select > summary {
+  list-style: none;
+}
+
+.abrd-filter-engine .proj-inline-select > summary::-webkit-details-marker {
+  display: none;
+}
+
+.abrd-filter-engine .proj-inline-select-trigger {
+  min-height: 36px;
+  border-radius: 9px;
+  border: 0;
+  background: var(--proj-control-soft-bg, color-mix(in oklab, var(--foreground) 4%, transparent));
+  color: var(--foreground);
+  padding: 0 11px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.abrd-filter-engine .proj-inline-select-value {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.abrd-filter-engine .proj-inline-select-value span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.abrd-filter-engine .proj-inline-select-list {
+  position: absolute;
+  top: calc(100% + 8px);
+  inset-inline-start: 0;
+  min-width: max(100%, 182px);
+  border-radius: 12px;
+  border: 1px solid var(--proj-outline-color);
+  background: var(--popover);
+  box-shadow: var(--proj-popover-shadow);
+  z-index: 140;
+  display: grid;
+  gap: 2px;
+  padding: 6px;
+  max-height: min(52vh, 320px);
+  overflow: auto;
+}
+
+.abrd-filter-engine .proj-inline-select-item {
+  min-height: 32px;
+  border-radius: 8px;
+  border: 0;
+  background: transparent;
+  color: var(--foreground);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0 8px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.abrd-filter-engine .proj-inline-select-item .item-main {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.abrd-filter-engine .proj-inline-select-item:hover,
+.abrd-filter-engine .proj-inline-select-item.active {
+  background: var(--proj-control-soft-bg-hover, color-mix(in oklab, var(--foreground) 8%, transparent));
+  font-weight: 700;
+}
+
+.abrd-filter-engine .proj-group-reset {
+  width: 36px;
+  height: 36px;
+  border-radius: 9px;
+  border: 0;
+  background: var(--proj-control-soft-bg, color-mix(in oklab, var(--foreground) 4%, transparent));
+  color: var(--muted-foreground);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.abrd-filter-engine .proj-group-add-subgroup {
+  min-height: 30px;
+  border-radius: 9px;
+  border: 0;
+  background: var(--proj-control-soft-bg, color-mix(in oklab, var(--foreground) 4%, transparent));
+  color: var(--foreground);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 0 10px;
+  cursor: pointer;
+  width: 100%;
+}
+
+@media (max-width: 820px) {
+  .abrd-filter-engine .proj-group-controls {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

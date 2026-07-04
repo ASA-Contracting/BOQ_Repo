@@ -4,12 +4,12 @@ import type { BreadcrumbItem } from "@/components/ui/breadcrumb";
 import { getRouteLabel } from "@/components/shared/AppShell/nav-items";
 
 export function buildShellBreadcrumbs(pathname: string): BreadcrumbItem[] {
-  if (pathname === "/" || pathname === "/projects") {
-    return [{ label: "Projects" }];
+  if (pathname === "/" || pathname === "/boq") {
+    return [{ label: "BOQ" }];
   }
 
   const segments = pathname.split("/").filter(Boolean);
-  const crumbs: BreadcrumbItem[] = [{ label: "Home", href: "/projects" }];
+  const crumbs: BreadcrumbItem[] = [{ label: "Home", href: "/boq" }];
 
   let path = "";
   for (const segment of segments) {

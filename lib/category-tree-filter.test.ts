@@ -26,6 +26,10 @@ describe('category-tree-filter', () => {
     expect(toggleTreeFilterBulkSelection('none')).toBe('all');
   });
 
+  it('shows all nodes when no visibility modes are selected', () => {
+    expect(matchesModeFilter(new Set(), [], 0)).toBe(true);
+  });
+
   it('matches mode and tag filters', () => {
     const modes = new Set(['tagged'] as const);
     expect(matchesModeFilter(modes, ['hvac'], 0)).toBe(true);

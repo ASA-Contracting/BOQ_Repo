@@ -4,10 +4,34 @@ import { buildMaterialClassificationTreeIndex } from '@/domain/classification/tr
 export type CategoryPickerOption = {
   id: number;
   label: string;
+  /** When set, used in picker UI instead of `label` (e.g. "Section - Air Outlets"). */
+  pickerLabel?: string;
   path: string;
   depth: number;
+  parentId: number | null;
+  parentLabel: string | null;
   searchText: string;
 };
+
+const SECTION_LABEL_PREFIX = 'Section - ';
+
+export function formatSectionPickerLabel(label: string): string {
+  return `${SECTION_LABEL_PREFIX}${label}`;
+}
+
+export function withSectionPickerLabels(
+  options: CategoryPickerOption[],
+): CategoryPickerOption[] {
+  return options.map((option) => ({
+    ...option,
+    pickerLabel: formatSectionPickerLabel(option.label),
+    searchText: `section ${option.searchText}`,
+  }));
+}
+
+export function getCategoryPickerDisplayLabel(option: CategoryPickerOption): string {
+  return option.pickerLabel ?? option.label;
+}
 
 export function buildCategoryPickerOptions(
   nodes: LevelOptionEntity[],
@@ -15,16 +39,43 @@ export function buildCategoryPickerOptions(
   const treeIndex = buildMaterialClassificationTreeIndex(nodes);
 
   return treeIndex.activeOptions.map((node) => {
-    const path = treeIndex.pathLabelById.get(node.id) ?? node.name;
-    const depth = (treeIndex.pathById.get(node.id)?.length ?? 1) - 1;
+    const path = treeIndex.pathById.get(node.id) ?? [node];
+    const pathLabel = treeIndex.pathLabelById.get(node.id) ?? node.name;
+    const depth = path.length - 1;
+    const parentEntity = path.length >= 2 ? path[path.length - 2] : null;
+
     return {
       id: node.id,
       label: node.name,
-      path,
+      path: pathLabel,
       depth,
-      searchText: `${node.name} ${path}`.trim().toLowerCase(),
+      parentId: parentEntity?.id ?? null,
+      parentLabel: parentEntity?.name ?? null,
+      searchText: `${node.name} ${pathLabel}`.trim().toLowerCase(),
     };
   });
+}
+
+export function resolveCategoryParentLabel(
+  materialNodeId: number | null | undefined,
+  options: CategoryPickerOption[],
+): string | null {
+  if (materialNodeId == null) return null;
+  return options.find((option) => option.id === materialNodeId)?.parentLabel ?? null;
+}
+
+export function buildCategoryOptionById(
+  options: CategoryPickerOption[],
+): ReadonlyMap<number, CategoryPickerOption> {
+  return new Map(options.map((option) => [option.id, option]));
+}
+
+export function resolveCategoryParentLabelFromMap(
+  materialNodeId: number | null | undefined,
+  optionById: ReadonlyMap<number, CategoryPickerOption>,
+): string | null {
+  if (materialNodeId == null) return null;
+  return optionById.get(materialNodeId)?.parentLabel ?? null;
 }
 
 export function filterCategoryPickerOptions(

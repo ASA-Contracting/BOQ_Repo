@@ -1,0 +1,655 @@
+@import "./abrd-grid-tokens.css";
+
+/* ── Page chrome ─────────────────────────────────────────────────────────── */
+
+.boq-master-list__page {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  max-width: 88rem;
+  margin-inline: auto;
+  width: 100%;
+}
+
+.boq-master-list__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding-inline: 8px;
+}
+
+.boq-master-list__title {
+  font-size: 1.75rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  color: rgb(var(--fg));
+}
+
+.boq-master-list__subtitle {
+  margin-top: 4px;
+  max-width: 36rem;
+  font-size: 12px;
+  line-height: 1.5;
+  color: rgb(var(--muted));
+}
+
+.boq-master-list__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.boq-master-list__add-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 30px;
+  padding: 0 12px;
+  border: 1px solid color-mix(in oklab, rgb(168 202 119) 55%, rgb(var(--border-strong)));
+  border-radius: 8px;
+  background: rgb(168 202 119);
+  color: rgb(var(--fg));
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+  text-decoration: none;
+  white-space: nowrap;
+  transition:
+    background-color 150ms ease,
+    border-color 150ms ease;
+}
+
+.boq-master-list__add-btn:hover {
+  background: color-mix(in oklab, rgb(168 202 119) 88%, white 12%);
+  border-color: color-mix(in oklab, rgb(168 202 119) 70%, rgb(var(--border-strong)));
+  color: rgb(var(--fg));
+}
+
+.boq-master-list__projects-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 30px;
+  padding: 0 10px;
+  border: 1px solid rgb(var(--border));
+  border-radius: 8px;
+  background: rgb(var(--surface));
+  color: rgb(var(--fg));
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+  transition:
+    background-color 150ms ease,
+    border-color 150ms ease;
+}
+
+.boq-master-list__projects-btn:hover {
+  border-color: rgb(var(--border-strong));
+  background: rgb(var(--bg1, 249 249 249));
+}
+
+.boq-master-list__card {
+  border-radius: 12px;
+  border: 1px solid rgb(var(--border));
+  background: rgb(var(--surface));
+  box-shadow: 0 2px 8px rgb(15 23 42 / 0.06);
+  overflow: hidden;
+}
+
+.boq-master-list__empty,
+.boq-master-list__error {
+  border-radius: 12px;
+  border: 1px solid rgb(var(--border));
+  background: rgb(var(--surface));
+  box-shadow: 0 2px 8px rgb(15 23 42 / 0.06);
+  padding: 32px;
+  text-align: center;
+}
+
+.boq-master-list__error {
+  border-color: color-mix(in oklab, rgb(var(--warning)) 40%, rgb(var(--border)));
+  background: color-mix(in oklab, rgb(var(--warning)) 6%, rgb(var(--surface)));
+  text-align: left;
+  font-size: 13px;
+}
+
+/* Filter shell — inherit ABRD toolbar tokens */
+.boq-master-list .abrd-filter-engine {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.boq-master-list .abrd-filter-engine .proj-page-tools {
+  overflow: visible;
+}
+
+/* ── Grid table — ABRD data-grid simple.scss parity ──────────────────────── */
+
+.boq-master-list .abrd-grouped-table > div {
+  overflow: visible;
+}
+
+.boq-master-list .abrd-grouped-table table {
+  width: 100%;
+  min-width: max-content;
+  border-collapse: collapse;
+  font-size: 12.5px;
+  background: transparent;
+}
+
+/* Reset shadcn Table defaults inside BOQ grid */
+.boq-master-list .abrd-grouped-table thead {
+  background: var(--app-color-grid-header-bg) !important;
+  border-bottom: 0 !important;
+}
+
+.boq-master-list .abrd-grouped-table thead tr {
+  border-bottom: 0 !important;
+}
+
+.boq-master-list .abrd-grouped-table thead th {
+  height: var(--app-grid-header-cell-height) !important;
+  padding: 0 var(--app-grid-header-cell-padding-inline) !important;
+  font-family: inherit !important;
+  font-size: var(--app-grid-header-cell-font-size) !important;
+  font-weight: var(--app-grid-header-cell-font-weight) !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+  color: var(--app-color-grid-header-cell-fg) !important;
+  text-align: left !important;
+  vertical-align: middle !important;
+  white-space: nowrap !important;
+  background: var(--app-color-grid-header-bg) !important;
+  border: 0 !important;
+  box-shadow:
+    inset -1px 0 0 var(--app-color-grid-line),
+    inset 0 -1px 0 var(--app-color-grid-line) !important;
+}
+
+.boq-master-list .abrd-grouped-table thead th:last-child {
+  box-shadow: inset 0 -1px 0 var(--app-color-grid-line) !important;
+}
+
+.boq-master-list .abrd-grouped-table thead th .header-text,
+.boq-master-list .abrd-grouped-table thead th > span,
+.boq-master-list .abrd-grouped-table thead th .flex > span:first-child {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: var(--app-grid-header-text-size) !important;
+  font-weight: var(--app-grid-header-text-font-weight) !important;
+  line-height: var(--app-grid-header-text-line-height) !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+  color: var(--app-color-grid-header-text-fg) !important;
+}
+
+.boq-master-list .abrd-grouped-table thead th button {
+  height: 16px !important;
+  min-height: 16px !important;
+  padding: 0 !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+  color: color-mix(in oklab, var(--app-color-grid-body-text) 38%, transparent) !important;
+  background: transparent !important;
+}
+
+.boq-master-list .abrd-grouped-table tbody tr.data-row {
+  background: transparent !important;
+  border-bottom: 0 !important;
+}
+
+.boq-master-list .abrd-grouped-table tbody tr.data-row > td {
+  height: 38px !important;
+  padding: 0 10px !important;
+  font-size: 12.5px !important;
+  font-weight: 400 !important;
+  color: var(--app-color-grid-body-text) !important;
+  vertical-align: middle !important;
+  background: var(--app-color-grid-surface) !important;
+  border: 0 !important;
+  box-shadow:
+    inset -1px 0 0 var(--app-color-grid-line),
+    inset 0 -1px 0 var(--app-color-grid-line-soft) !important;
+}
+
+.boq-master-list .abrd-grouped-table tbody tr.data-row > td:last-child {
+  box-shadow: inset 0 -1px 0 var(--app-color-grid-line-soft) !important;
+}
+
+.boq-master-list .abrd-grouped-table tbody tr.data-row:hover > td {
+  background: var(--app-color-grid-row-hover) !important;
+}
+
+.boq-master-list .abrd-grouped-table tbody.grouped-display-body tr.grouped-data-row > td {
+  background: var(--app-color-grid-surface) !important;
+}
+
+/* ── Cell typography ─────────────────────────────────────────────────────── */
+
+.boq-master-list .bml-cell-primary {
+  font-size: 12.5px;
+  font-weight: 400;
+  color: var(--app-color-grid-body-text);
+  line-height: 1.35;
+}
+
+.boq-master-list .bml-open-target {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 100%;
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--data-grid-link-color) !important;
+  text-decoration: underline;
+  text-decoration-color: color-mix(in oklab, var(--data-grid-link-color) 40%, transparent);
+  text-underline-offset: 2px;
+  transition:
+    color 150ms ease,
+    text-decoration-color 150ms ease;
+}
+
+.boq-master-list .bml-open-target:hover {
+  color: var(--data-grid-link-hover-color) !important;
+  text-decoration-color: currentColor;
+}
+
+.boq-master-list .bml-open-target:focus-visible {
+  outline: 2px solid color-mix(in oklab, var(--data-grid-link-color) 55%, transparent);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+.boq-master-list .bml-open-target__name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.boq-master-list .bml-open-target__icon {
+  flex-shrink: 0;
+  opacity: 0.72;
+  transition: opacity 150ms ease, transform 150ms ease;
+}
+
+.boq-master-list .bml-open-target:hover .bml-open-target__icon {
+  opacity: 1;
+  transform: translate(1px, -1px);
+}
+
+.boq-master-list .bml-cell-secondary {
+  margin-top: 2px;
+  font-size: 11px;
+  color: var(--app-color-grid-body-text-soft);
+  line-height: 1.4;
+}
+
+.boq-master-list .bml-cell-tertiary {
+  margin-top: 1px;
+  font-size: 11px;
+  color: rgb(var(--muted));
+}
+
+/* ── Pills — ABRD tender-project pill + dot ──────────────────────────────── */
+
+.boq-master-list .pill {
+  --bml-pill-bg: var(--app-color-grid-pill-surface);
+  --bml-pill-border: var(--app-color-grid-pill-border);
+  --bml-pill-fg: var(--app-color-grid-pill-text);
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: var(--app-grid-pill-gap);
+  height: var(--app-grid-pill-height);
+  min-height: var(--app-grid-pill-height);
+  max-height: var(--app-grid-pill-height);
+  padding: 0 var(--app-grid-pill-padding-inline);
+  border-radius: var(--app-grid-pill-radius);
+  border: 1px solid var(--bml-pill-border);
+  background: var(--bml-pill-bg);
+  color: var(--bml-pill-fg);
+  font-size: var(--app-grid-pill-font-size);
+  font-weight: var(--app-grid-pill-font-weight);
+  line-height: 1;
+  white-space: nowrap;
+  max-width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  vertical-align: middle;
+}
+
+.boq-master-list .pill::before {
+  content: "";
+  width: var(--app-grid-pill-dot-size);
+  height: var(--app-grid-pill-dot-size);
+  flex: 0 0 var(--app-grid-pill-dot-size);
+  border-radius: 999px;
+  background: transparent;
+  box-shadow: inset 0 0 0 var(--app-grid-pill-dot-ring) currentColor;
+  opacity: 0.92;
+}
+
+.boq-master-list .pill .pill__label {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: inherit;
+}
+
+.boq-master-list .pill[class*="tone-"] {
+  --bml-pill-bg: var(--app-color-grid-pill-tone-bg);
+  --bml-pill-border: var(--app-color-grid-pill-tone-border);
+}
+
+.boq-master-list .pill.tone-green {
+  --bml-pill-fg: var(--app-color-grid-pill-tone-green);
+}
+
+.boq-master-list .pill.tone-yellow {
+  --bml-pill-fg: var(--app-color-grid-pill-tone-yellow);
+}
+
+.boq-master-list .pill.tone-orange {
+  --bml-pill-fg: var(--app-color-grid-pill-tone-orange);
+}
+
+.boq-master-list .pill.tone-blue {
+  --bml-pill-fg: var(--app-color-grid-pill-tone-blue);
+}
+
+.boq-master-list .pill.tone-purple {
+  --bml-pill-fg: var(--app-color-grid-pill-tone-purple);
+}
+
+.boq-master-list .pill.tone-gray {
+  --bml-pill-fg: var(--app-color-grid-pill-tone-gray);
+  --bml-pill-bg: var(--app-color-grid-pill-surface);
+  --bml-pill-border: var(--app-color-grid-pill-border);
+}
+
+/* ── Progress ────────────────────────────────────────────────────────────── */
+
+.boq-master-list .bml-progress {
+  min-width: 9rem;
+}
+
+.boq-master-list .bml-progress__bar {
+  height: 6px;
+  border-radius: 3px;
+  background: color-mix(in oklab, rgb(var(--border-strong)) 40%, white);
+  overflow: hidden;
+}
+
+.boq-master-list .bml-progress__fill {
+  height: 100%;
+  border-radius: 3px;
+  background: var(--app-color-primary);
+  width: var(--bml-progress, 0%);
+  transition: width 200ms ease;
+}
+
+.boq-master-list .bml-progress__label {
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--app-color-grid-body-text-soft);
+}
+
+.boq-master-list .bml-progress__label strong {
+  font-weight: 600;
+  color: var(--app-color-grid-body-text);
+}
+
+/* ── Row open action ─────────────────────────────────────────────────────── */
+
+.boq-master-list .bml-open-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  height: 26px;
+  padding: 0 10px;
+  border: 1px solid color-mix(in oklab, var(--data-grid-link-color) 35%, rgb(var(--border-strong)));
+  border-radius: 6px;
+  background: color-mix(in oklab, rgb(var(--primary)) 7%, rgb(var(--surface)));
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--data-grid-link-color);
+  text-decoration: none;
+  white-space: nowrap;
+  transition:
+    color 150ms ease,
+    background-color 150ms ease,
+    border-color 150ms ease;
+}
+
+.boq-master-list .bml-open-btn:hover {
+  color: var(--data-grid-link-hover-color);
+  border-color: color-mix(in oklab, var(--data-grid-link-color) 55%, rgb(var(--border-strong)));
+  background: color-mix(in oklab, rgb(var(--primary)) 14%, rgb(var(--surface)));
+}
+
+.boq-master-list .bml-open-btn:focus-visible {
+  outline: 2px solid color-mix(in oklab, var(--data-grid-link-color) 55%, transparent);
+  outline-offset: 2px;
+}
+
+.boq-master-list .bml-open-btn--continue {
+  color: rgb(var(--warning));
+  border-color: color-mix(in oklab, rgb(var(--warning)) 45%, rgb(var(--border-strong)));
+  background: color-mix(in oklab, rgb(var(--warning)) 10%, rgb(var(--surface)));
+}
+
+.boq-master-list .bml-open-btn--continue:hover {
+  color: color-mix(in oklab, rgb(var(--warning)) 88%, black 12%);
+  border-color: color-mix(in oklab, rgb(var(--warning)) 60%, rgb(var(--border-strong)));
+  background: color-mix(in oklab, rgb(var(--warning)) 16%, rgb(var(--surface)));
+}
+
+.boq-master-list .bml-row-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  height: 28px;
+  padding: 0 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: rgb(var(--muted));
+  text-decoration: none;
+  transition: color 150ms ease, background-color 150ms ease;
+}
+
+.boq-master-list .bml-row-action:hover {
+  color: var(--app-color-primary);
+  background: color-mix(in oklab, rgb(var(--primary)) 8%, transparent);
+}
+
+.boq-master-list .bml-cell-wrap .bml-open-target {
+  white-space: normal;
+}
+
+.boq-master-list .bml-cell-wrap .bml-open-target__name {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+}
+
+.boq-master-list .abrd-grouped-table tbody tr.data-row > td:has(.bml-cell-wrap) {
+  height: auto !important;
+  min-height: 38px;
+  vertical-align: top;
+  padding-top: 6px !important;
+  padding-bottom: 6px !important;
+}
+
+/* ── Group rows — override global abrd-group-rows for ABRD parity ────────── */
+
+.boq-master-list .abrd-grouped-table .group-row-content {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  min-height: 32px;
+  height: 32px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  cursor: pointer;
+  user-select: none;
+}
+
+.boq-master-list .abrd-grouped-table .group-row-main {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.boq-master-list .abrd-grouped-table .group-toggle {
+  width: 16px;
+  height: 16px;
+  color: rgb(var(--muted));
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.boq-master-list .abrd-grouped-table .group-row-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: rgb(var(--muted));
+}
+
+.boq-master-list .abrd-grouped-table .group-row-pill {
+  display: inline;
+  height: auto;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.boq-master-list .abrd-grouped-table .group-row-pill::before {
+  content: none;
+}
+
+.boq-master-list .abrd-grouped-table .group-row-count {
+  display: inline;
+  min-width: 0;
+  height: auto;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: rgb(var(--muted));
+  font-size: 11px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.boq-master-list .abrd-grouped-table .group-row-count::before {
+  content: "·";
+  margin-inline-end: 4px;
+  font-size: 11px;
+  opacity: 0.6;
+}
+
+/* ── Group headers — ABRD plain divider ──────────────────────────────────── */
+
+.boq-master-list .abrd-grouped-table tr.group-row > td.group-row-cell {
+  padding: 0 12px;
+  border: 0 !important;
+  background: rgb(var(--surface)) !important;
+  box-shadow: none !important;
+}
+
+.boq-master-list .abrd-grouped-table .group-row-content {
+  border-bottom: 1px solid var(--app-color-grid-line-soft);
+}
+
+.boq-master-list .bml-group-header {
+  justify-content: space-between;
+}
+
+.boq-master-list .bml-group-header__summary {
+  font-size: 11px;
+  font-weight: 500;
+  color: rgb(var(--muted));
+  white-space: nowrap;
+}
+
+.boq-master-list .bml-group-header__actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.boq-master-list .abrd-grouped-table .group-row-pill {
+  color: var(--app-color-grid-pill-tone-purple);
+}
+
+/* ── Group footer & calculate row ────────────────────────────────────────── */
+
+.boq-master-list .abrd-grouped-table tr.group-footer-row > td {
+  background: transparent !important;
+  border-top: 1px solid var(--app-color-grid-line) !important;
+  height: 32px;
+  padding: 0 10px !important;
+  box-shadow: none !important;
+}
+
+.boq-master-list .abrd-grouped-table tr.group-footer-row .aggregate-value {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: var(--app-grid-pill-height);
+  padding: 0 var(--app-grid-pill-padding-inline);
+  border-radius: 999px;
+  border: 1px solid var(--app-color-grid-pill-border);
+  background: transparent;
+  color: var(--app-color-grid-pill-text);
+  font-size: var(--app-grid-pill-font-size);
+  font-weight: var(--app-grid-pill-font-weight);
+}
+
+.boq-master-list .grid-calculate-footer {
+  border-top: 1px solid var(--app-color-grid-line);
+  background: var(--app-color-grid-header-bg) !important;
+}
+
+.boq-master-list .grid-calculate-footer__trigger {
+  font-size: 11px;
+  color: rgb(var(--muted));
+}
+
+.boq-master-list .grid-calculate-footer__trigger.is-active {
+  background: color-mix(in oklab, rgb(var(--primary)) 12%, transparent);
+  color: rgb(var(--fg));
+}

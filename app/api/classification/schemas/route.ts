@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { getDb } from '@/infrastructure/persistence/db';
+import { getDb, resetDbAfterError } from '@/infrastructure/persistence/db';
 import {
   createSchema,
   listSchemas,
@@ -13,8 +13,14 @@ export async function GET() {
   const userId = await requireAuthUserId();
   if (!userId) return apiError('Unauthorized', 401);
   const db = getDb();
-  const rows = await listSchemas(db);
-  return apiSuccess(rows, 'Schemas retrieved');
+  try {
+    const rows = await listSchemas(db);
+    return apiSuccess(rows, 'Schemas retrieved');
+  } catch (error) {
+    resetDbAfterError(error);
+    console.error(error);
+    return apiError(error instanceof Error ? error.message : 'Failed to load schemas', 500);
+  }
 }
 
 export async function POST(request: NextRequest) {
