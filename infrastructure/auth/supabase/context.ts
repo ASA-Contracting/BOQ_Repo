@@ -7,8 +7,8 @@ import {
 import type { AuthModeWithKey, SupabaseContext } from "@supabase/server";
 import { cookies } from "next/headers";
 
-import { getSupabaseEnv } from "@/infrastructure/config/env";
 import { resolveSupabaseServerEnv } from "@/infrastructure/auth/supabase/env";
+import { tryGetSupabaseEnv } from "@/infrastructure/config/env";
 
 export type CreateAppSupabaseContextOptions = {
   auth?: AuthModeWithKey | AuthModeWithKey[];
@@ -25,7 +25,14 @@ export async function createAppSupabaseContext(
     return { data: null, error: envError ?? new Error("Supabase env not configured") };
   }
 
-  const config = getSupabaseEnv();
+  const config = tryGetSupabaseEnv();
+  if (!config) {
+    return {
+      data: null,
+      error: new Error("Supabase env not configured"),
+    };
+  }
+
   const cookieStore = await cookies();
   const ssrClient = createServerClient(
     config.SUPABASE_URL,

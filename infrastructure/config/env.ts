@@ -34,22 +34,41 @@ function readSupabaseEnvInput(): Record<string, string | undefined> {
   };
 }
 
-export function getSupabaseEnv(): SupabaseEnvConfig {
+function parseSupabaseEnv(): SupabaseEnvConfig | null {
+  const result = supabaseEnvSchema.safeParse(readSupabaseEnvInput());
+
+  if (!result.success) {
+    return null;
+  }
+
+  return result.data;
+}
+
+export function tryGetSupabaseEnv(): SupabaseEnvConfig | null {
   if (cachedSupabaseEnv) {
     return cachedSupabaseEnv;
   }
 
-  const result = supabaseEnvSchema.safeParse(readSupabaseEnvInput());
+  const parsed = parseSupabaseEnv();
+  if (parsed) {
+    cachedSupabaseEnv = parsed;
+  }
 
-  if (!result.success) {
-    const missing = result.error.issues
-      .map((issue) => issue.path.join("."))
-      .join(", ");
+  return parsed;
+}
+
+export function getSupabaseEnv(): SupabaseEnvConfig {
+  const env = tryGetSupabaseEnv();
+
+  if (!env) {
+    const result = supabaseEnvSchema.safeParse(readSupabaseEnvInput());
+    const missing = result.success
+      ? "unknown"
+      : result.error.issues.map((issue) => issue.path.join(".")).join(", ");
     throw new Error(`Missing or invalid Supabase environment variables: ${missing}`);
   }
 
-  cachedSupabaseEnv = result.data;
-  return cachedSupabaseEnv;
+  return env;
 }
 
 export function getDatabaseEnv(): DatabaseEnvConfig {

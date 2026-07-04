@@ -1,7 +1,7 @@
 import { resolveEnv } from "@supabase/server/core";
 import type { SupabaseEnv } from "@supabase/server";
 
-import { getSupabaseEnv } from "@/infrastructure/config/env";
+import { tryGetSupabaseEnv } from "@/infrastructure/config/env";
 
 export function resolveSupabaseServerEnv(): {
   data: SupabaseEnv;
@@ -10,7 +10,16 @@ export function resolveSupabaseServerEnv(): {
   data: null;
   error: Error;
 } {
-  const config = getSupabaseEnv();
+  const config = tryGetSupabaseEnv();
+
+  if (!config) {
+    return {
+      data: null,
+      error: new Error(
+        "Missing or invalid Supabase environment variables: SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY",
+      ),
+    };
+  }
 
   const { data, error } = resolveEnv({
     url: config.SUPABASE_URL,
