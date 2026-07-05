@@ -1,6 +1,11 @@
 import { LoginForm } from "@/app/login/_components/LoginForm";
+import { tryGetSupabaseEnv } from "@/infrastructure/config/env";
+
+export const dynamic = "force-dynamic";
 
 export default function LoginPage() {
+  const authConfigured = Boolean(tryGetSupabaseEnv());
+
   return (
     <main className="flex min-h-screen items-center justify-center p-6">
       <div className="w-full max-w-sm space-y-6">
@@ -10,7 +15,13 @@ export default function LoginPage() {
             Use your Supabase email and password account.
           </p>
         </div>
-        <LoginForm />
+        {!authConfigured ? (
+          <p className="rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm text-destructive">
+            Sign-in is not configured on this server. Add Supabase environment
+            variables in Vercel, then redeploy.
+          </p>
+        ) : null}
+        <LoginForm disabled={!authConfigured} />
       </div>
     </main>
   );

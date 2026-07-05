@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-export function LoginForm() {
+export function LoginForm({ disabled = false }: { disabled?: boolean }) {
   const [state, formAction, isPending] = useActionState(signInAction, {});
 
   return (
@@ -20,6 +20,7 @@ export function LoginForm() {
           type="email"
           autoComplete="email"
           required
+          disabled={disabled || isPending}
         />
       </div>
 
@@ -31,6 +32,7 @@ export function LoginForm() {
           type="password"
           autoComplete="current-password"
           required
+          disabled={disabled || isPending}
         />
       </div>
 
@@ -40,7 +42,7 @@ export function LoginForm() {
         </p>
       ) : null}
 
-      <Button type="submit" className="w-full" disabled={isPending}>
+      <Button type="submit" className="w-full" disabled={disabled || isPending}>
         {isPending ? "Signing in..." : "Sign in"}
       </Button>
     </form>

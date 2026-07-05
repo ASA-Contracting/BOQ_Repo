@@ -15,7 +15,8 @@
     "db:fix-url": "node scripts/fix-database-url.mjs",
     "db:verify:family": "tsx --env-file=.env.local scripts/verify-family-use-case.ts",
     "db:repair": "node --env-file=.env.local scripts/repair-database.mjs",
-    "db:seed:classification": "tsx --env-file=.env.local infrastructure/persistence/seeds/classification-seed.ts"
+    "db:seed:classification": "tsx --env-file=.env.local infrastructure/persistence/seeds/classification-seed.ts",
+    "vercel:env:sync": "node scripts/sync-vercel-env.mjs"
   },
   "dependencies": {
     "@radix-ui/react-accordion": "^1.2.15",

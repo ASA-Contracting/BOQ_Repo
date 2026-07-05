@@ -1,11 +1,18 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 
-import { getSupabaseEnv } from "@/infrastructure/config/env";
+import { tryGetSupabaseEnv } from "@/infrastructure/config/env";
 
 export async function createClient() {
+  const env = tryGetSupabaseEnv();
+
+  if (!env) {
+    throw new Error(
+      "Missing or invalid Supabase environment variables: SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY",
+    );
+  }
+
   const cookieStore = await cookies();
-  const env = getSupabaseEnv();
 
   return createServerClient(env.SUPABASE_URL, env.SUPABASE_PUBLISHABLE_KEY, {
     cookies: {
