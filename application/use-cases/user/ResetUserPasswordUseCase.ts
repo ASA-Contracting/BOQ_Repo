@@ -1,4 +1,3 @@
-import type { InviteUserInput } from "@/application/dto/user/userSchema";
 import type { UserWithTemporaryPasswordDto } from "@/application/dto/user/userDto";
 import { mapAdminUserWithTemporaryPasswordDto } from "@/application/mappers/user/userMapper";
 import type { IUserAdminRepository } from "@/application/ports/IUserAdminRepository";
@@ -12,18 +11,22 @@ import type { DomainError } from "@/domain/shared/errors/DomainError";
 import type { RequestContext } from "@/domain/shared/RequestContext";
 import { err, ok, type Result } from "@/domain/shared/Result";
 
-export type InviteUserDependencies = {
+export type ResetUserPasswordInput = {
+  id: string;
+};
+
+export type ResetUserPasswordDependencies = {
   userAdminRepository: IUserAdminRepository | null;
 };
 
-export class InviteUserUseCase
-  implements IUseCase<InviteUserInput, UserWithTemporaryPasswordDto, DomainError>
+export class ResetUserPasswordUseCase
+  implements IUseCase<ResetUserPasswordInput, UserWithTemporaryPasswordDto, DomainError>
 {
-  constructor(private readonly deps: InviteUserDependencies) {}
+  constructor(private readonly deps: ResetUserPasswordDependencies) {}
 
   async execute(
     ctx: RequestContext,
-    input: InviteUserInput,
+    input: ResetUserPasswordInput,
   ): Promise<Result<UserWithTemporaryPasswordDto, DomainError>> {
     const auth = authorizeUserAdmin(ctx);
     if (!auth.ok) {
@@ -35,16 +38,11 @@ export class InviteUserUseCase
     }
 
     try {
-      const created = await this.deps.userAdminRepository.inviteUser({
-        email: input.email,
-        displayName: input.displayName,
-        roles: input.roles,
-      });
-
-      return ok(mapAdminUserWithTemporaryPasswordDto(created));
+      const reset = await this.deps.userAdminRepository.resetUserPassword(input.id);
+      return ok(mapAdminUserWithTemporaryPasswordDto(reset));
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : "Unable to invite user.";
+        error instanceof Error ? error.message : "Unable to reset user password.";
       return err(new UserAdminOperationError(message));
     }
   }

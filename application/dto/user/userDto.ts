@@ -10,6 +10,11 @@ export type UserSummaryDto = {
   isActive: boolean;
   lastSignInAt: string | null;
   createdAt: string;
+  mustChangePassword: boolean;
+};
+
+export type UserWithTemporaryPasswordDto = UserSummaryDto & {
+  temporaryPassword: string;
 };
 
 export type UserListDto = {

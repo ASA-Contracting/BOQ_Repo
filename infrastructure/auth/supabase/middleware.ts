@@ -86,6 +86,7 @@ export async function updateSession(request: NextRequest) {
     pathname.startsWith("/api/health");
 
   const isApiRoute = pathname.startsWith("/api/");
+  const mustChangePassword = user?.user_metadata?.must_change_password === true;
 
   if (!user && !isPublicRoute) {
     if (isApiRoute) {
@@ -97,7 +98,23 @@ export async function updateSession(request: NextRequest) {
     return attachCorrelationId(request, NextResponse.redirect(url));
   }
 
-  if (user && pathname === "/login") {
+  if (user && mustChangePassword) {
+    const isChangePasswordRoute = pathname.startsWith("/login/change-password");
+
+    if (!isChangePasswordRoute) {
+      if (isApiRoute) {
+        return attachCorrelationId(request, supabaseResponse);
+      }
+
+      const url = request.nextUrl.clone();
+      url.pathname = "/login/change-password";
+      return attachCorrelationId(request, NextResponse.redirect(url));
+    }
+
+    return attachCorrelationId(request, supabaseResponse);
+  }
+
+  if (user && pathname.startsWith("/login")) {
     const url = request.nextUrl.clone();
     url.pathname = "/";
     return attachCorrelationId(request, NextResponse.redirect(url));

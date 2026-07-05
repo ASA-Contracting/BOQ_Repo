@@ -8,6 +8,12 @@ export type AdminUserRecord = {
   isActive: boolean;
   lastSignInAt: string | null;
   createdAt: string;
+  mustChangePassword: boolean;
+};
+
+export type AdminUserWithTemporaryPassword = {
+  user: AdminUserRecord;
+  temporaryPassword: string;
 };
 
 export type ListUsersParams = {
@@ -36,7 +42,11 @@ export interface IUserAdminRepository {
 
   getUserById(id: string): Promise<AdminUserRecord | null>;
 
-  inviteUser(params: InviteUserParams): Promise<AdminUserRecord>;
+  inviteUser(params: InviteUserParams): Promise<AdminUserWithTemporaryPassword>;
+
+  resetUserPassword(id: string): Promise<AdminUserWithTemporaryPassword>;
+
+  clearMustChangePassword(userId: string): Promise<void>;
 
   updateUser(params: UpdateUserParams): Promise<AdminUserRecord>;
 

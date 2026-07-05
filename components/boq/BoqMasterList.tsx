@@ -256,50 +256,51 @@ export function BoqMasterList({
     setDeleteDialogOpen(true);
   }, [selectedBoqs.length]);
 
-  const content = (
-    <div className="boq-master-list__page">
-        <header className="boq-master-list__header">
-          <div>
-            <h1 className="boq-master-list__title">BOQ master list</h1>
-            <p className="boq-master-list__subtitle">
-              Production bills of quantities. Open a BOQ to assign categories and review the full
-              breakdown grid.
-            </p>
-          </div>
-          <div className="boq-master-list__actions">
-            {onOpenProjects ? (
-              <button
-                type="button"
-                className="boq-master-list__projects-btn"
-                onClick={onOpenProjects}
-              >
-                <Briefcase size={14} aria-hidden />
-                Projects
-              </button>
-            ) : null}
-            <Link href="/boq/import" className="boq-master-list__add-btn">
-              Add New BOQ
+  return (
+    <ShellContent flush className="boq-master-list">
+      <header className="boq-master-list__header">
+        <div className="boq-master-list__heading">
+          <h1 className="boq-master-list__title">BOQ master list</h1>
+          <p className="boq-master-list__subtitle">
+            Production bills of quantities. Open a BOQ to assign categories and review the full
+            breakdown grid.
+          </p>
+        </div>
+        <div className="boq-master-list__actions">
+          {onOpenProjects ? (
+            <button
+              type="button"
+              className="boq-master-list__projects-btn"
+              onClick={onOpenProjects}
+            >
+              <Briefcase size={14} aria-hidden />
+              Projects
+            </button>
+          ) : null}
+          <Link href="/boq/import" className="boq-master-list__add-btn">
+            Add New BOQ
+          </Link>
+        </div>
+      </header>
+
+      {error ? <div className="boq-master-list__error">{error}</div> : null}
+
+      {boqs.length === 0 ? (
+        <div className="boq-master-list__empty">
+          <p className="text-base font-medium text-foreground">No BOQs yet</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Import an Excel BOQ — it will appear here with import date, owner, and publish
+            progress.
+          </p>
+          <Button asChild className="mt-6" size="sm">
+            <Link href="/boq/import">
+              <Plus className="mr-2 h-4 w-4" aria-hidden />
+              Import BOQ
             </Link>
-          </div>
-        </header>
-
-        {error ? <div className="boq-master-list__error">{error}</div> : null}
-
-        {boqs.length === 0 ? (
-          <div className="boq-master-list__empty">
-            <p className="text-base font-medium text-foreground">No BOQs yet</p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Import an Excel BOQ — it will appear here with import date, owner, and publish
-              progress.
-            </p>
-            <Button asChild className="mt-6" size="sm">
-              <Link href="/boq/import">
-                <Plus className="mr-2 h-4 w-4" aria-hidden />
-                Import BOQ
-              </Link>
-            </Button>
-          </div>
-        ) : (
+          </Button>
+        </div>
+      ) : (
+        <div className="boq-master-list__grid-shell">
           <div className="boq-master-list__card">
             <FilterableDataGrid
               pageKey="boq-master-list"
@@ -310,7 +311,7 @@ export function BoqMasterList({
               toolbarAfterSearch={
                 <BoqSettingsToolbarButton onClick={() => setSettingsOpen(true)} />
               }
-              shellClassName="border-0 bg-transparent shadow-none"
+              shellClassName="border-0 bg-transparent shadow-none min-h-0 flex-1"
               initialHiddenColumnIds={["status"]}
               renderGroupHeader={({ block, expanded, toggle }) => (
                 <BoqProjectGroupHeader block={block} expanded={expanded} toggle={toggle} />
@@ -329,13 +330,8 @@ export function BoqMasterList({
               }}
             />
           </div>
-        )}
-      </div>
-  );
-
-  return (
-    <ShellContent className="boq-master-list">
-      {content}
+        </div>
+      )}
       <BoqSettingsModal open={settingsOpen} onClose={() => setSettingsOpen(false)} />
       <BoqBulkDeleteDialog
         open={deleteDialogOpen}

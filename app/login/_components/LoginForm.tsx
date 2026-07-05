@@ -17,9 +17,9 @@ export function LoginForm({ disabled = false }: { disabled?: boolean }) {
 
   useEffect(() => {
     if (!state.success) return;
-    router.replace("/");
+    router.replace(state.mustChangePassword ? "/login/change-password" : "/");
     router.refresh();
-  }, [router, state.success]);
+  }, [router, state.mustChangePassword, state.success]);
 
   return (
     <form action={formAction} className="space-y-4">

@@ -1,10 +1,11 @@
 "use client";
 
-import { Pencil, Trash2, UserPlus, Users } from "lucide-react";
-import { useMemo, useState } from "react";
+import { KeyRound, Pencil, Trash2, UserPlus, Users } from "lucide-react";
+import { useCallback, useMemo, useState } from "react";
 
 import { DeleteUserDialog } from "@/app/(dashboard)/settings/users/_components/DeleteUserDialog";
 import { RolePermissionsMatrix } from "@/app/(dashboard)/settings/users/_components/RolePermissionsMatrix";
+import { TemporaryPasswordDialog } from "@/app/(dashboard)/settings/users/_components/TemporaryPasswordDialog";
 import { UserFormDialog } from "@/app/(dashboard)/settings/users/_components/UserFormDialog";
 import type {
   RoleCatalogDto,
@@ -109,6 +110,12 @@ export function UserAdminWorkspace({
   const [dialogMode, setDialogMode] = useState<"invite" | "edit" | null>(null);
   const [selectedUser, setSelectedUser] = useState<UserSummaryDto | null>(null);
   const [userToDelete, setUserToDelete] = useState<UserSummaryDto | null>(null);
+  const [temporaryPasswordState, setTemporaryPasswordState] = useState<{
+    user: UserSummaryDto;
+    temporaryPassword: string;
+    mode: "create" | "reset";
+  } | null>(null);
+  const [resettingUserId, setResettingUserId] = useState<string | null>(null);
 
   const filteredUsers = useMemo(() => {
     const needle = search.trim().toLowerCase();
@@ -122,6 +129,30 @@ export function UserAdminWorkspace({
         (user.displayName?.toLowerCase().includes(needle) ?? false),
     );
   }, [search, users]);
+
+  const handleUserSaved = useCallback(
+    (savedUser: UserSummaryDto, temporaryPassword?: string) => {
+      setUsers((current) => {
+        const index = current.findIndex((user) => user.id === savedUser.id);
+        if (index === -1) {
+          return [savedUser, ...current];
+        }
+
+        const next = [...current];
+        next[index] = savedUser;
+        return next;
+      });
+
+      if (temporaryPassword) {
+        setTemporaryPasswordState({
+          user: savedUser,
+          temporaryPassword,
+          mode: "create",
+        });
+      }
+    },
+    [],
+  );
 
   const columns = useMemo<DataGridColumn<UserSummaryDto>[]>(
     () => [
@@ -212,13 +243,55 @@ export function UserAdminWorkspace({
         id: "actions",
         header: "Actions",
         align: "right",
-        minWidth: 180,
-        width: 200,
+        minWidth: 280,
+        width: 320,
         cell: (user) => {
           const isSelf = user.id === currentUserId;
+          const isResetting = resettingUserId === user.id;
 
           return (
             <div className="flex items-center justify-end gap-1">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-8"
+                disabled={isResetting}
+                onClick={async () => {
+                  setResettingUserId(user.id);
+                  try {
+                    const response = await fetch(
+                      `/api/v1/users/${user.id}/reset-password`,
+                      { method: "POST" },
+                    );
+                    const payload = (await response.json().catch(() => null)) as {
+                      data?: UserSummaryDto & { temporaryPassword?: string };
+                      error?: { message?: string };
+                    } | null;
+
+                    if (!response.ok || !payload?.data?.temporaryPassword) {
+                      window.alert(
+                        payload?.error?.message ?? "Unable to reset password.",
+                      );
+                      return;
+                    }
+
+                    handleUserSaved(payload.data);
+                    setTemporaryPasswordState({
+                      user: payload.data,
+                      temporaryPassword: payload.data.temporaryPassword,
+                      mode: "reset",
+                    });
+                  } catch {
+                    window.alert("Network error while resetting password.");
+                  } finally {
+                    setResettingUserId(null);
+                  }
+                }}
+              >
+                <KeyRound className="mr-1.5 h-3.5 w-3.5" aria-hidden />
+                {isResetting ? "Resetting..." : "Reset password"}
+              </Button>
               <Button
                 type="button"
                 variant="outline"
@@ -249,21 +322,8 @@ export function UserAdminWorkspace({
         },
       },
     ],
-    [currentUserId],
+    [currentUserId, resettingUserId, handleUserSaved],
   );
-
-  function handleUserSaved(savedUser: UserSummaryDto) {
-    setUsers((current) => {
-      const index = current.findIndex((user) => user.id === savedUser.id);
-      if (index === -1) {
-        return [savedUser, ...current];
-      }
-
-      const next = [...current];
-      next[index] = savedUser;
-      return next;
-    });
-  }
 
   function handleUserDeleted(userId: string) {
     setUsers((current) => current.filter((user) => user.id !== userId));
@@ -276,7 +336,7 @@ export function UserAdminWorkspace({
       <Tabs defaultValue="users" className="flex min-h-0 flex-1 flex-col">
         <PageHeader
           title="User management"
-          description="Invite users, assign roles, and review the v1 permission matrix."
+          description="Add users with temporary passwords, assign roles, and review the v1 permission matrix."
           breadcrumbs={[
             { label: "Settings", href: "/settings" },
             { label: "Users" },
@@ -291,7 +351,7 @@ export function UserAdminWorkspace({
               disabled={Boolean(configurationError)}
             >
               <UserPlus className="mr-1.5 h-4 w-4" aria-hidden />
-              Invite user
+              Add user
             </Button>
           }
           tabs={
@@ -351,7 +411,7 @@ export function UserAdminWorkspace({
                   emptyMessage={
                     search.trim()
                       ? "No users match your search."
-                      : "No users yet. Invite the first user to get started."
+                      : "No users yet. Add the first user to get started."
                   }
                   height="100%"
                   tableClassName="users-admin-table"
@@ -384,6 +444,14 @@ export function UserAdminWorkspace({
           onSuccess={handleUserSaved}
         />
       ) : null}
+
+      <TemporaryPasswordDialog
+        open={Boolean(temporaryPasswordState)}
+        user={temporaryPasswordState?.user ?? null}
+        temporaryPassword={temporaryPasswordState?.temporaryPassword ?? ""}
+        mode={temporaryPasswordState?.mode ?? "create"}
+        onClose={() => setTemporaryPasswordState(null)}
+      />
 
       <DeleteUserDialog
         open={Boolean(userToDelete)}

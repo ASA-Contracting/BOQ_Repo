@@ -12,6 +12,7 @@ const AUTH_UNAVAILABLE_MESSAGE =
 export type SignInActionState = {
   error?: string;
   success?: boolean;
+  mustChangePassword?: boolean;
 };
 
 export async function signInAction(
@@ -27,14 +28,17 @@ export async function signInAction(
 
   try {
     const supabase = await createClient();
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
     if (error) {
       return { error: error.message };
     }
+
+    const mustChangePassword =
+      data.user?.user_metadata?.must_change_password === true;
+
+    return { success: true, mustChangePassword };
   } catch {
     return { error: AUTH_UNAVAILABLE_MESSAGE };
   }
-
-  return { success: true };
 }

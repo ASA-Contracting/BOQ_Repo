@@ -20,10 +20,14 @@ export async function resolveRequestContext(
     jwtClaims: ctx.jwtClaims as Record<string, unknown> | null | undefined,
   });
 
+  const mustChangePassword =
+    ctx.userClaims.userMetadata?.must_change_password === true;
+
   return createRequestContextValue({
     userId: toUserId(ctx.userClaims.id),
     roles,
     correlationId: correlationId ?? createCorrelationId(),
+    mustChangePassword,
   });
 }
 

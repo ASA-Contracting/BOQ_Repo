@@ -5,6 +5,7 @@ import { useMemo, useState, type FormEvent } from "react";
 import type {
   RoleCatalogDto,
   UserSummaryDto,
+  UserWithTemporaryPasswordDto,
 } from "@/application/dto/user/userDto";
 import { formatRoleLabel } from "@/application/dto/user/roleCatalog";
 import type { Role } from "@/domain/shared/Role";
@@ -23,7 +24,7 @@ type UserFormDialogProps = {
   user: UserSummaryDto | null;
   roleCatalog: RoleCatalogDto;
   onClose: () => void;
-  onSuccess: (user: UserSummaryDto) => void;
+  onSuccess: (user: UserSummaryDto, temporaryPassword?: string) => void;
 };
 
 type FormValues = {
@@ -119,7 +120,7 @@ export function UserFormDialog({
             });
 
       const payload = (await response.json().catch(() => null)) as {
-        data?: UserSummaryDto;
+        data?: UserSummaryDto | UserWithTemporaryPasswordDto;
         error?: { message?: string };
       } | null;
 
@@ -138,7 +139,15 @@ export function UserFormDialog({
         return;
       }
 
-      onSuccess(payload.data);
+      const temporaryPassword =
+        mode === "invite" &&
+        payload.data &&
+        "temporaryPassword" in payload.data &&
+        typeof payload.data.temporaryPassword === "string"
+          ? payload.data.temporaryPassword
+          : undefined;
+
+      onSuccess(payload.data, temporaryPassword);
       onClose();
     } catch {
       setError("Network error while saving user.");
@@ -150,10 +159,10 @@ export function UserFormDialog({
   return (
     <Dialog
       open={open}
-      title={mode === "invite" ? "Invite user" : "Edit user"}
+      title={mode === "invite" ? "Add user" : "Edit user"}
       description={
         mode === "invite"
-          ? "Send an email invitation and assign initial roles."
+          ? "Create an account with a system-generated temporary password."
           : "Update display name, roles, and account status."
       }
       onClose={onClose}
@@ -166,7 +175,7 @@ export function UserFormDialog({
           </Button>
           <Button type="submit" disabled={isSubmitting}>
             {isSubmitting ? <Spinner className="mr-2 h-4 w-4" /> : null}
-            {mode === "invite" ? "Send invite" : "Save changes"}
+            {mode === "invite" ? "Create user" : "Save changes"}
           </Button>
         </>
       }

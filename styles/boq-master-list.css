@@ -1,39 +1,67 @@
 @import "./abrd-grid-tokens.css";
 @import "./abrd-grid-selection.css";
 
-/* ── Page chrome ─────────────────────────────────────────────────────────── */
+/* ── Page shell — parity with BOQ categorizing (breakdown) workspace ───────── */
 
-.boq-master-list__page {
+.boq-master-list {
+  --primary: 132 199 24;
+  --bg0: 255 255 255;
+  --bg1: 249 249 249;
+  --surface: 255 255 255;
+  --border: 232 232 232;
+  --border-strong: 214 214 214;
+  --fg: 31 35 43;
+  --muted: 141 141 141;
+
   display: flex;
+  height: 100%;
+  min-height: 0;
+  flex: 1 1 auto;
   flex-direction: column;
-  gap: 24px;
-  max-width: 88rem;
-  margin-inline: auto;
-  width: 100%;
+  overflow: hidden;
+  background: rgb(var(--bg1));
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial,
+    sans-serif;
+  color: rgb(var(--fg));
 }
+
+/* ── Compact page header — title + subtitle inline, actions right ─────────── */
 
 .boq-master-list__header {
   display: flex;
+  flex-shrink: 0;
   flex-wrap: wrap;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  padding-inline: 8px;
+  gap: 8px 12px;
+  padding: 6px 8px;
+  border-bottom: 1px solid rgb(var(--border));
+  background: rgb(var(--bg1));
+}
+
+.boq-master-list__heading {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px 12px;
 }
 
 .boq-master-list__title {
-  font-size: 1.75rem;
+  flex-shrink: 0;
+  font-size: 1.125rem;
   font-weight: 600;
   letter-spacing: -0.02em;
-  line-height: 1.2;
+  line-height: 1.25;
   color: rgb(var(--fg));
 }
 
 .boq-master-list__subtitle {
-  margin-top: 4px;
-  max-width: 36rem;
+  margin: 0;
+  min-width: 0;
   font-size: 12px;
-  line-height: 1.5;
+  line-height: 1.35;
   color: rgb(var(--muted));
 }
 
@@ -94,16 +122,30 @@
   background: rgb(var(--bg1, 249 249 249));
 }
 
+.boq-master-list__grid-shell {
+  display: flex;
+  min-height: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 6px 8px 8px;
+}
+
 .boq-master-list__card {
+  display: flex;
+  min-height: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+  overflow: hidden;
   border-radius: 12px;
   border: 1px solid rgb(var(--border));
   background: rgb(var(--surface));
   box-shadow: 0 2px 8px rgb(15 23 42 / 0.06);
-  overflow: hidden;
 }
 
 .boq-master-list__empty,
 .boq-master-list__error {
+  margin: 6px 8px 8px;
   border-radius: 12px;
   border: 1px solid rgb(var(--border));
   background: rgb(var(--surface));
@@ -119,7 +161,7 @@
   font-size: 13px;
 }
 
-/* Filter shell — inherit ABRD toolbar tokens */
+/* Filter shell — ABRD toolbar parity (matches BOQ categorizing screen) */
 .boq-master-list .abrd-filter-engine {
   border: 0;
   border-radius: 0;
@@ -129,6 +171,14 @@
 
 .boq-master-list .abrd-filter-engine .proj-page-tools {
   overflow: visible;
+  border-bottom: 1px solid var(--app-color-grid-line);
+  background: rgb(var(--surface));
+}
+
+.boq-master-list .abrd-filter-engine > .min-h-0.flex-1.overflow-auto {
+  background:
+    linear-gradient(rgb(var(--bg1)), rgb(var(--bg1))) padding-box,
+    rgb(244 246 249);
 }
 
 /* ── Grid table — ABRD data-grid simple.scss parity ──────────────────────── */
@@ -176,6 +226,30 @@
 
 .boq-master-list .abrd-grouped-table thead th:last-child {
   box-shadow: inset 0 -1px 0 var(--app-color-grid-line) !important;
+}
+
+.boq-master-list .abrd-grouped-table thead.sticky {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 20 !important;
+  box-shadow: 0 2px 6px rgb(15 23 42 / 0.08);
+}
+
+.boq-master-list .abrd-grouped-table thead.sticky th,
+.boq-master-list .abrd-grouped-table thead th.abrd-grid-header-cell {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 20 !important;
+}
+
+.boq-master-list .abrd-grouped-table thead.sticky th[class*="left-0"],
+.boq-master-list .abrd-grouped-table thead th.abrd-grid-header-cell[class*="left-0"] {
+  z-index: 22 !important;
+}
+
+.boq-master-list .abrd-grouped-table thead.sticky th[class*="right-0"],
+.boq-master-list .abrd-grouped-table thead th.abrd-grid-header-cell[class*="right-0"] {
+  z-index: 22 !important;
 }
 
 .boq-master-list .abrd-grouped-table thead th .header-text,

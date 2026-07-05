@@ -1,5 +1,6 @@
 import type {
   AdminUserRecord,
+  AdminUserWithTemporaryPassword,
   InviteUserParams,
   IUserAdminRepository,
   ListUsersParams,
@@ -7,6 +8,7 @@ import type {
 } from "@/application/ports/IUserAdminRepository";
 import type { Role } from "@/domain/shared/Role";
 import { isRole } from "@/domain/shared/Role";
+import { generateTemporaryPassword } from "@/infrastructure/auth/generateTemporaryPassword";
 import { createSupabaseAdminClient } from "@/infrastructure/auth/supabase/adminClient";
 
 function parseRolesFromAppMetadata(
@@ -20,6 +22,12 @@ function parseRolesFromAppMetadata(
   return raw.filter(
     (entry): entry is Role => typeof entry === "string" && isRole(entry),
   );
+}
+
+function parseMustChangePassword(
+  userMetadata: Record<string, unknown> | undefined,
+): boolean {
+  return userMetadata?.must_change_password === true;
 }
 
 function mapSupabaseUser(user: {
@@ -49,17 +57,8 @@ function mapSupabaseUser(user: {
     isActive: !isBanned,
     lastSignInAt: user.last_sign_in_at ?? null,
     createdAt: user.created_at ?? new Date().toISOString(),
+    mustChangePassword: parseMustChangePassword(user.user_metadata),
   };
-}
-
-function isEmailDeliveryError(message: string, code?: string): boolean {
-  const normalized = message.toLowerCase();
-  return (
-    code === "over_email_send_rate_limit" ||
-    normalized.includes("rate limit") ||
-    normalized.includes("smtp") ||
-    normalized.includes("email provider")
-  );
 }
 
 function isExistingUserError(message: string): boolean {
@@ -69,6 +68,13 @@ function isExistingUserError(message: string): boolean {
     normalized.includes("already registered") ||
     normalized.includes("already exists")
   );
+}
+
+function buildUserMetadata(displayName?: string, mustChangePassword = false) {
+  return {
+    ...(displayName ? { display_name: displayName } : {}),
+    must_change_password: mustChangePassword,
+  };
 }
 
 export class SupabaseUserAdminRepository implements IUserAdminRepository {
@@ -128,48 +134,55 @@ export class SupabaseUserAdminRepository implements IUserAdminRepository {
     return mapSupabaseUser(data.user);
   }
 
-  private async findUserByEmail(email: string): Promise<AdminUserRecord | null> {
+  private async createUserWithTemporaryPassword(
+    params: InviteUserParams,
+  ): Promise<AdminUserWithTemporaryPassword> {
     const client = this.getClient();
-    const needle = email.toLowerCase();
-    let page = 1;
+    const temporaryPassword = generateTemporaryPassword();
 
-    while (page <= 10) {
-      const { data, error } = await client.auth.admin.listUsers({
-        page,
-        perPage: 1000,
-      });
+    const { data, error } = await client.auth.admin.createUser({
+      email: params.email,
+      password: temporaryPassword,
+      email_confirm: true,
+      user_metadata: buildUserMetadata(params.displayName, true),
+      app_metadata: { roles: params.roles },
+    });
 
-      if (error) {
-        throw new Error(error.message);
+    if (error) {
+      if (isExistingUserError(error.message)) {
+        throw new Error("A user with this email already exists.");
       }
-
-      const match = (data.users ?? []).find(
-        (user) => user.email?.toLowerCase() === needle,
-      );
-      if (match) {
-        return mapSupabaseUser(match);
-      }
-
-      if ((data.users ?? []).length < 1000) {
-        break;
-      }
-
-      page += 1;
+      throw new Error(error.message);
     }
 
-    return null;
+    if (!data.user) {
+      throw new Error("User creation succeeded but no user was returned.");
+    }
+
+    return {
+      user: mapSupabaseUser(data.user),
+      temporaryPassword,
+    };
   }
 
-  private async applyUserProfile(
-    userId: string,
-    params: Pick<InviteUserParams, "displayName" | "roles">,
-  ): Promise<AdminUserRecord> {
+  async inviteUser(params: InviteUserParams): Promise<AdminUserWithTemporaryPassword> {
+    return this.createUserWithTemporaryPassword(params);
+  }
+
+  async resetUserPassword(id: string): Promise<AdminUserWithTemporaryPassword> {
     const client = this.getClient();
-    const { data, error } = await client.auth.admin.updateUserById(userId, {
-      app_metadata: { roles: params.roles },
-      user_metadata: params.displayName
-        ? { display_name: params.displayName }
-        : undefined,
+    const existing = await this.getUserById(id);
+    if (!existing) {
+      throw new Error(`User "${id}" was not found.`);
+    }
+
+    const temporaryPassword = generateTemporaryPassword();
+    const { data, error } = await client.auth.admin.updateUserById(id, {
+      password: temporaryPassword,
+      user_metadata: buildUserMetadata(
+        existing.displayName ?? undefined,
+        true,
+      ),
     });
 
     if (error) {
@@ -177,68 +190,32 @@ export class SupabaseUserAdminRepository implements IUserAdminRepository {
     }
 
     if (!data.user) {
-      throw new Error("User update succeeded but no user was returned.");
+      throw new Error("Password reset succeeded but no user was returned.");
     }
 
-    return mapSupabaseUser(data.user);
+    return {
+      user: mapSupabaseUser(data.user),
+      temporaryPassword,
+    };
   }
 
-  async inviteUser(params: InviteUserParams): Promise<AdminUserRecord> {
+  async clearMustChangePassword(userId: string): Promise<void> {
     const client = this.getClient();
-    const { data, error } = await client.auth.admin.inviteUserByEmail(
-      params.email,
-      {
-        data: params.displayName
-          ? { display_name: params.displayName }
-          : undefined,
-      },
-    );
-
-    if (!error && data.user) {
-      return this.applyUserProfile(data.user.id, params);
+    const existing = await this.getUserById(userId);
+    if (!existing) {
+      throw new Error(`User "${userId}" was not found.`);
     }
 
-    if (error && isExistingUserError(error.message)) {
-      const existing = await this.findUserByEmail(params.email);
-      if (!existing) {
-        throw new Error(error.message);
-      }
-      return this.applyUserProfile(existing.id, params);
-    }
-
-    if (error && isEmailDeliveryError(error.message, error.code)) {
-      const { data: created, error: createError } =
-        await client.auth.admin.createUser({
-          email: params.email,
-          email_confirm: true,
-          user_metadata: params.displayName
-            ? { display_name: params.displayName }
-            : undefined,
-          app_metadata: { roles: params.roles },
-        });
-
-      if (!createError && created.user) {
-        return mapSupabaseUser(created.user);
-      }
-
-      if (createError && isExistingUserError(createError.message)) {
-        const existing = await this.findUserByEmail(params.email);
-        if (!existing) {
-          throw new Error(createError.message);
-        }
-        return this.applyUserProfile(existing.id, params);
-      }
-
-      if (createError) {
-        throw new Error(createError.message);
-      }
-    }
+    const { error } = await client.auth.admin.updateUserById(userId, {
+      user_metadata: buildUserMetadata(
+        existing.displayName ?? undefined,
+        false,
+      ),
+    });
 
     if (error) {
       throw new Error(error.message);
     }
-
-    throw new Error("Invite succeeded but no user was returned.");
   }
 
   async updateUser(params: UpdateUserParams): Promise<AdminUserRecord> {
@@ -258,9 +235,10 @@ export class SupabaseUserAdminRepository implements IUserAdminRepository {
 
     const { data, error } = await client.auth.admin.updateUserById(params.id, {
       app_metadata: { roles: nextRoles },
-      user_metadata: {
-        display_name: nextDisplayName,
-      },
+      user_metadata: buildUserMetadata(
+        nextDisplayName ?? undefined,
+        existing.mustChangePassword,
+      ),
       ban_duration: nextActive ? "none" : "876000h",
     });
 
