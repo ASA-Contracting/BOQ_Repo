@@ -2,10 +2,11 @@
 
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Check, ChevronDown, Search } from 'lucide-react';
+import { Check, ChevronDown, ListFilter, Search, Tag } from 'lucide-react';
 
 import type { CategoryPickerOption } from '@/lib/category-picker-options';
 import {
+  collectCategoryPickerAvailableTags,
   filterCategoryPickerOptions,
   getCategoryPickerDisplayLabel,
 } from '@/lib/category-picker-options';
@@ -93,14 +94,42 @@ export function BoqCategoryPickerMenu({
 }: PickerMenuProps) {
   const instanceId = useId().replace(/:/g, '');
   const [query, setQuery] = useState('');
+  const [selectedTagNames, setSelectedTagNames] = useState<Set<string>>(new Set());
+  const [tagFilterOpen, setTagFilterOpen] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
+  const tagFilterRef = useRef<HTMLDivElement>(null);
   const menuStyle = useMenuPosition(anchorEl, true);
 
-  const filtered = useMemo(
-    () => filterCategoryPickerOptions(options, query),
-    [options, query],
+  const availableTags = useMemo(
+    () => collectCategoryPickerAvailableTags(options),
+    [options],
   );
+
+  const filtered = useMemo(
+    () => filterCategoryPickerOptions(options, query, selectedTagNames),
+    [options, query, selectedTagNames],
+  );
+
+  const tagFilterActive = selectedTagNames.size > 0;
+
+  const toggleTagFilter = useCallback((tagName: string) => {
+    const key = tagName.trim().replace(/^#+/, '').toLowerCase();
+    if (!key) return;
+    setSelectedTagNames((current) => {
+      const next = new Set(current);
+      if (next.has(key)) {
+        next.delete(key);
+      } else {
+        next.add(key);
+      }
+      return next;
+    });
+  }, []);
+
+  const clearTagFilters = useCallback(() => {
+    setSelectedTagNames(new Set());
+  }, []);
 
   useEffect(() => {
     searchRef.current?.focus({ preventScroll: true });
@@ -117,6 +146,19 @@ export function BoqCategoryPickerMenu({
     window.addEventListener('mousedown', onPointerDown);
     return () => window.removeEventListener('mousedown', onPointerDown);
   }, [anchorEl, onClose]);
+
+  useEffect(() => {
+    if (!tagFilterOpen) return;
+
+    const onPointerDown = (event: MouseEvent) => {
+      const target = event.target as Node;
+      if (tagFilterRef.current?.contains(target)) return;
+      setTagFilterOpen(false);
+    };
+
+    window.addEventListener('mousedown', onPointerDown);
+    return () => window.removeEventListener('mousedown', onPointerDown);
+  }, [tagFilterOpen]);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -137,11 +179,11 @@ export function BoqCategoryPickerMenu({
       onPointerDown={(event) => event.stopPropagation()}
       onMouseDown={(event) => event.stopPropagation()}
     >
-      <div className="flex items-center gap-2 border-b border-indigo-100 bg-indigo-50 px-3 py-2">
-        <Search className="h-4 w-4 text-indigo-600" aria-hidden />
+      <div className="relative flex items-center gap-2 border-b border-indigo-100 bg-indigo-50 px-3 py-2">
+        <Search className="h-4 w-4 shrink-0 text-indigo-600" aria-hidden />
         <input
           ref={searchRef}
-          className="h-8 w-full bg-transparent text-sm outline-none placeholder:text-indigo-400"
+          className="h-8 min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-indigo-400"
           placeholder={searchPlaceholder}
           value={query}
           onChange={(event) => setQuery(event.target.value)}
@@ -149,6 +191,86 @@ export function BoqCategoryPickerMenu({
             if (event.key === 'Escape') onClose();
           }}
         />
+        <div ref={tagFilterRef} className="relative shrink-0">
+          <button
+            type="button"
+            className={cn(
+              'boq-category-picker__tag-filter-trigger flex h-7 w-7 items-center justify-center rounded-md border transition-colors',
+              tagFilterActive || tagFilterOpen
+                ? 'border-indigo-400 bg-indigo-100 text-indigo-700'
+                : 'border-slate-200 bg-white text-slate-500 hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-600',
+            )}
+            aria-label={
+              tagFilterActive
+                ? `Filter by tags (${selectedTagNames.size} selected)`
+                : 'Filter by tags'
+            }
+            title="Filter by tags"
+            aria-expanded={tagFilterOpen}
+            aria-haspopup="menu"
+            onClick={() => setTagFilterOpen((open) => !open)}
+          >
+            <ListFilter className="h-4 w-4" aria-hidden />
+          </button>
+          {tagFilterOpen ? (
+            <div
+              className="boq-category-picker__tag-filter-menu absolute right-0 top-full z-10 mt-1 w-56 overflow-hidden rounded-lg border border-indigo-200 bg-white shadow-lg"
+              role="menu"
+            >
+              <div className="flex items-center justify-between border-b border-indigo-100 bg-indigo-50 px-3 py-2">
+                <span className="text-xs font-semibold text-indigo-900">Filter by tag</span>
+                {tagFilterActive ? (
+                  <button
+                    type="button"
+                    className="text-[11px] font-medium text-indigo-600 hover:text-indigo-800"
+                    onClick={clearTagFilters}
+                  >
+                    Clear
+                  </button>
+                ) : null}
+              </div>
+              {availableTags.length === 0 ? (
+                <div className="px-3 py-3 text-center text-xs text-muted-foreground">
+                  No tags applied yet.
+                </div>
+              ) : (
+                <div className="max-h-48 overflow-auto py-1">
+                  {availableTags.map((tag) => {
+                    const tagKey = tag.name.toLowerCase();
+                    const isSelected = selectedTagNames.has(tagKey);
+                    return (
+                      <button
+                        key={tag.name}
+                        type="button"
+                        role="menuitemcheckbox"
+                        aria-checked={isSelected}
+                        className={cn(
+                          'boq-category-picker__tag-filter-option flex w-full items-center gap-2 px-3 py-2 text-left text-xs transition-colors',
+                          isSelected
+                            ? 'bg-indigo-100 font-semibold text-indigo-900'
+                            : 'text-slate-700 hover:bg-indigo-50',
+                        )}
+                        onClick={() => toggleTagFilter(tag.name)}
+                      >
+                        <Tag
+                          className={cn(
+                            'h-3.5 w-3.5 shrink-0',
+                            isSelected ? 'text-indigo-600' : 'text-indigo-400',
+                          )}
+                          aria-hidden
+                        />
+                        <span className="min-w-0 flex-1 truncate">#{tag.name}</span>
+                        <span className="shrink-0 text-[10px] text-muted-foreground">
+                          {tag.count}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          ) : null}
+        </div>
       </div>
       <div className="max-h-64 overflow-auto py-1">
         <button

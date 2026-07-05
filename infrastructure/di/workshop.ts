@@ -19,7 +19,6 @@ import { ListSimilarWorkshopItemsUseCase } from "@/application/use-cases/worksho
 import { ParseExcelUploadUseCase } from "@/application/use-cases/workshop/ParseExcelUploadUseCase";
 import { ProcessImportJobsUseCase } from "@/application/use-cases/workshop/ProcessImportJobsUseCase";
 import { PublishWorkshopBatchUseCase } from "@/application/use-cases/workshop/PublishWorkshopBatchUseCase";
-import { RunBatchCategorizationUseCase } from "@/application/use-cases/workshop/RunBatchCategorizationUseCase";
 import { SaveWorkshopItemClassificationUseCase } from "@/application/use-cases/workshop/SaveWorkshopItemClassificationUseCase";
 import { SkipWorkshopItemUseCase } from "@/application/use-cases/workshop/SkipWorkshopItemUseCase";
 import { ListBoqNotificationsUseCase } from "@/application/use-cases/workshop/ListBoqNotificationsUseCase";
@@ -37,7 +36,6 @@ import type {
   IWorkshopItemRepository,
   IWorkshopReviewRepository,
 } from "@/domain/workshop/repositories/IWorkshopItemRepository";
-import type { ICategorizationService } from "@/application/ports/ICategorizationService";
 import type { IExcelParser } from "@/application/ports/IExcelParser";
 import { DrizzleBoqImportRepository } from "@/infrastructure/persistence/boq/DrizzleBoqImportRepository";
 import { DrizzleBoqVersionRepository } from "@/infrastructure/persistence/boq/DrizzleBoqVersionRepository";
@@ -49,7 +47,6 @@ import {
   DrizzleWorkshopReviewRepository,
 } from "@/infrastructure/persistence/workshop/DrizzleWorkshopItemRepository";
 import { SheetJsExcelParser } from "@/infrastructure/import/SheetJsExcelParser";
-import { OpenAiCategorizationService } from "@/infrastructure/ai/providers/openai/OpenAiCategorizationService";
 import { ImportJobWorker } from "@/infrastructure/jobs/ImportJobWorker";
 
 export type WorkshopServices = {
@@ -60,7 +57,6 @@ export type WorkshopServices = {
   importCampaignRepository: IImportCampaignRepository;
   boqImportRepository: IBoqImportRepository;
   excelParser: IExcelParser;
-  categorizationService: ICategorizationService;
   parseExcelUploadUseCase: ParseExcelUploadUseCase;
   importBoqFromExcelUseCase: ImportBoqFromExcelUseCase;
   listRecentWorkshopBatchesUseCase: ListRecentWorkshopBatchesUseCase;
@@ -73,7 +69,6 @@ export type WorkshopServices = {
   skipWorkshopItemUseCase: SkipWorkshopItemUseCase;
   listSimilarWorkshopItemsUseCase: ListSimilarWorkshopItemsUseCase;
   listPriorClassificationDecisionsUseCase: ListPriorClassificationDecisionsUseCase;
-  runBatchCategorizationUseCase: RunBatchCategorizationUseCase;
   publishWorkshopBatchUseCase: PublishWorkshopBatchUseCase;
   bulkApproveSimilarUseCase: BulkApproveSimilarUseCase;
   createImportCampaignUseCase: CreateImportCampaignUseCase;
@@ -105,7 +100,6 @@ export function createWorkshopServices(
   const boqImportRepository = new DrizzleBoqImportRepository();
   const boqVersionRepository = new DrizzleBoqVersionRepository();
   const excelParser = new SheetJsExcelParser();
-  const categorizationService = new OpenAiCategorizationService();
 
   const importBoqFromExcelUseCase = new ImportBoqFromExcelUseCase({
     boqImportRepository,
@@ -115,19 +109,10 @@ export function createWorkshopServices(
     unitOfWork: deps.unitOfWork,
   });
 
-  const runBatchCategorizationUseCase = new RunBatchCategorizationUseCase({
-    workshopBatchRepository,
-    workshopItemRepository,
-    familyRepository: deps.familyRepository,
-    categorizationService,
-    unitOfWork: deps.unitOfWork,
-  });
-
   const processImportJobsUseCase = new ProcessImportJobsUseCase({
     importCampaignRepository,
     excelParser,
     importBoqFromExcelUseCase,
-    runBatchCategorizationUseCase,
   });
 
   return {
@@ -138,7 +123,6 @@ export function createWorkshopServices(
     importCampaignRepository,
     boqImportRepository,
     excelParser,
-    categorizationService,
     parseExcelUploadUseCase: new ParseExcelUploadUseCase({ excelParser }),
     importBoqFromExcelUseCase,
     listRecentWorkshopBatchesUseCase: new ListRecentWorkshopBatchesUseCase({
@@ -187,7 +171,6 @@ export function createWorkshopServices(
       new ListPriorClassificationDecisionsUseCase({
         workshopReviewRepository,
       }),
-    runBatchCategorizationUseCase,
     publishWorkshopBatchUseCase: new PublishWorkshopBatchUseCase({
       workshopBatchRepository,
       workshopItemRepository,

@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { MAX_CLASSIFICATION_SCHEMA_LEVELS } from '@/domain/classification/constants';
+
 export const levelOrderSchema = z.object({
   levelTypeId: z.number().int().positive(),
   order: z.number().int().positive(),
@@ -104,7 +106,7 @@ export const updateLevelTypeSchema = createLevelTypeSchema.extend({
 });
 
 export const saveSchemaHierarchySchema = z.object({
-  levels: z.array(levelOrderSchema).min(1),
+  levels: z.array(levelOrderSchema).min(1).max(MAX_CLASSIFICATION_SCHEMA_LEVELS),
 });
 
 export const createMaterialNodeSchema = z.object({
@@ -157,7 +159,7 @@ export const importRowSchema = z.object({
 
 export const importRequestSchema = z.object({
   schemaId: z.number().int().positive().optional(),
-  maxDepth: z.number().int().positive().optional(),
+  maxDepth: z.number().int().positive().max(MAX_CLASSIFICATION_SCHEMA_LEVELS).optional(),
   rows: z.array(importRowSchema).min(1).max(10000),
 });
 

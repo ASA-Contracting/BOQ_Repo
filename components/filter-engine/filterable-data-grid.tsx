@@ -237,8 +237,8 @@ export function FilterableDataGrid<T>({
             <>
               <SharedGroupMenu grouping={grouping} columns={columns} />
               <ColumnFieldsMenu columns={columns} layout={layout} />
-              <ToggleAllGroupsChip grouping={grouping} data={engine.displayData} />
               {toolbarTitle}
+              <ToggleAllGroupsChip grouping={grouping} data={engine.displayData} />
             </>
           }
           toolbarRight={toolbarActions}

@@ -75,12 +75,15 @@ export type WorkshopItemReviewDto = {
 export type ExcelPreviewDto = {
   sheetName: string;
   sheetNames: string[];
+  sheetRows: string[][];
+  detectedHeaderRowIndex: number;
   headers: string[];
   rawHeaders: string[];
   columnLetters: string[];
   previewRows: string[][];
   allRows: string[][];
   totalRowCount: number;
+  skippedLabelRowCount: number;
 };
 
 export type ImportBoqResultDto = {

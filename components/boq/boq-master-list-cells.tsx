@@ -53,10 +53,8 @@ export function isWorkshopIncomplete(boq: BoqListEntryDto): boolean {
 }
 
 export function boqRowHref(boq: BoqListEntryDto): string {
-  if (isWorkshopIncomplete(boq)) {
-    return `/workshop/categorize/${boq.batchId}`;
-  }
-  return `/boq/${boq.boqId}`;
+  const query = boq.versionId ? `?versionId=${boq.versionId}` : "";
+  return `/boq/${boq.boqId}${query}`;
 }
 
 export function boqRowActionLabel(boq: BoqListEntryDto): string {
@@ -75,7 +73,10 @@ export function approvalLabel(boq: BoqListEntryDto): string {
 }
 
 export function versionLabel(boq: BoqListEntryDto): string {
-  return boq.versionName ?? (boq.versionNumber ? `v${boq.versionNumber}` : "");
+  if (boq.approvalStatus === "approved") {
+    return boq.versionName ?? (boq.versionNumber ? `Version ${boq.versionNumber}` : "Approved");
+  }
+  return boq.versionName ?? "Draft";
 }
 
 type PillTone = "gray" | "green" | "yellow" | "orange" | "blue" | "purple";

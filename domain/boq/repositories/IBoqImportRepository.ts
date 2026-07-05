@@ -5,6 +5,7 @@ export type ImportBoqLineInput = {
   description: string | null;
   unit: string | null;
   quantity: string | null;
+  unitPrice: string | null;
   itemNo: string | null;
   isHeader: boolean;
   isMeasurable: boolean;
@@ -22,6 +23,7 @@ export type ImportBoqSnapshotResult = {
     description: string | null;
     unit: string | null;
     quantity: string | null;
+    unitPrice: string | null;
     itemNo: string | null;
     isHeader: boolean;
     isMeasurable: boolean;
@@ -38,5 +40,6 @@ export interface IBoqImportRepository {
     projectId?: number;
     boqId?: number;
     client?: string;
+    discipline?: string;
   }): Promise<ImportBoqSnapshotResult>;
 }

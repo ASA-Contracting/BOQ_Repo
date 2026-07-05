@@ -27,3 +27,11 @@ export class LastSystemAdministratorError extends DomainError {
     );
   }
 }
+
+export class CannotDeleteSelfError extends DomainError {
+  readonly code = "CANNOT_DELETE_SELF";
+
+  constructor() {
+    super("You cannot delete your own account.");
+  }
+}

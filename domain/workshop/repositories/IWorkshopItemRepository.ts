@@ -46,6 +46,7 @@ export type CreateWorkshopItemInput = {
   originalIsHeader: boolean;
   originalIsMeasurable: boolean;
   contextQuantity: string | null;
+  contextUnitRate?: string | null;
   contextBoqVersionId?: number | null;
   contextSnapshotJson: string | null;
   importedAt: Date;

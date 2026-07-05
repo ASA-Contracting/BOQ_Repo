@@ -7,7 +7,7 @@ type RouteContext = {
   params: Promise<{ boqId: string }>;
 };
 
-export async function GET(_request: NextRequest, context: RouteContext) {
+export async function GET(request: NextRequest, context: RouteContext) {
   const ctx = await resolveRequestContext();
   if (!ctx) return apiError("Unauthorized", 401);
 
@@ -17,7 +17,10 @@ export async function GET(_request: NextRequest, context: RouteContext) {
     return apiError("Invalid BOQ id", 400);
   }
 
-  const result = await getAppServices().boq.getBoqBreakdownUseCase.execute(ctx, { boqId });
+  const result = await getAppServices().boq.getBoqBreakdownUseCase.execute(ctx, {
+    boqId,
+    versionId: Number(request.nextUrl.searchParams.get("versionId") ?? "") || undefined,
+  });
   if (!result.ok) {
     const status = result.error.code === "VALIDATION_ERROR" ? 404 : 400;
     return apiError(result.error.message, status);

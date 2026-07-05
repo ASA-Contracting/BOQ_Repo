@@ -48,6 +48,7 @@ describe("SheetJsExcelParser", () => {
 
     expect(parsed.sheetName).toBe("Break down (2)");
     expect(parsed.sheetNames).toEqual(["Summary", "Break down (2)"]);
+    expect(parsed.detectedHeaderRowIndex).toBe(0);
     expect(parsed.headers).toEqual(["BOQ #", "Description"]);
     expect(parsed.totalRowCount).toBe(2);
     expect(parsed.allRows[0]).toEqual(["1", "Item A"]);

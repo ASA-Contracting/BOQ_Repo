@@ -22,6 +22,8 @@ export type DataGridColumn<T> = {
   align?: "left" | "right" | "center";
   sortable?: boolean;
   sortKey?: string;
+  width?: number | string;
+  minWidth?: number;
 };
 
 export type DataGridProps<T extends object> = Omit<DataTableProps<T>, "columns" | "stickyHeader"> & {
@@ -34,6 +36,7 @@ export type DataGridProps<T extends object> = Omit<DataTableProps<T>, "columns" 
   onSelectionChange?: (keys: Set<string>) => void;
   height?: string | number;
   tableRef?: React.Ref<TableAPI>;
+  tableClassName?: string;
 };
 
 export function DataGrid<T extends object>({
@@ -52,6 +55,7 @@ export function DataGrid<T extends object>({
   selectedRowKey,
   height,
   tableRef,
+  tableClassName,
   "aria-label": ariaLabel,
 }: DataGridProps<T>) {
   const headers = React.useMemo(
@@ -85,6 +89,7 @@ export function DataGrid<T extends object>({
     <div aria-label={ariaLabel} className={cn("h-full min-h-0", className)}>
       <SimpleDataGrid
         ref={tableRef}
+        className={tableClassName}
         defaultHeaders={headers as ReactHeaderObject[]}
         rows={data}
         height={height}

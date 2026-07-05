@@ -1,7 +1,7 @@
 import type { ImportBoqResultDto } from "@/application/dto/workshop/categorizationDto";
 import type { ImportBoqInput } from "@/application/dto/workshop/importBoqSchema";
 import type { IUseCase } from "@/application/use-cases/IUseCase";
-import { requireAuthenticatedUser } from "@/application/use-cases/family/authorizeFamilyAdmin";
+import { authorizeWorkshopImport } from "@/application/use-cases/workshop/authorizeWorkshopImport";
 import { mapImportRows } from "@/application/use-cases/workshop/mapImportRows";
 import { resolveFamilyHint } from "@/application/use-cases/workshop/resolveFamilyHint";
 import type { IBoqImportRepository } from "@/domain/boq/repositories/IBoqImportRepository";
@@ -32,7 +32,7 @@ export class ImportBoqFromExcelUseCase
     ctx: RequestContext,
     input: ImportBoqInput,
   ): Promise<Result<ImportBoqResultDto, DomainError>> {
-    const auth = requireAuthenticatedUser(ctx);
+    const auth = authorizeWorkshopImport(ctx);
     if (!auth.ok) {
       return auth;
     }
@@ -52,6 +52,7 @@ export class ImportBoqFromExcelUseCase
       description: line.description,
       unit: line.unit,
       quantity: line.quantity,
+      unitPrice: line.unitPrice,
       itemNo: line.itemNo,
       isHeader: line.isHeader,
       isMeasurable: line.isMeasurable,
@@ -68,6 +69,7 @@ export class ImportBoqFromExcelUseCase
         projectId: input.projectId,
         boqId: input.boqId,
         client: input.client,
+        discipline: input.discipline,
       });
 
       const batch = await this.deps.workshopBatchRepository.createBatch({
@@ -99,6 +101,7 @@ export class ImportBoqFromExcelUseCase
           originalIsHeader: item.isHeader,
           originalIsMeasurable: item.isMeasurable,
           contextQuantity: item.quantity,
+          contextUnitRate: item.unitPrice,
           contextBoqVersionId: snapshot.boqVersionId as number,
           contextSnapshotJson: item.contextSnapshot
             ? JSON.stringify(item.contextSnapshot)

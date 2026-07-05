@@ -174,6 +174,15 @@ export class SupabaseUserAdminRepository implements IUserAdminRepository {
     return mapSupabaseUser(data.user);
   }
 
+  async deleteUser(id: string): Promise<void> {
+    const client = this.getClient();
+    const { error } = await client.auth.admin.deleteUser(id);
+
+    if (error) {
+      throw new Error(error.message);
+    }
+  }
+
   async countActiveSystemAdministrators(
     excludeUserId?: string,
   ): Promise<number> {

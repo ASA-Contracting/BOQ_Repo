@@ -41,3 +41,19 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
 
   return v1Success(result.value);
 }
+
+export async function DELETE(_request: NextRequest, context: RouteContext) {
+  const ctx = await resolveRequestContext();
+  if (!ctx) return v1Unauthorized();
+
+  const { id } = await context.params;
+
+  const result = await getAppServices().userAdmin.deleteUserUseCase.execute(ctx, {
+    id,
+  });
+  if (!result.ok) {
+    return v1Error(result.error);
+  }
+
+  return v1Success(null);
+}

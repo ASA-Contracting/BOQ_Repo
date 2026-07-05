@@ -6,6 +6,7 @@ export type MappedImportLine = {
   description: string | null;
   unit: string | null;
   quantity: string | null;
+  unitPrice: string | null;
   itemNo: string | null;
   isHeader: boolean;
   isMeasurable: boolean;
@@ -56,6 +57,7 @@ export function mapImportRows(input: ImportBoqInput): MappedImportLine[] {
       const description = getCell(row, "description");
       const unit = getCell(row, "unit");
       const quantity = normalizeImportQuantity(getCell(row, "quantity"));
+      const unitPrice = normalizeImportQuantity(getCell(row, "unit_price"));
       const itemNo = getCell(row, "item_no");
       const section = getCell(row, "section");
       const rowDiscipline = getCell(row, "discipline");
@@ -78,6 +80,7 @@ export function mapImportRows(input: ImportBoqInput): MappedImportLine[] {
         description: description || null,
         unit: unit || null,
         quantity: quantity || null,
+        unitPrice: unitPrice || null,
         itemNo: itemNo || null,
         isHeader,
         isMeasurable,

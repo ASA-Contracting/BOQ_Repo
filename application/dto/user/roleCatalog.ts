@@ -57,23 +57,15 @@ export const ROLE_LABELS: Record<
   },
   general_manager: {
     label: "General Manager",
-    description: "Oversight, publish, close project, and reporting.",
+    description: "Upload BOQs, approve versions, publish, close projects, and reporting.",
   },
   technical_office_manager: {
     label: "Technical Office Manager",
-    description: "Technical alignment and publish.",
+    description: "Upload BOQs, approve versions, publish, and reporting.",
   },
   estimator: {
     label: "Estimator",
-    description: "Import, Workshop, and categorization approval — no publish.",
-  },
-  reviewer: {
-    label: "Reviewer",
-    description: "Workshop review and categorization approval — no publish.",
-  },
-  ai_reviewer: {
-    label: "AI Reviewer",
-    description: "AI output review and categorization approval — no publish.",
+    description: "Upload BOQs, classify lines in draft, and submit for approval — no publish.",
   },
   viewer: {
     label: "Viewer",

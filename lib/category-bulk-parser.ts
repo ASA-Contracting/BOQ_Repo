@@ -91,7 +91,11 @@ export function buildBulkPreview(
   return { rows, createCount, existingCount, tagCount: tagNames.size, errors, warnings };
 }
 
-export function buildImportTemplateCsv(maxLevels = 4): string {
+import { MAX_CLASSIFICATION_SCHEMA_LEVELS } from '@/domain/classification/constants';
+
+export function buildImportTemplateCsv(
+  maxLevels = MAX_CLASSIFICATION_SCHEMA_LEVELS,
+): string {
   const headers = [
     ...Array.from({ length: maxLevels }, (_item, index) => `Level ${index + 1}`),
     'Tags',

@@ -44,6 +44,8 @@ type Props = {
   categoryOptions: CategoryPickerOption[];
   savingItemId?: number | null;
   rowActionPending?: boolean;
+  readOnly?: boolean;
+  pendingUncategorized?: number;
   onCategoryChange: (itemId: number, materialNodeId: number | null) => void;
   onItemsChange: (items: BoqItemRowDto[]) => void;
   onInsertRow: (relativeToItemId: number, position: "before" | "after") => void;
@@ -56,6 +58,8 @@ export function BoqBreakdownGrid({
   categoryOptions,
   savingItemId = null,
   rowActionPending = false,
+  readOnly = false,
+  pendingUncategorized = 0,
   onCategoryChange,
   onItemsChange,
   onInsertRow,
@@ -305,6 +309,7 @@ export function BoqBreakdownGrid({
       categoryOptions={categoryOptions}
       sectionPickerOptions={sectionPickerOptions}
       savingItemId={savingItemId}
+      readOnly={readOnly}
       onCategoryChange={onCategoryChange}
     >
       <div className="flex min-h-0 flex-1 flex-col">
@@ -325,7 +330,7 @@ export function BoqBreakdownGrid({
           rowSelection={rowSelection}
           getRowSelectionNumber={getRowSelectionNumber}
           appendRow={
-            items.length > 0
+            !readOnly && items.length > 0
               ? {
                   key: "append-row",
                   label: "Click to add a new row at the end…",
@@ -339,16 +344,26 @@ export function BoqBreakdownGrid({
             showExportAction: false,
             onCopy: () => void handleCopyRows(),
             onCopyJson: () => void handleCopyJson(),
-            onDelete: () => void handleDeleteSelected(),
+            onDelete: readOnly ? undefined : () => void handleDeleteSelected(),
             onInsertAbove:
-              selectedItems.length > 0 && !rowActionPending
+              !readOnly && selectedItems.length > 0 && !rowActionPending
                 ? () => handleInsertRelativeToSelection("before")
                 : undefined,
             onInsertBelow:
-              selectedItems.length > 0 && !rowActionPending
+              !readOnly && selectedItems.length > 0 && !rowActionPending
                 ? () => handleInsertRelativeToSelection("after")
                 : undefined,
           }}
+          toolbarTitle={
+            !readOnly && pendingUncategorized > 0 ? (
+              <p className="boq-breakdown__toolbar-hint" role="status">
+                <strong className="boq-breakdown__toolbar-hint-count">
+                  {pendingUncategorized}
+                </strong>{" "}
+                row(s) still uncategorized — you can approve now or continue categorizing.
+              </p>
+            ) : null
+          }
           toolbarActions={
             <button
               type="button"

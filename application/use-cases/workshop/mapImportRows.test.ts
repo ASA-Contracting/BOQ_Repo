@@ -28,7 +28,14 @@ describe("mapImportRows", () => {
         "1": "description",
         "2": "unit",
         "3": "quantity",
+        "4": "unit_price",
       },
+      headers: ["A · BOQ #", "B · Item Description", "C · Unit", "D · QTY", "E · Unit Price"],
+      rows: [
+        ["", "Section 15520 - (Valves)", "", "", ""],
+        ["1", "Gate valve 2in", "EA", "10", "25.50"],
+        ["2", "Check valve", "EA", "5", "18"],
+      ],
     });
 
     expect(lines).toHaveLength(3);
@@ -38,6 +45,7 @@ describe("mapImportRows", () => {
     expect(lines[1]?.description).toBe("Gate valve 2in");
     expect(lines[1]?.unit).toBe("EA");
     expect(lines[1]?.quantity).toBe("10");
+    expect(lines[1]?.unitPrice).toBe("25.50");
     expect(lines[1]?.isMeasurable).toBe(true);
   });
 

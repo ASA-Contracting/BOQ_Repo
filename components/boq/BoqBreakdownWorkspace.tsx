@@ -1,24 +1,22 @@
 "use client";
 
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useCallback, useMemo, useState } from "react";
-import { ExternalLink, Layers, Upload } from "lucide-react";
 
 import type { BoqBreakdownDto, BoqItemRowDto } from "@/application/boq/dto";
 import { BoqBreakdownGrid } from "@/components/boq/BoqBreakdownGrid";
+import { BoqBreakdownHeader } from "@/components/boq/BoqBreakdownHeader";
 import {
   applySectionParentLabels,
   insertBoqItemRowInOrder,
   removeBoqItemRow,
   withCalculatedTotal,
 } from "@/components/boq/boq-breakdown-utils";
-import { Select, SelectOption } from "@/components/ui/select";
-import { useBoqLookupOptions } from "@/hooks/use-boq-lookup-options";
 import {
   buildCategoryOptionById,
+  getCategoryPickerDisplayLabel,
   type CategoryPickerOption,
 } from "@/lib/category-picker-options";
-import { cn } from "@/lib/utils";
 
 import "@/styles/boq-breakdown.css";
 
@@ -28,33 +26,36 @@ type Props = {
   onOpenCategoryBuilder?: () => void;
 };
 
-function isWorkshopIncomplete(breakdown: BoqBreakdownDto): boolean {
-  if (!breakdown.batchId) return false;
-  const measurable = breakdown.items.filter((item) => item.isMeasurable && !item.isHeader);
-  const published = measurable.filter((item) => item.materialNodeId != null).length;
-  return published < measurable.length;
-}
-
 export function BoqBreakdownWorkspace({
   breakdown,
   categoryOptions,
   onOpenCategoryBuilder,
 }: Props) {
+  const router = useRouter();
+  const isApproved = breakdown.isApproved;
   const [items, setItems] = useState<BoqItemRowDto[]>(() =>
     breakdown.items.map(withCalculatedTotal),
   );
   const [savingItemId, setSavingItemId] = useState<number | null>(null);
   const [rowActionPending, setRowActionPending] = useState(false);
+  const [workflowPending, setWorkflowPending] = useState(false);
   const [categoryError, setCategoryError] = useState<string | null>(null);
   const [rowActionError, setRowActionError] = useState<string | null>(null);
+  const [workflowError, setWorkflowError] = useState<string | null>(null);
+  const [workflowMessage, setWorkflowMessage] = useState<string | null>(null);
   const [discipline, setDiscipline] = useState(breakdown.discipline ?? "");
-  const { items: disciplineOptions, loading: disciplineLoading } = useBoqLookupOptions("discipline");
-  const disciplineChoices = useMemo(() => {
-    if (!discipline || disciplineOptions.some((option) => option.name === discipline)) {
-      return disciplineOptions;
-    }
-    return [{ id: -1, name: discipline, category: "discipline" as const }, ...disciplineOptions];
-  }, [discipline, disciplineOptions]);
+  const [disciplineSaving, setDisciplineSaving] = useState(false);
+  const [disciplineError, setDisciplineError] = useState<string | null>(null);
+
+  const importHref = useMemo(() => {
+    const params = new URLSearchParams({
+      boqId: String(breakdown.id),
+      projectId: String(breakdown.projectId),
+      projectName: breakdown.projectName,
+      boqName: breakdown.name,
+    });
+    return `/boq/import?${params.toString()}`;
+  }, [breakdown.id, breakdown.name, breakdown.projectId, breakdown.projectName]);
 
   const sections = useMemo(
     () => items.filter((item) => item.isHeader).length,
@@ -69,7 +70,6 @@ export function BoqBreakdownWorkspace({
     [measurable],
   );
   const pending = measurable.length - published;
-  const showWorkshopCta = isWorkshopIncomplete(breakdown);
 
   const categoryOptionById = useMemo(
     () => buildCategoryOptionById(categoryOptions),
@@ -81,8 +81,120 @@ export function BoqBreakdownWorkspace({
     [items, categoryOptionById],
   );
 
+  const handleApproveVersion = useCallback(async () => {
+    if (!breakdown.versionId || isApproved) return;
+
+    setWorkflowError(null);
+    setWorkflowMessage(null);
+    setWorkflowPending(true);
+
+    try {
+      const response = await fetch(
+        `/api/boq/${breakdown.id}/versions/${breakdown.versionId}/approve`,
+        { method: "POST" },
+      );
+      const json = (await response.json()) as {
+        success: boolean;
+        message?: string;
+        data?: { versionName: string; versionNumber: number };
+      };
+
+      if (!response.ok || !json.success || !json.data) {
+        throw new Error(json.message ?? "Failed to approve version");
+      }
+
+      setWorkflowMessage(`${json.data.versionName} approved`);
+      router.refresh();
+    } catch (error) {
+      setWorkflowError(error instanceof Error ? error.message : "Failed to approve version");
+    } finally {
+      setWorkflowPending(false);
+    }
+  }, [breakdown.id, breakdown.versionId, isApproved, router]);
+
+  const handleDisciplineChange = useCallback(
+    async (nextDiscipline: string) => {
+      const previous = discipline;
+      setDiscipline(nextDiscipline);
+      setDisciplineError(null);
+
+      if (!nextDiscipline) {
+        return;
+      }
+
+      if (isApproved) {
+        setDiscipline(previous);
+        setDisciplineError("Discipline is locked on approved versions.");
+        return;
+      }
+
+      if (!breakdown.versionId) {
+        setDiscipline(previous);
+        setDisciplineError("No version is available to save discipline.");
+        return;
+      }
+
+      setDisciplineSaving(true);
+      try {
+        const response = await fetch(`/api/boq/${breakdown.id}/discipline`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            versionId: breakdown.versionId,
+            ...(breakdown.batchId != null ? { batchId: breakdown.batchId } : {}),
+            discipline: nextDiscipline,
+          }),
+        });
+        const json = (await response.json()) as { success: boolean; message?: string };
+        if (!response.ok || !json.success) {
+          throw new Error(json.message ?? "Failed to save discipline");
+        }
+      } catch (error) {
+        setDiscipline(previous);
+        setDisciplineError(error instanceof Error ? error.message : "Failed to save discipline");
+      } finally {
+        setDisciplineSaving(false);
+      }
+    },
+    [breakdown.batchId, breakdown.id, breakdown.versionId, discipline, isApproved],
+  );
+
+  const handleDuplicateVersion = useCallback(async () => {
+    if (!breakdown.versionId) return;
+
+    setWorkflowError(null);
+    setWorkflowMessage(null);
+    setWorkflowPending(true);
+
+    try {
+      const response = await fetch(`/api/boq/${breakdown.id}/versions/duplicate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sourceVersionId: breakdown.versionId }),
+      });
+      const json = (await response.json()) as {
+        success: boolean;
+        message?: string;
+        data?: { versionId: number };
+      };
+
+      if (!response.ok || !json.success || !json.data) {
+        throw new Error(json.message ?? "Failed to duplicate version");
+      }
+
+      router.push(`/boq/${breakdown.id}?versionId=${json.data.versionId}`);
+      router.refresh();
+    } catch (error) {
+      setWorkflowError(error instanceof Error ? error.message : "Failed to duplicate version");
+    } finally {
+      setWorkflowPending(false);
+    }
+  }, [breakdown.id, breakdown.versionId, router]);
+
   const updateCategory = useCallback(
     async (itemId: number, materialNodeId: number | null) => {
+      if (isApproved) return;
+
       setCategoryError(null);
 
       let previousRow: BoqItemRowDto | undefined;
@@ -94,7 +206,7 @@ export function BoqBreakdownWorkspace({
           return {
             ...item,
             materialNodeId,
-            categoryLabel: option?.label ?? null,
+            categoryLabel: option ? getCategoryPickerDisplayLabel(option) : null,
             categoryPath: option?.path ?? null,
           };
         });
@@ -122,11 +234,13 @@ export function BoqBreakdownWorkspace({
         setSavingItemId(null);
       }
     },
-    [categoryOptionById],
+    [categoryOptionById, isApproved],
   );
 
   const insertRow = useCallback(
     async (relativeToItemId: number, position: "before" | "after") => {
+      if (isApproved) return;
+
       setRowActionError(null);
       setRowActionPending(true);
 
@@ -164,11 +278,11 @@ export function BoqBreakdownWorkspace({
         setRowActionPending(false);
       }
     },
-    [breakdown.id, breakdown.versionId],
+    [breakdown.id, breakdown.versionId, isApproved],
   );
 
   const deleteRows = useCallback(async (itemIds: number[]) => {
-    if (itemIds.length === 0) return;
+    if (isApproved || itemIds.length === 0) return;
 
     setRowActionError(null);
     setRowActionPending(true);
@@ -197,106 +311,42 @@ export function BoqBreakdownWorkspace({
     } finally {
       setRowActionPending(false);
     }
-  }, []);
+  }, [isApproved]);
 
   return (
     <div className="boq-breakdown">
-      <header className="boq-breakdown__header">
-        <div className="boq-breakdown__header-row">
-          <div className="boq-breakdown__nav-group">
-            <Link href="/boq" className="boq-breakdown__back-btn">
-              BOQ master list
-            </Link>
-
-            <div className="boq-breakdown__discipline">
-              <label
-                className="boq-breakdown__discipline-label"
-                htmlFor="boq-breakdown-discipline"
-              >
-                Discipline
-              </label>
-              <Select
-                id="boq-breakdown-discipline"
-                className="boq-breakdown__discipline-select"
-                inputSize="sm"
-                value={discipline}
-                onChange={(event) => setDiscipline(event.target.value)}
-                disabled={disciplineLoading || disciplineChoices.length === 0}
-              >
-                <SelectOption value="">
-                  {disciplineLoading ? "Loading disciplines…" : "Select discipline…"}
-                </SelectOption>
-                {disciplineChoices.map((option) => (
-                  <SelectOption key={option.id} value={option.name}>
-                    {option.name}
-                  </SelectOption>
-                ))}
-              </Select>
-            </div>
-          </div>
-
-          <div className="boq-breakdown__title-block">
-            <h1 className="boq-breakdown__title">{breakdown.name}</h1>
-            <p className="boq-breakdown__subtitle">
-              {breakdown.projectName}
-              {breakdown.versionName ? ` · ${breakdown.versionName}` : ""}
-            </p>
-          </div>
-
-          <div className="boq-breakdown__stats">
-            <StatChip label="Total rows" value={items.length} tone="slate" />
-            <StatChip label="Sections" value={sections} tone="amber" />
-            <StatChip label="Published" value={published} tone="emerald" />
-            <StatChip label="Pending" value={pending} tone="rose" highlight={pending > 0} />
-          </div>
-
-          <div className="boq-breakdown__actions">
-            {onOpenCategoryBuilder ? (
-              <button
-                type="button"
-                className="boq-breakdown__action-btn"
-                onClick={onOpenCategoryBuilder}
-              >
-                <Layers size={14} aria-hidden />
-                Category builder
-              </button>
-            ) : null}
-            {showWorkshopCta && breakdown.batchId ? (
-              <Link
-                href={`/workshop/categorize/${breakdown.batchId}`}
-                className="boq-breakdown__action-btn boq-breakdown__action-btn--primary"
-              >
-                <ExternalLink size={14} aria-hidden />
-                Continue in Workshop
-              </Link>
-            ) : null}
-            <Link href="/boq/import" className="boq-breakdown__action-btn">
-              <Upload size={14} aria-hidden />
-              Import Excel
-            </Link>
-          </div>
-        </div>
-
-        {categoryError ? (
-          <p className="boq-breakdown__error" role="alert">
-            {categoryError}
-          </p>
-        ) : null}
-        {rowActionError ? (
-          <p className="boq-breakdown__error" role="alert">
-            {rowActionError}
-          </p>
-        ) : null}
-      </header>
+      <BoqBreakdownHeader
+        breakdown={breakdown}
+        discipline={discipline}
+        disciplineSaving={disciplineSaving}
+        totalRows={items.length}
+        sections={sections}
+        published={published}
+        pending={pending}
+        measurableCount={measurable.length}
+        workflowPending={workflowPending}
+        workflowMessage={workflowMessage}
+        workflowError={workflowError}
+        categoryError={categoryError}
+        rowActionError={rowActionError}
+        disciplineError={disciplineError}
+        importHref={importHref}
+        onDisciplineChange={(value) => void handleDisciplineChange(value)}
+        onApproveVersion={() => void handleApproveVersion()}
+        onDuplicateVersion={() => void handleDuplicateVersion()}
+        onOpenCategoryBuilder={onOpenCategoryBuilder}
+      />
 
       <div className="boq-breakdown__grid-shell">
         <div className="boq-breakdown__card">
           <BoqBreakdownGrid
-            pageKey={`boq-breakdown-${breakdown.id}`}
+            pageKey={`boq-breakdown-${breakdown.id}-${breakdown.versionId ?? "latest"}`}
             items={gridItems}
             categoryOptions={categoryOptions}
             savingItemId={savingItemId}
             rowActionPending={rowActionPending}
+            readOnly={isApproved}
+            pendingUncategorized={pending}
             onCategoryChange={(itemId, materialNodeId) => void updateCategory(itemId, materialNodeId)}
             onItemsChange={setItems}
             onInsertRow={(itemId, position) => void insertRow(itemId, position)}
@@ -304,31 +354,6 @@ export function BoqBreakdownWorkspace({
           />
         </div>
       </div>
-    </div>
-  );
-}
-
-function StatChip({
-  label,
-  value,
-  tone,
-  highlight = false,
-}: {
-  label: string;
-  value: number;
-  tone: "slate" | "amber" | "emerald" | "rose";
-  highlight?: boolean;
-}) {
-  return (
-    <div
-      className={cn(
-        "boq-breakdown__stat",
-        `boq-breakdown__stat--${tone}`,
-        highlight && "boq-breakdown__stat--highlight",
-      )}
-    >
-      <div className="boq-breakdown__stat-label">{label}</div>
-      <div className="boq-breakdown__stat-value">{value}</div>
     </div>
   );
 }

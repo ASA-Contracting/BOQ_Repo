@@ -1,3 +1,4 @@
+import { DeleteUserUseCase } from "@/application/use-cases/user/DeleteUserUseCase";
 import { InviteUserUseCase } from "@/application/use-cases/user/InviteUserUseCase";
 import { ListRolesUseCase } from "@/application/use-cases/user/ListRolesUseCase";
 import { ListUsersUseCase } from "@/application/use-cases/user/ListUsersUseCase";
@@ -12,6 +13,7 @@ export type UserAdminServices = {
   listRolesUseCase: ListRolesUseCase;
   inviteUserUseCase: InviteUserUseCase;
   updateUserUseCase: UpdateUserUseCase;
+  deleteUserUseCase: DeleteUserUseCase;
 };
 
 export function createUserAdminServices(): UserAdminServices {
@@ -25,5 +27,6 @@ export function createUserAdminServices(): UserAdminServices {
     listRolesUseCase: new ListRolesUseCase(),
     inviteUserUseCase: new InviteUserUseCase({ userAdminRepository }),
     updateUserUseCase: new UpdateUserUseCase({ userAdminRepository }),
+    deleteUserUseCase: new DeleteUserUseCase({ userAdminRepository }),
   };
 }

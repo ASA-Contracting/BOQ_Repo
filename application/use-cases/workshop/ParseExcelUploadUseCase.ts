@@ -31,12 +31,15 @@ export class ParseExcelUploadUseCase
     return ok({
       sheetName: parsed.sheetName,
       sheetNames: parsed.sheetNames,
+      sheetRows: parsed.sheetRows,
+      detectedHeaderRowIndex: parsed.detectedHeaderRowIndex,
       headers: parsed.headers,
       rawHeaders: parsed.rawHeaders,
       columnLetters: parsed.columnLetters,
       previewRows: parsed.previewRows,
       allRows: parsed.allRows,
       totalRowCount: parsed.totalRowCount,
+      skippedLabelRowCount: parsed.skippedLabelRowCount,
     });
   }
 }

@@ -7,6 +7,8 @@ export type BoqListEntryDto = {
   name: string;
   projectId: number;
   projectName: string;
+  /** Group key: project + BOQ name so all versions list together. */
+  scopeLabel: string;
   discipline: string | null;
   abrdProjectId: number | null;
   externalSource: string;
@@ -52,6 +54,15 @@ export type UpdateBoqItemCategoryDto = {
   materialNodeId: number | null;
 };
 
+export type BoqVersionSummaryDto = {
+  id: number;
+  versionNumber: number | null;
+  versionName: string | null;
+  approvalStatus: string;
+  createdAt: string | null;
+  isCurrent: boolean;
+};
+
 export type BoqBreakdownDto = {
   id: number;
   name: string;
@@ -59,13 +70,42 @@ export type BoqBreakdownDto = {
   projectName: string;
   discipline: string | null;
   versionId: number | null;
+  versionNumber: number | null;
   versionName: string | null;
   batchId: number | null;
   workflowStage: string | null;
   approvalStatus: string | null;
+  isApproved: boolean;
   items: BoqItemRowDto[];
 };
 
 export type GetBoqBreakdownInput = {
+  boqId: number;
+  versionId?: number;
+};
+
+export type ListBoqVersionsInput = {
+  boqId: number;
+  currentVersionId?: number;
+};
+
+export type ApproveBoqVersionFromBreakdownInput = {
+  boqId: number;
+  versionId: number;
+};
+
+export type ApproveBoqVersionFromBreakdownResult = {
+  versionId: number;
+  versionNumber: number;
+  versionName: string;
+};
+
+export type DuplicateBoqVersionInput = {
+  boqId: number;
+  sourceVersionId: number;
+};
+
+export type DuplicateBoqVersionResult = {
+  versionId: number;
   boqId: number;
 };

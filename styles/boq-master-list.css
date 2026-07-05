@@ -244,6 +244,13 @@
   line-height: 1.35;
 }
 
+.boq-master-list .bml-version-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
 .boq-master-list .bml-open-target {
   display: inline-flex;
   align-items: center;

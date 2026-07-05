@@ -27,11 +27,11 @@ describe("parseRolesFromClaims", () => {
 
   it("prefers user claims over jwt claims", () => {
     const roles = resolveRolesFromClaims({
-      appMetadata: { roles: ["reviewer"] },
+      appMetadata: { roles: ["estimator"] },
       jwtClaims: { app_metadata: { roles: ["viewer"] } },
     });
 
-    expect(roles).toEqual(["reviewer"]);
+    expect(roles).toEqual(["estimator"]);
   });
 
   it("returns empty array when metadata is missing", () => {

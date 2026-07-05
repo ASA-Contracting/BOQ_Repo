@@ -63,6 +63,7 @@ export class DrizzleWorkshopItemRepository
           original_is_header: item.originalIsHeader,
           original_is_measurable: item.originalIsMeasurable,
           context_quantity: item.contextQuantity,
+          context_unit_rate: item.contextUnitRate ?? null,
           context_boq_version_id: item.contextBoqVersionId ?? null,
           context_snapshot_json: item.contextSnapshotJson,
           imported_at: item.importedAt,

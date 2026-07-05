@@ -1,9 +1,10 @@
 import { and, desc, eq, gte, gt, sql } from "drizzle-orm";
 
-import type { BoqBreakdownDto, BoqItemRowDto, BoqListEntryDto, BoqWorkflowStatus } from "@/application/boq/dto";
+import type { BoqBreakdownDto, BoqItemRowDto, BoqListEntryDto, BoqVersionSummaryDto, BoqWorkflowStatus } from "@/application/boq/dto";
 import type { IBoqReadRepository, InsertBoqItemInput } from "@/application/ports/IBoqReadRepository";
 import type { BoqId } from "@/domain/boq/ids";
 import { buildMaterialClassificationTreeIndex } from "@/domain/classification/tree-index";
+import { formatCategoryParentChildLabel } from "@/lib/category-picker-options";
 import {
   aspNetUsers,
   boqItemVersions,
@@ -53,11 +54,14 @@ export class DrizzleBoqReadRepository extends DrizzleRepository implements IBoqR
         versionNumber: boqVersions.VersionNumber,
         approvalStatus: boqVersions.ApprovalStatus,
         workflowStage: boqWorkBatch.workflowStage,
-        discipline: sql<string | null>`(
-          select ${boqWorkItem.context_snapshot_json}::json->>'discipline'
-          from ${boqWorkItem}
-          where ${boqWorkItem.batch_id} = ${boqWorkBatch.id}
-          limit 1
+        discipline: sql<string | null>`coalesce(
+          ${boqVersions.Discipline},
+          (
+            select ${boqWorkItem.context_snapshot_json}::json->>'discipline'
+            from ${boqWorkItem}
+            where ${boqWorkItem.batch_id} = ${boqWorkBatch.id}
+            limit 1
+          )
         )`,
         createdBy: boqVersions.CreatedBy,
         importedByName: aspNetUsers.FullName,
@@ -118,6 +122,7 @@ export class DrizzleBoqReadRepository extends DrizzleRepository implements IBoqR
         name: row.name,
         projectId: row.projectId,
         projectName: row.projectName,
+        scopeLabel: `${row.projectName} · ${row.name}`,
         discipline: row.discipline ?? null,
         abrdProjectId: row.abrdProjectId ?? null,
         externalSource: row.externalSource ?? "local",
@@ -140,7 +145,7 @@ export class DrizzleBoqReadRepository extends DrizzleRepository implements IBoqR
     });
   }
 
-  async getBoqBreakdown(boqId: number): Promise<BoqBreakdownDto | null> {
+  async getBoqBreakdown(boqId: number, versionId?: number): Promise<BoqBreakdownDto | null> {
     const boqRows = await this.database
       .select({
         id: boqs.Id,
@@ -158,33 +163,58 @@ export class DrizzleBoqReadRepository extends DrizzleRepository implements IBoqR
       return null;
     }
 
-    const versionRows = await this.database
-      .select({
-        id: boqVersions.Id,
-        versionName: boqVersions.VersionName,
-        approvalStatus: boqVersions.ApprovalStatus,
-        batchId: boqWorkBatch.id,
-        workflowStage: boqWorkBatch.workflowStage,
-      })
-      .from(boqVersions)
-      .leftJoin(boqWorkBatch, eq(boqWorkBatch.linkedBoqVersionId, boqVersions.Id))
-      .where(and(eq(boqVersions.BoqId, boqId), eq(boqVersions.IsDeleted, false)))
-      .orderBy(desc(boqVersions.CreatedAt))
-      .limit(1);
+    const versionRows = versionId
+      ? await this.database
+          .select({
+            id: boqVersions.Id,
+            versionName: boqVersions.VersionName,
+            versionNumber: boqVersions.VersionNumber,
+            approvalStatus: boqVersions.ApprovalStatus,
+            versionDiscipline: boqVersions.Discipline,
+            batchId: boqWorkBatch.id,
+            workflowStage: boqWorkBatch.workflowStage,
+          })
+          .from(boqVersions)
+          .leftJoin(boqWorkBatch, eq(boqWorkBatch.linkedBoqVersionId, boqVersions.Id))
+          .where(
+            and(
+              eq(boqVersions.Id, versionId),
+              eq(boqVersions.BoqId, boqId),
+              eq(boqVersions.IsDeleted, false),
+            ),
+          )
+          .limit(1)
+      : await this.database
+          .select({
+            id: boqVersions.Id,
+            versionName: boqVersions.VersionName,
+            versionNumber: boqVersions.VersionNumber,
+            approvalStatus: boqVersions.ApprovalStatus,
+            versionDiscipline: boqVersions.Discipline,
+            batchId: boqWorkBatch.id,
+            workflowStage: boqWorkBatch.workflowStage,
+          })
+          .from(boqVersions)
+          .leftJoin(boqWorkBatch, eq(boqWorkBatch.linkedBoqVersionId, boqVersions.Id))
+          .where(and(eq(boqVersions.BoqId, boqId), eq(boqVersions.IsDeleted, false)))
+          .orderBy(desc(boqVersions.CreatedAt))
+          .limit(1);
 
     const version = versionRows[0] ?? null;
 
-    const disciplineRows = version?.batchId
-      ? await this.database
-          .select({
-            discipline: sql<string | null>`${boqWorkItem.context_snapshot_json}::json->>'discipline'`,
-          })
-          .from(boqWorkItem)
-          .where(eq(boqWorkItem.batch_id, version.batchId))
-          .limit(1)
-      : [];
+    let batchDiscipline: string | null = null;
+    if (version?.batchId && !version.versionDiscipline) {
+      const disciplineRows = await this.database
+        .select({
+          discipline: sql<string | null>`${boqWorkItem.context_snapshot_json}::json->>'discipline'`,
+        })
+        .from(boqWorkItem)
+        .where(eq(boqWorkItem.batch_id, version.batchId))
+        .limit(1);
+      batchDiscipline = disciplineRows[0]?.discipline ?? null;
+    }
 
-    const discipline = disciplineRows[0]?.discipline ?? null;
+    const discipline = version?.versionDiscipline ?? batchDiscipline;
 
     const itemRows = await this.database
       .select({
@@ -222,6 +252,7 @@ export class DrizzleBoqReadRepository extends DrizzleRepository implements IBoqR
       .filter((id): id is number => id != null);
 
     const pathByNodeId = new Map<number, string>();
+    const parentLabelByNodeId = new Map<number, string | null>();
     if (nodeIds.length > 0) {
       const nodes = await this.database
         .select({
@@ -249,6 +280,9 @@ export class DrizzleBoqReadRepository extends DrizzleRepository implements IBoqR
 
       for (const nodeId of nodeIds) {
         pathByNodeId.set(nodeId, treeIndex.pathLabelById.get(nodeId) ?? "");
+        const path = treeIndex.pathById.get(nodeId) ?? [];
+        const parent = path.length >= 2 ? path[path.length - 2] : null;
+        parentLabelByNodeId.set(nodeId, parent?.name ?? null);
       }
     }
 
@@ -265,7 +299,13 @@ export class DrizzleBoqReadRepository extends DrizzleRepository implements IBoqR
         isHeader: row.isHeader,
         isMeasurable: row.isMeasurable,
         materialNodeId: row.materialNodeId,
-        categoryLabel: row.materialNodeName,
+        categoryLabel:
+          row.materialNodeId != null && row.materialNodeName
+            ? formatCategoryParentChildLabel(
+                row.materialNodeName,
+                parentLabelByNodeId.get(row.materialNodeId),
+              )
+            : null,
         categoryPath: row.materialNodeId
           ? pathByNodeId.get(row.materialNodeId) ?? row.materialNodeName
           : null,
@@ -279,12 +319,40 @@ export class DrizzleBoqReadRepository extends DrizzleRepository implements IBoqR
       projectName: boq.projectName,
       discipline,
       versionId: version?.id ?? null,
+      versionNumber: version?.versionNumber ?? null,
       versionName: version?.versionName ?? null,
       batchId: version?.batchId ?? null,
       workflowStage: version?.workflowStage ?? null,
       approvalStatus: version?.approvalStatus ?? null,
+      isApproved: version?.approvalStatus === "approved",
       items,
     };
+  }
+
+  async listBoqVersions(
+    boqId: number,
+    currentVersionId?: number | null,
+  ): Promise<BoqVersionSummaryDto[]> {
+    const rows = await this.database
+      .select({
+        id: boqVersions.Id,
+        versionName: boqVersions.VersionName,
+        versionNumber: boqVersions.VersionNumber,
+        approvalStatus: boqVersions.ApprovalStatus,
+        createdAt: boqVersions.CreatedAt,
+      })
+      .from(boqVersions)
+      .where(and(eq(boqVersions.BoqId, boqId), eq(boqVersions.IsDeleted, false)))
+      .orderBy(desc(boqVersions.CreatedAt), desc(boqVersions.Id));
+
+    return rows.map((row) => ({
+      id: row.id,
+      versionNumber: row.versionNumber,
+      versionName: row.versionName,
+      approvalStatus: row.approvalStatus,
+      createdAt: toIsoString(row.createdAt),
+      isCurrent: currentVersionId != null ? row.id === currentVersionId : false,
+    }));
   }
 
   async updateItemMaterialNodeId(itemId: number, materialNodeId: number | null): Promise<void> {
@@ -451,5 +519,95 @@ export class DrizzleBoqReadRepository extends DrizzleRepository implements IBoqR
       );
 
     return rows[0]?.count ?? 0;
+  }
+
+  async countPendingCategorization(boqId: BoqId): Promise<number> {
+    const rows = await this.database
+      .select({ count: sql<number>`count(*)::int` })
+      .from(boqItems)
+      .where(
+        and(
+          eq(boqItems.BoqId, boqId),
+          eq(boqItems.IsDeleted, false),
+          eq(boqItems.IsMeasurable, true),
+          eq(boqItems.IsHeader, false),
+          sql`${boqItems.MaterialNodeId} is null`,
+        ),
+      );
+
+    return rows[0]?.count ?? 0;
+  }
+
+  async updateBatchDiscipline(batchId: number, discipline: string): Promise<void> {
+    await this.database.execute(sql`
+      update ${boqWorkItem}
+      set context_snapshot_json = jsonb_set(
+        coalesce(${boqWorkItem.context_snapshot_json}::jsonb, '{}'::jsonb),
+        '{discipline}',
+        to_jsonb(${discipline}::text)
+      )::text
+      where ${boqWorkItem.batch_id} = ${batchId}
+    `);
+  }
+
+  async updateVersionDiscipline(versionId: number, discipline: string): Promise<void> {
+    await this.database
+      .update(boqVersions)
+      .set({ Discipline: discipline })
+      .where(and(eq(boqVersions.Id, versionId), eq(boqVersions.IsDeleted, false)));
+  }
+
+  async batchBelongsToBoq(boqId: number, batchId: number): Promise<boolean> {
+    const rows = await this.database
+      .select({ id: boqWorkBatch.id })
+      .from(boqWorkBatch)
+      .innerJoin(boqVersions, eq(boqWorkBatch.linkedBoqVersionId, boqVersions.Id))
+      .where(
+        and(
+          eq(boqWorkBatch.id, batchId),
+          eq(boqVersions.BoqId, boqId),
+          eq(boqVersions.IsDeleted, false),
+        ),
+      )
+      .limit(1);
+
+    return rows.length > 0;
+  }
+
+  async versionBelongsToBoq(boqId: number, versionId: number): Promise<boolean> {
+    const rows = await this.database
+      .select({ id: boqVersions.Id })
+      .from(boqVersions)
+      .where(
+        and(
+          eq(boqVersions.Id, versionId),
+          eq(boqVersions.BoqId, boqId),
+          eq(boqVersions.IsDeleted, false),
+        ),
+      )
+      .limit(1);
+
+    return rows.length > 0;
+  }
+
+  async isBatchOnApprovedVersion(batchId: number): Promise<boolean> {
+    const rows = await this.database
+      .select({ approvalStatus: boqVersions.ApprovalStatus })
+      .from(boqWorkBatch)
+      .innerJoin(boqVersions, eq(boqWorkBatch.linkedBoqVersionId, boqVersions.Id))
+      .where(and(eq(boqWorkBatch.id, batchId), eq(boqVersions.IsDeleted, false)))
+      .limit(1);
+
+    return rows[0]?.approvalStatus === "approved";
+  }
+
+  async isVersionApproved(versionId: number): Promise<boolean> {
+    const rows = await this.database
+      .select({ approvalStatus: boqVersions.ApprovalStatus })
+      .from(boqVersions)
+      .where(and(eq(boqVersions.Id, versionId), eq(boqVersions.IsDeleted, false)))
+      .limit(1);
+
+    return rows[0]?.approvalStatus === "approved";
   }
 }

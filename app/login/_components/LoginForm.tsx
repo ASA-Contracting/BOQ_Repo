@@ -1,14 +1,25 @@
 "use client";
 
-import { useActionState } from "react";
+import { useRouter } from "next/navigation";
+import { useActionState, useEffect } from "react";
 
-import { signInAction } from "@/app/login/actions";
+import { signInAction, type SignInActionState } from "@/app/login/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 export function LoginForm({ disabled = false }: { disabled?: boolean }) {
-  const [state, formAction, isPending] = useActionState(signInAction, {});
+  const router = useRouter();
+  const [state, formAction, isPending] = useActionState<SignInActionState, FormData>(
+    signInAction,
+    {},
+  );
+
+  useEffect(() => {
+    if (!state.success) return;
+    router.replace("/");
+    router.refresh();
+  }, [router, state.success]);
 
   return (
     <form action={formAction} className="space-y-4">

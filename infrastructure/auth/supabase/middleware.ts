@@ -58,9 +58,26 @@ export async function updateSession(request: NextRequest) {
     },
   });
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  let user: Awaited<ReturnType<typeof supabase.auth.getUser>>["data"]["user"] = null;
+  try {
+    ({
+      data: { user },
+    } = await supabase.auth.getUser());
+  } catch {
+    const pathname = request.nextUrl.pathname;
+    const isPublicRoute =
+      pathname.startsWith("/login") ||
+      pathname.startsWith("/auth") ||
+      pathname.startsWith("/api/health");
+
+    if (isPublicRoute) {
+      return attachCorrelationId(request, supabaseResponse);
+    }
+
+    const url = request.nextUrl.clone();
+    url.pathname = "/login";
+    return attachCorrelationId(request, NextResponse.redirect(url));
+  }
 
   const pathname = request.nextUrl.pathname;
   const isPublicRoute =

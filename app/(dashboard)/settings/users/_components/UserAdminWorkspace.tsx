@@ -1,8 +1,9 @@
 "use client";
 
-import { Pencil, UserPlus } from "lucide-react";
+import { Pencil, Trash2, UserPlus, Users } from "lucide-react";
 import { useMemo, useState } from "react";
 
+import { DeleteUserDialog } from "@/app/(dashboard)/settings/users/_components/DeleteUserDialog";
 import { RolePermissionsMatrix } from "@/app/(dashboard)/settings/users/_components/RolePermissionsMatrix";
 import { UserFormDialog } from "@/app/(dashboard)/settings/users/_components/UserFormDialog";
 import type {
@@ -18,20 +19,24 @@ import {
   PanelHeader,
   WorkspaceLayout,
 } from "@/components/shared/PageHeader";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DataGrid, type DataGridColumn } from "@/components/ui/data-grid";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Text } from "@/components/ui/typography";
+import { cn } from "@/lib/utils";
 
 type UserAdminWorkspaceProps = {
   initialUsers: UserListDto;
   roleCatalog: RoleCatalogDto;
+  currentUserId: string;
   configurationError?: string | null;
 };
 
 function formatDate(value: string | null): string {
-  if (!value) return "—";
+  if (!value) return "Never";
   return new Date(value).toLocaleString(undefined, {
     day: "numeric",
     month: "short",
@@ -41,15 +46,69 @@ function formatDate(value: string | null): string {
   });
 }
 
+function getInitials(email: string, displayName: string | null): string {
+  if (displayName) {
+    const parts = displayName.trim().split(/\s+/);
+    return parts
+      .slice(0, 2)
+      .map((part) => part[0]?.toUpperCase() ?? "")
+      .join("");
+  }
+
+  return email.slice(0, 2).toUpperCase();
+}
+
+function UserSummaryStats({ users }: { users: UserSummaryDto[] }) {
+  const activeCount = users.filter((user) => user.isActive).length;
+  const disabledCount = users.length - activeCount;
+  const adminCount = users.filter((user) =>
+    user.roles.includes("system_administrator"),
+  ).length;
+
+  const stats = [
+    { label: "Total accounts", value: users.length },
+    { label: "Active", value: activeCount, tone: "success" as const },
+    { label: "Disabled", value: disabledCount, tone: "muted" as const },
+    { label: "Administrators", value: adminCount, tone: "info" as const },
+  ];
+
+  return (
+    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      {stats.map((stat) => (
+        <div
+          key={stat.label}
+          className="rounded-lg border border-border bg-card px-4 py-3 shadow-xs"
+        >
+          <Text variant="muted" size="xs" className="uppercase tracking-wide">
+            {stat.label}
+          </Text>
+          <div className="mt-1 flex items-baseline gap-2">
+            <span className="text-2xl font-semibold tabular-nums tracking-tight">
+              {stat.value}
+            </span>
+            {stat.tone === "success" && stat.value > 0 ? (
+              <Badge variant="success" className="text-[10px]">
+                Live
+              </Badge>
+            ) : null}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export function UserAdminWorkspace({
   initialUsers,
   roleCatalog,
+  currentUserId,
   configurationError = null,
 }: UserAdminWorkspaceProps) {
   const [users, setUsers] = useState(initialUsers.items);
   const [search, setSearch] = useState("");
   const [dialogMode, setDialogMode] = useState<"invite" | "edit" | null>(null);
   const [selectedUser, setSelectedUser] = useState<UserSummaryDto | null>(null);
+  const [userToDelete, setUserToDelete] = useState<UserSummaryDto | null>(null);
 
   const filteredUsers = useMemo(() => {
     const needle = search.trim().toLowerCase();
@@ -67,31 +126,57 @@ export function UserAdminWorkspace({
   const columns = useMemo<DataGridColumn<UserSummaryDto>[]>(
     () => [
       {
-        id: "name",
-        header: "User",
+        id: "displayName",
+        header: "Name",
         sortable: true,
-        sortKey: "email",
-        cell: (user) => (
-          <div className="min-w-0 py-1">
-            <div className="truncate font-medium">
-              {user.displayName ?? user.email}
+        minWidth: 180,
+        width: 220,
+        cell: (user) => {
+          const initials = getInitials(user.email, user.displayName);
+
+          return (
+            <div className="flex min-w-0 items-center gap-3">
+              <Avatar className="h-9 w-9 shrink-0 ring-1 ring-border">
+                <AvatarFallback className="bg-secondary text-xs font-medium">
+                  {initials}
+                </AvatarFallback>
+              </Avatar>
+              <span
+                className={cn(
+                  "truncate text-sm",
+                  user.displayName
+                    ? "font-medium text-foreground"
+                    : "italic text-muted-foreground",
+                )}
+              >
+                {user.displayName ?? "No display name"}
+              </span>
             </div>
-            {user.displayName ? (
-              <div className="truncate text-xs text-muted-foreground">
-                {user.email}
-              </div>
-            ) : null}
-          </div>
+          );
+        },
+      },
+      {
+        id: "email",
+        header: "Email",
+        sortable: true,
+        minWidth: 240,
+        width: 300,
+        cell: (user) => (
+          <span className="block truncate font-mono text-sm text-foreground/90">
+            {user.email}
+          </span>
         ),
       },
       {
         id: "roles",
         header: "Roles",
+        minWidth: 200,
+        width: 240,
         cell: (user) => (
-          <div className="flex flex-wrap gap-1 py-1">
+          <div className="flex flex-wrap gap-1.5">
             {user.roles.length > 0 ? (
               user.roles.map((role) => (
-                <Badge key={role} variant="outline">
+                <Badge key={role} variant="outline" className="font-normal">
                   {formatRoleLabel(role)}
                 </Badge>
               ))
@@ -104,6 +189,8 @@ export function UserAdminWorkspace({
       {
         id: "status",
         header: "Status",
+        minWidth: 110,
+        width: 120,
         cell: (user) => (
           <Badge variant={user.isActive ? "success" : "destructive"}>
             {user.isActive ? "Active" : "Disabled"}
@@ -113,33 +200,56 @@ export function UserAdminWorkspace({
       {
         id: "lastSignIn",
         header: "Last sign-in",
+        minWidth: 160,
+        width: 180,
         cell: (user) => (
-          <span className="text-sm text-muted-foreground">
+          <span className="whitespace-nowrap text-sm tabular-nums text-muted-foreground">
             {formatDate(user.lastSignInAt)}
           </span>
         ),
       },
       {
         id: "actions",
-        header: "",
+        header: "Actions",
         align: "right",
-        cell: (user) => (
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            onClick={() => {
-              setSelectedUser(user);
-              setDialogMode("edit");
-            }}
-          >
-            <Pencil className="mr-1.5 h-3.5 w-3.5" aria-hidden />
-            Edit
-          </Button>
-        ),
+        minWidth: 180,
+        width: 200,
+        cell: (user) => {
+          const isSelf = user.id === currentUserId;
+
+          return (
+            <div className="flex items-center justify-end gap-1">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-8"
+                onClick={() => {
+                  setSelectedUser(user);
+                  setDialogMode("edit");
+                }}
+              >
+                <Pencil className="mr-1.5 h-3.5 w-3.5" aria-hidden />
+                Edit
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-8 text-destructive hover:border-destructive/30 hover:bg-destructive/10 hover:text-destructive"
+                disabled={isSelf}
+                title={isSelf ? "You cannot delete your own account" : undefined}
+                onClick={() => setUserToDelete(user)}
+              >
+                <Trash2 className="mr-1.5 h-3.5 w-3.5" aria-hidden />
+                Delete
+              </Button>
+            </div>
+          );
+        },
       },
     ],
-    [],
+    [currentUserId],
   );
 
   function handleUserSaved(savedUser: UserSummaryDto) {
@@ -154,6 +264,12 @@ export function UserAdminWorkspace({
       return next;
     });
   }
+
+  function handleUserDeleted(userId: string) {
+    setUsers((current) => current.filter((user) => user.id !== userId));
+  }
+
+  const accountLabel = `${users.length} account${users.length === 1 ? "" : "s"}`;
 
   return (
     <WorkspaceLayout>
@@ -194,23 +310,40 @@ export function UserAdminWorkspace({
               </div>
             ) : null}
 
-            <Panel className="min-h-0 flex-1">
+            <UserSummaryStats users={users} />
+
+            <Panel className="min-h-0 flex-1 overflow-hidden rounded-lg shadow-xs">
               <PanelHeader
                 title="Users"
-                description={`${initialUsers.total} account${initialUsers.total === 1 ? "" : "s"} in Supabase Auth.`}
+                description={`${accountLabel} in Supabase Auth.`}
+                className="px-1"
                 actions={
-                  <Input
-                    type="search"
-                    placeholder="Search by name or email"
-                    value={search}
-                    onChange={(event) => setSearch(event.target.value)}
-                    className="w-64"
-                    aria-label="Search users"
-                  />
+                  <div className="relative">
+                    <Users
+                      className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+                      aria-hidden
+                    />
+                    <Input
+                      type="search"
+                      placeholder="Search by name or email"
+                      value={search}
+                      onChange={(event) => setSearch(event.target.value)}
+                      className="w-72 pl-9"
+                      aria-label="Search users"
+                    />
+                  </div>
                 }
               />
 
-              <div className="min-h-[420px] flex-1">
+              {search.trim() && filteredUsers.length !== users.length ? (
+                <div className="mb-3 rounded-md border border-border/70 bg-muted/40 px-3 py-2">
+                  <Text variant="muted" size="sm">
+                    Showing {filteredUsers.length} of {users.length} users
+                  </Text>
+                </div>
+              ) : null}
+
+              <div className="min-h-[420px] flex-1 overflow-hidden rounded-md">
                 <DataGrid
                   columns={columns}
                   data={filteredUsers}
@@ -221,6 +354,7 @@ export function UserAdminWorkspace({
                       : "No users yet. Invite the first user to get started."
                   }
                   height="100%"
+                  tableClassName="users-admin-table"
                   aria-label="Users"
                 />
               </div>
@@ -250,6 +384,13 @@ export function UserAdminWorkspace({
           onSuccess={handleUserSaved}
         />
       ) : null}
+
+      <DeleteUserDialog
+        open={Boolean(userToDelete)}
+        user={userToDelete}
+        onClose={() => setUserToDelete(null)}
+        onSuccess={handleUserDeleted}
+      />
     </WorkspaceLayout>
   );
 }

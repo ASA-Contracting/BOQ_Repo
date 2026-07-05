@@ -12,6 +12,7 @@ import { buildCategoryPickerOptions } from "@/lib/category-picker-options";
 
 type PageProps = {
   params: Promise<{ boqId: string }>;
+  searchParams: Promise<{ versionId?: string }>;
 };
 
 function BoqBreakdownFallback() {
@@ -24,7 +25,13 @@ function BoqBreakdownFallback() {
   );
 }
 
-async function BoqBreakdownContent({ boqId }: { boqId: number }) {
+async function BoqBreakdownContent({
+  boqId,
+  versionId,
+}: {
+  boqId: number;
+  versionId?: number;
+}) {
   const user = await getSessionUser();
   if (!user) {
     redirect("/login");
@@ -37,7 +44,7 @@ async function BoqBreakdownContent({ boqId }: { boqId: number }) {
 
   const services = getAppServices();
   const [breakdownResult, classification] = await Promise.all([
-    services.boq.getBoqBreakdownUseCase.execute(ctx, { boqId }),
+    services.boq.getBoqBreakdownUseCase.execute(ctx, { boqId, versionId }),
     loadClassificationPageDataWithTimeout(),
   ]);
 
@@ -58,6 +65,10 @@ async function BoqBreakdownContent({ boqId }: { boqId: number }) {
         schemaId: material.schemaId,
         isActive: material.isActive,
       })),
+    state.materialTags.map((link) => ({
+      materialNodeId: link.materialNodeId,
+      tagName: link.tagName,
+    })),
   );
 
   return (
@@ -69,9 +80,11 @@ async function BoqBreakdownContent({ boqId }: { boqId: number }) {
   );
 }
 
-export default async function BoqBreakdownRoute({ params }: PageProps) {
+export default async function BoqBreakdownRoute({ params, searchParams }: PageProps) {
   const { boqId: boqIdParam } = await params;
+  const { versionId: versionIdParam } = await searchParams;
   const boqId = Number(boqIdParam);
+  const versionId = Number(versionIdParam);
 
   if (!Number.isFinite(boqId) || boqId <= 0) {
     redirect("/boq");
@@ -79,7 +92,10 @@ export default async function BoqBreakdownRoute({ params }: PageProps) {
 
   return (
     <Suspense fallback={<BoqBreakdownFallback />}>
-      <BoqBreakdownContent boqId={boqId} />
+      <BoqBreakdownContent
+        boqId={boqId}
+        versionId={Number.isFinite(versionId) && versionId > 0 ? versionId : undefined}
+      />
     </Suspense>
   );
 }

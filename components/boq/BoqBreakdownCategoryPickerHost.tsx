@@ -36,6 +36,7 @@ type PickerController = {
 type HostContextValue = {
   openForRow: (itemId: number, anchor: HTMLElement) => void;
   isRowSaving: (itemId: number) => boolean;
+  readOnly: boolean;
 };
 
 const HostContext = createContext<HostContextValue | null>(null);
@@ -107,6 +108,7 @@ const BoqBreakdownCategoryPickerMenuLayer = forwardRef<PickerController, MenuLay
 
 type HostProps = MenuLayerProps & {
   savingItemId: number | null;
+  readOnly?: boolean;
   children: ReactNode;
 };
 
@@ -115,14 +117,16 @@ export function BoqBreakdownCategoryPickerHost({
   categoryOptions,
   sectionPickerOptions,
   savingItemId,
+  readOnly = false,
   onCategoryChange,
   children,
 }: HostProps) {
   const pickerRef = useRef<PickerController>(null);
 
   const openForRow = useCallback((itemId: number, anchor: HTMLElement) => {
+    if (readOnly) return;
     pickerRef.current?.open(itemId, anchor);
-  }, []);
+  }, [readOnly]);
 
   const isRowSaving = useCallback(
     (itemId: number) => savingItemId === itemId,
@@ -130,8 +134,8 @@ export function BoqBreakdownCategoryPickerHost({
   );
 
   const contextValue = useMemo(
-    () => ({ openForRow, isRowSaving }),
-    [openForRow, isRowSaving],
+    () => ({ openForRow, isRowSaving, readOnly }),
+    [openForRow, isRowSaving, readOnly],
   );
 
   return (
@@ -154,19 +158,17 @@ type TriggerProps = {
 };
 
 export function BoqBreakdownCategoryPickerTrigger({ item, optionById }: TriggerProps) {
-  const { openForRow, isRowSaving } = useBoqBreakdownCategoryPicker();
+  const { openForRow, isRowSaving, readOnly } = useBoqBreakdownCategoryPicker();
   const sectionMode = isSectionFormatRow(item);
   const selected =
     item.materialNodeId != null ? optionById.get(item.materialNodeId) : undefined;
   const triggerLabel =
     selected != null
-      ? sectionMode
-        ? formatSectionPickerLabel(selected.label)
-        : getCategoryPickerDisplayLabel(selected)
+      ? getCategoryPickerDisplayLabel(selected)
       : sectionMode && item.sectionParentLabel
         ? formatSectionPickerLabel(item.sectionParentLabel)
         : null;
-  const disabled = isRowSaving(item.id);
+  const disabled = isRowSaving(item.id) || readOnly;
   const placeholder = sectionMode ? "Select section…" : "Select category…";
 
   return (

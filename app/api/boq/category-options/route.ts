@@ -26,6 +26,10 @@ export async function GET(request: NextRequest) {
           schemaId: material.schemaId,
           isActive: material.isActive,
         })),
+      state.materialTags.map((link) => ({
+        materialNodeId: link.materialNodeId,
+        tagName: link.tagName,
+      })),
     );
     return apiSuccess(
       {

@@ -19,5 +19,9 @@ export async function loadBoqCategoryOptions(schemaId?: number): Promise<Categor
         schemaId: material.schemaId,
         isActive: material.isActive,
       })),
+    state.materialTags.map((link) => ({
+      materialNodeId: link.materialNodeId,
+      tagName: link.tagName,
+    })),
   );
 }

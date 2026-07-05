@@ -3,8 +3,6 @@ export const ROLES = [
   "general_manager",
   "technical_office_manager",
   "estimator",
-  "reviewer",
-  "ai_reviewer",
   "viewer",
 ] as const;
 

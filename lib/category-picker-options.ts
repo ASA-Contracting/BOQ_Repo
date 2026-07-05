@@ -1,5 +1,11 @@
 import type { LevelOptionEntity } from '@/domain/classification/entities';
 import { buildMaterialClassificationTreeIndex } from '@/domain/classification/tree-index';
+import { matchesTagFilter } from '@/lib/category-tree-filter';
+
+export type CategoryPickerMaterialTag = {
+  materialNodeId: number;
+  tagName: string;
+};
 
 export type CategoryPickerOption = {
   id: number;
@@ -10,8 +16,61 @@ export type CategoryPickerOption = {
   depth: number;
   parentId: number | null;
   parentLabel: string | null;
+  /** Direct and inherited tags — used for tag filtering. */
+  tagNames: string[];
+  /** Tags assigned directly on this category — used for filter tag counts. */
+  directTagNames: string[];
   searchText: string;
 };
+
+function normalizeTagNames(tags: string[]): string[] {
+  const seen = new Set<string>();
+  const result: string[] = [];
+  for (const raw of tags) {
+    const tag = String(raw ?? '')
+      .trim()
+      .replace(/^#+/, '');
+    if (!tag) continue;
+    const key = tag.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    result.push(tag);
+  }
+  return result;
+}
+
+function buildTagNamesByNodeId(
+  treeIndex: ReturnType<typeof buildMaterialClassificationTreeIndex>,
+  materialTags: CategoryPickerMaterialTag[],
+): { tagNamesByNodeId: Map<number, string[]>; directTagNamesByNodeId: Map<number, string[]> } {
+  const directTagsByNodeId = new Map<number, string[]>();
+  for (const link of materialTags) {
+    const bucket = directTagsByNodeId.get(link.materialNodeId) ?? [];
+    bucket.push(link.tagName);
+    directTagsByNodeId.set(link.materialNodeId, bucket);
+  }
+
+  const tagNamesByNodeId = new Map<number, string[]>();
+  const directTagNamesByNodeId = new Map<number, string[]>();
+
+  for (const option of treeIndex.activeOptions) {
+    const direct = normalizeTagNames(directTagsByNodeId.get(option.id) ?? []);
+    directTagNamesByNodeId.set(option.id, direct);
+
+    const inherited: string[] = [];
+    const path = treeIndex.pathById.get(option.id) ?? [];
+    for (let index = path.length - 2; index >= 0; index -= 1) {
+      const ancestor = path[index];
+      for (const tag of directTagsByNodeId.get(ancestor.id) ?? []) {
+        inherited.push(tag);
+      }
+    }
+
+    tagNamesByNodeId.set(option.id, normalizeTagNames([...direct, ...inherited]));
+  }
+
+  return { tagNamesByNodeId, directTagNamesByNodeId };
+}
 
 const SECTION_LABEL_PREFIX = 'Section - ';
 
@@ -29,20 +88,40 @@ export function withSectionPickerLabels(
   }));
 }
 
+export function formatCategoryParentChildLabel(
+  label: string,
+  parentLabel?: string | null,
+): string {
+  const chosen = label.trim();
+  if (!chosen) return '';
+  const parent = parentLabel?.trim();
+  if (parent) {
+    return `${parent} - ${chosen}`;
+  }
+  return chosen;
+}
+
 export function getCategoryPickerDisplayLabel(option: CategoryPickerOption): string {
-  return option.pickerLabel ?? option.label;
+  return formatCategoryParentChildLabel(option.label, option.parentLabel);
 }
 
 export function buildCategoryPickerOptions(
   nodes: LevelOptionEntity[],
+  materialTags: CategoryPickerMaterialTag[] = [],
 ): CategoryPickerOption[] {
   const treeIndex = buildMaterialClassificationTreeIndex(nodes);
+  const { tagNamesByNodeId, directTagNamesByNodeId } = buildTagNamesByNodeId(
+    treeIndex,
+    materialTags,
+  );
 
   return treeIndex.activeOptions.map((node) => {
     const path = treeIndex.pathById.get(node.id) ?? [node];
     const pathLabel = treeIndex.pathLabelById.get(node.id) ?? node.name;
     const depth = path.length - 1;
     const parentEntity = path.length >= 2 ? path[path.length - 2] : null;
+    const tagNames = tagNamesByNodeId.get(node.id) ?? [];
+    const directTagNames = directTagNamesByNodeId.get(node.id) ?? [];
 
     return {
       id: node.id,
@@ -51,9 +130,32 @@ export function buildCategoryPickerOptions(
       depth,
       parentId: parentEntity?.id ?? null,
       parentLabel: parentEntity?.name ?? null,
-      searchText: `${node.name} ${pathLabel}`.trim().toLowerCase(),
+      tagNames,
+      directTagNames,
+      searchText: `${node.name} ${pathLabel} ${tagNames.join(' ')}`.trim().toLowerCase(),
     };
   });
+}
+
+export function collectCategoryPickerAvailableTags(
+  options: CategoryPickerOption[],
+): Array<{ name: string; count: number }> {
+  const counts = new Map<string, { name: string; count: number }>();
+
+  for (const option of options) {
+    for (const tag of option.directTagNames) {
+      const key = tag.toLowerCase();
+      const current = counts.get(key);
+      counts.set(key, {
+        name: current?.name ?? tag,
+        count: (current?.count ?? 0) + 1,
+      });
+    }
+  }
+
+  return Array.from(counts.values()).sort((left, right) =>
+    left.name.localeCompare(right.name, undefined, { sensitivity: 'base' }),
+  );
 }
 
 export function resolveCategoryParentLabel(
@@ -78,13 +180,27 @@ export function resolveCategoryParentLabelFromMap(
   return optionById.get(materialNodeId)?.parentLabel ?? null;
 }
 
+export function normalizeCategoryPickerTagFilter(
+  tagNames: Iterable<string>,
+): Set<string> {
+  return new Set(
+    Array.from(tagNames)
+      .map((value) => value.trim().replace(/^#+/, '').toLowerCase())
+      .filter(Boolean),
+  );
+}
+
 export function filterCategoryPickerOptions(
   options: CategoryPickerOption[],
   query: string,
+  selectedTagNames: Iterable<string> = [],
 ): CategoryPickerOption[] {
   const normalized = query.trim().toLowerCase();
-  if (!normalized) {
-    return options;
-  }
-  return options.filter((option) => option.searchText.includes(normalized));
+  const tagFilter = normalizeCategoryPickerTagFilter(selectedTagNames);
+
+  return options.filter((option) => {
+    const matchesQuery = !normalized || option.searchText.includes(normalized);
+    const matchesTags = matchesTagFilter(tagFilter, option.tagNames);
+    return matchesQuery && matchesTags;
+  });
 }

@@ -1,3 +1,4 @@
+import { MAX_CLASSIFICATION_SCHEMA_LEVELS } from '@/domain/classification/constants';
 import type { Db } from '@/infrastructure/persistence/db';
 import { findLevelMapsBySchemaId, replaceLevelMapsForSchema } from '@/infrastructure/persistence/repositories/classification/repository';
 
@@ -17,6 +18,12 @@ export async function saveSchemaHierarchy(
   const expected = Array.from({ length: orders.length }, (_, i) => i + 1);
   if (orders.length === 0 || !orders.every((o, i) => o === expected[i])) {
     throw new ConflictError('Invalid level order sequence');
+  }
+
+  if (levels.length > MAX_CLASSIFICATION_SCHEMA_LEVELS) {
+    throw new ConflictError(
+      `A classification schema supports at most ${MAX_CLASSIFICATION_SCHEMA_LEVELS} levels.`,
+    );
   }
 
   const levelTypeIds = levels.map((l) => l.levelTypeId);

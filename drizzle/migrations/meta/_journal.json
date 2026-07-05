@@ -71,6 +71,13 @@
       "when": 1783013353082,
       "tag": "0009_boq_item_original_row_index",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1783013353083,
+      "tag": "0010_boq_version_discipline",
+      "breakpoints": true
     }
   ]
 }

@@ -50,6 +50,7 @@ export const boqVersions = pgTable(
     VersionName: varchar("VersionName", { length: 250 }),
     VersionNumber: integer("VersionNumber"),
     ApprovalStatus: varchar("ApprovalStatus", { length: 30 }).notNull().default("draft"),
+    Discipline: varchar("Discipline", { length: 150 }),
     Notes: text("Notes"),
     Source: varchar("Source", { length: 200 }),
     CreatedBy: varchar("CreatedBy", { length: 200 }),

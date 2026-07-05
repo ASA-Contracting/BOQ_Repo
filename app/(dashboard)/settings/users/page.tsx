@@ -57,6 +57,7 @@ export default async function UserManagementPage() {
       <UserAdminWorkspace
         initialUsers={initialUsers}
         roleCatalog={rolesResult.value}
+        currentUserId={user.id}
         configurationError={configurationError}
       />
     </ShellContent>

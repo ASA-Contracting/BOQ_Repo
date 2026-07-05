@@ -29,7 +29,10 @@ export class GetBoqBreakdownUseCase
       return err(new ValidationError("Invalid BOQ id.", { field: "boqId" }));
     }
 
-    const breakdown = await this.deps.boqReadRepository.getBoqBreakdown(input.boqId);
+    const breakdown = await this.deps.boqReadRepository.getBoqBreakdown(
+      input.boqId,
+      input.versionId,
+    );
     if (!breakdown) {
       return err(new ValidationError("BOQ not found.", { field: "boqId" }));
     }

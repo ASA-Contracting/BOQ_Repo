@@ -10,7 +10,6 @@ import { CommandBar } from "@/components/shared/AppShell/CommandBar";
 import { useShellShortcuts } from "@/components/shared/AppShell/useShellShortcuts";
 import { ThemeToggle } from "@/components/shared/ThemeToggle";
 import { UserSession } from "@/components/shared/UserSession";
-import { WorkshopApprovalInbox } from "@/components/workshop/WorkshopApprovalInbox";
 import type { SessionUser } from "@/application/dto/session";
 
 type AppShellProps = {
@@ -50,7 +49,7 @@ function AppShellInner({ user, children }: AppShellProps) {
       <AppShellSidebar footer={<ShellSidebarFooter user={user} />} roles={user.roles} />
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <CommandBar searchRef={searchRef} trailing={<WorkshopApprovalInbox />} />
+        <CommandBar searchRef={searchRef} />
         <main className="flex min-h-0 flex-1 flex-col overflow-hidden">
           {children}
         </main>

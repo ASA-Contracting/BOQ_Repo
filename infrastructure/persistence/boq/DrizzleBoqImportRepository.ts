@@ -34,6 +34,7 @@ export class DrizzleBoqImportRepository
     projectId?: number;
     boqId?: number;
     client?: string;
+    discipline?: string;
   }): Promise<ImportBoqSnapshotResult> {
     const now = new Date();
     const client = input.client ?? "TBD";
@@ -96,22 +97,14 @@ export class DrizzleBoqImportRepository
       throw new Error("Failed to resolve BOQ for import.");
     }
 
-    const versionNumberRows = await this.database
-      .select({
-        maxNumber: sql<number>`coalesce(max(${boqVersions.VersionNumber}), 0)::int`,
-      })
-      .from(boqVersions)
-      .where(and(eq(boqVersions.BoqId, boqId), eq(boqVersions.IsDeleted, false)));
-
-    const versionNumber = (versionNumberRows[0]?.maxNumber ?? 0) + 1;
-
     const versionRows = await this.database
       .insert(boqVersions)
       .values({
         BoqId: boqId,
-        VersionName: `Import draft v${versionNumber}`,
-        VersionNumber: versionNumber,
+        VersionName: "Draft",
+        VersionNumber: null,
         ApprovalStatus: "draft",
+        Discipline: input.discipline ?? null,
         Notes: "Created by Excel import",
         Source: "workshop_import",
         CreatedBy: input.createdBy,
@@ -152,7 +145,8 @@ export class DrizzleBoqImportRepository
       const versionValues: Array<{
         BoqItemId: number;
         BoqVersionId: number;
-        Quantity: string;
+        Quantity: string | null;
+        UnitRate: string | null;
         CreatedBy: string;
         CreatedAt: Date;
         IsDeleted: boolean;
@@ -165,11 +159,13 @@ export class DrizzleBoqImportRepository
         }
 
         const quantity = normalizeImportQuantity(line.quantity);
-        if (quantity) {
+        const unitRate = normalizeImportQuantity(line.unitPrice);
+        if (quantity || unitRate) {
           versionValues.push({
             BoqItemId: row.id,
             BoqVersionId: boqVersionId,
             Quantity: quantity,
+            UnitRate: unitRate,
             CreatedBy: input.createdBy,
             CreatedAt: now,
             IsDeleted: false,
@@ -182,6 +178,7 @@ export class DrizzleBoqImportRepository
           description: line.description,
           unit: line.unit,
           quantity: line.quantity,
+          unitPrice: line.unitPrice,
           itemNo: line.itemNo,
           isHeader: line.isHeader,
           isMeasurable: line.isMeasurable,

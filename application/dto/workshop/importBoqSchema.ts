@@ -14,6 +14,7 @@ export const BOQ_IMPORT_FIELD_KEYS = [
   "description",
   "unit",
   "quantity",
+  "unit_price",
   "item_no",
   "section",
   "discipline",
@@ -27,7 +28,17 @@ export const BOQ_IMPORT_WIZARD_FIELD_KEYS = [
   "description",
   "unit",
   "quantity",
+  "unit_price",
   "skip",
+] as const;
+
+/** Required column mappings before import can proceed. */
+export const BOQ_IMPORT_REQUIRED_FIELD_KEYS = [
+  "item_no",
+  "description",
+  "unit",
+  "quantity",
+  "unit_price",
 ] as const;
 
 export type BoqImportWizardFieldKey = (typeof BOQ_IMPORT_WIZARD_FIELD_KEYS)[number];
@@ -48,6 +59,8 @@ export const importBoqSchema = z.object({
   rows: z.array(z.array(z.string())),
   columnMapping: columnMappingSchema,
   columnMappingByIndex: columnMappingByIndexSchema.optional(),
+  headerRowIndex: z.number().int().min(0).optional(),
+  skipRowsAfterHeader: z.number().int().min(0).max(10).optional(),
   projectId: z.number().int().positive().optional(),
   boqId: z.number().int().positive().optional(),
   projectName: z.string().trim().min(1).max(150),

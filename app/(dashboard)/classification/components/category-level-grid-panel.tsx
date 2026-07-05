@@ -14,7 +14,7 @@ type GridRow = {
   name: string;
 };
 
-const INITIAL_DRAFT_ROW_COUNT = 3;
+const INITIAL_DRAFT_ROW_COUNT = 10;
 const NEXT_DRAFT_ROW_ID = INITIAL_DRAFT_ROW_COUNT + 1;
 
 function createInitialDraftRows(): GridRow[] {

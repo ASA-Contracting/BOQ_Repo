@@ -12,6 +12,7 @@ import {
   BoqProjectGroupHeader,
   BoqRowAction,
   BoqStatusCell,
+  BmlBadge,
   PUBLISH_BADGE,
   approvalLabel,
   versionLabel,
@@ -35,6 +36,19 @@ type Props = {
 
 function buildGridColumns(): FilterableColumn<BoqListEntryDto>[] {
   return [
+    {
+      id: "scope",
+      field: "scopeLabel",
+      label: "Scope",
+      filterType: "text",
+      searchable: true,
+      filterOnly: true,
+      hideFromChooser: true,
+      getValue: (boq) => boq.scopeLabel,
+      header: "Scope",
+      className: "min-w-[8rem]",
+      cell: () => null,
+    },
     {
       id: "project",
       field: "projectName",
@@ -74,7 +88,12 @@ function buildGridColumns(): FilterableColumn<BoqListEntryDto>[] {
       header: "Version",
       className: "min-w-[6rem]",
       cell: (boq) => (
-        <div className="bml-cell-primary">{versionLabel(boq) || "—"}</div>
+        <div className="bml-cell-primary bml-version-cell">
+          <span>{versionLabel(boq) || "—"}</span>
+          <BmlBadge tone={boq.approvalStatus === "approved" ? "green" : "yellow"}>
+            {approvalLabel(boq)}
+          </BmlBadge>
+        </div>
       ),
     },
     {
@@ -95,7 +114,11 @@ function buildGridColumns(): FilterableColumn<BoqListEntryDto>[] {
       getValue: approvalLabel,
       header: "Approval",
       className: "min-w-[8rem]",
-      cell: (boq) => <div className="bml-cell-primary">{approvalLabel(boq)}</div>,
+      cell: (boq) => (
+        <BmlBadge tone={boq.approvalStatus === "approved" ? "green" : "yellow"}>
+          {approvalLabel(boq)}
+        </BmlBadge>
+      ),
     },
     {
       id: "status",
@@ -171,8 +194,8 @@ export function BoqMasterList({
           <div>
             <h1 className="boq-master-list__title">BOQ master list</h1>
             <p className="boq-master-list__subtitle">
-              Production bills of quantities. Family assignment happens in Workshop; this view
-              shows published progress only.
+              Production bills of quantities. Open a BOQ to assign categories and review the full
+              breakdown grid.
             </p>
           </div>
           <div className="boq-master-list__actions">
@@ -220,7 +243,7 @@ export function BoqMasterList({
                 <BoqSettingsToolbarButton onClick={() => setSettingsOpen(true)} />
               }
               shellClassName="border-0 bg-transparent shadow-none"
-              initialGroupField="projectName"
+              initialGroupField="scopeLabel"
               renderGroupHeader={({ block, expanded, toggle }) => (
                 <BoqProjectGroupHeader block={block} expanded={expanded} toggle={toggle} />
               )}

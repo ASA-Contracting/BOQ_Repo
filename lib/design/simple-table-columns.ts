@@ -25,8 +25,8 @@ export function toSimpleTableHeaders<T extends object>(columns: DataGridColumn<T
       accessor: column.id,
       label,
       type: "other",
-      width: "auto",
-      minWidth: 80,
+      width: column.width ?? "auto",
+      minWidth: column.minWidth ?? 80,
       isSortable: column.sortable,
       align: column.align,
       headerRenderer: hasCustomHeader(column.header)

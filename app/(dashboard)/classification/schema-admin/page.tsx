@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { MAX_CLASSIFICATION_SCHEMA_LEVELS } from '@/domain/classification/constants';
 
 type LevelType = {
   id: number;
@@ -197,7 +198,7 @@ export default function SchemaAdminPage() {
                 },
               ])
             }
-            disabled={levelTypes.length === 0}
+            disabled={levelTypes.length === 0 || draftLevels.length >= MAX_CLASSIFICATION_SCHEMA_LEVELS}
           >
             Add level
           </Button>
@@ -225,6 +226,9 @@ export default function SchemaAdminPage() {
 
         <div className="mt-4 text-xs text-zinc-500">
           Current maps: {maps.map((map) => map.levelTypeName ?? map.levelTypeId).join(' → ')}
+          {' · '}
+          Up to {MAX_CLASSIFICATION_SCHEMA_LEVELS} levels ({draftLevels.length}/
+          {MAX_CLASSIFICATION_SCHEMA_LEVELS} in draft)
         </div>
       </section>
     </div>

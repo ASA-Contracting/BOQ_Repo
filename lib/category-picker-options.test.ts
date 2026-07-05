@@ -2,8 +2,10 @@ import { describe, expect, it } from 'vitest';
 
 import {
   buildCategoryPickerOptions,
+  collectCategoryPickerAvailableTags,
   filterCategoryPickerOptions,
   formatSectionPickerLabel,
+  getCategoryPickerDisplayLabel,
   resolveCategoryParentLabel,
   withSectionPickerLabels,
 } from './category-picker-options';
@@ -52,5 +54,52 @@ describe('category-picker-options', () => {
     expect(formatSectionPickerLabel('Air Outlets')).toBe('Section - Air Outlets');
     expect(withSectionPickerLabels(options)[0]?.pickerLabel).toBe('Section - Air Outlets');
     expect(filterCategoryPickerOptions(withSectionPickerLabels(options), 'section air')).toHaveLength(1);
+  });
+
+  it('formats selected category as parent - chosen in the cell', () => {
+    const options = buildCategoryPickerOptions([
+      { id: 1, name: 'HVAC', materialLevelTypeId: 1, parentId: null, schemaId: 1, isActive: true },
+      { id: 2, name: 'Air Outlets', materialLevelTypeId: 2, parentId: 1, schemaId: 1, isActive: true },
+      { id: 3, name: 'Ceiling Diffuser', materialLevelTypeId: 3, parentId: 2, schemaId: 1, isActive: true },
+    ]);
+
+    expect(getCategoryPickerDisplayLabel(options[0]!)).toBe('HVAC');
+    expect(getCategoryPickerDisplayLabel(options[1]!)).toBe('HVAC - Air Outlets');
+    expect(getCategoryPickerDisplayLabel(options[2]!)).toBe('Air Outlets - Ceiling Diffuser');
+  });
+
+  it('includes direct and inherited tags on picker options', () => {
+    const options = buildCategoryPickerOptions(
+      [
+        { id: 1, name: 'HVAC', materialLevelTypeId: 1, parentId: null, schemaId: 1, isActive: true },
+        { id: 2, name: 'AHU', materialLevelTypeId: 2, parentId: 1, schemaId: 1, isActive: true },
+      ],
+      [{ materialNodeId: 1, tagName: 'Mechanical' }],
+    );
+
+    expect(options.find((option) => option.id === 1)?.directTagNames).toEqual(['Mechanical']);
+    expect(options.find((option) => option.id === 2)?.tagNames).toEqual(['Mechanical']);
+    expect(options.find((option) => option.id === 2)?.directTagNames).toEqual([]);
+  });
+
+  it('filters options by selected tags', () => {
+    const options = buildCategoryPickerOptions(
+      [
+        { id: 1, name: 'HVAC', materialLevelTypeId: 1, parentId: null, schemaId: 1, isActive: true },
+        { id: 2, name: 'Plumbing', materialLevelTypeId: 1, parentId: null, schemaId: 1, isActive: true },
+      ],
+      [
+        { materialNodeId: 1, tagName: 'Mechanical' },
+        { materialNodeId: 2, tagName: 'Wet' },
+      ],
+    );
+
+    expect(filterCategoryPickerOptions(options, '', ['mechanical'])).toEqual([
+      expect.objectContaining({ id: 1 }),
+    ]);
+    expect(collectCategoryPickerAvailableTags(options)).toEqual([
+      { name: 'Mechanical', count: 1 },
+      { name: 'Wet', count: 1 },
+    ]);
   });
 });

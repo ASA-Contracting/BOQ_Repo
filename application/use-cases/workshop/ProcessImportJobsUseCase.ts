@@ -1,13 +1,12 @@
 import type { ProcessJobsInput } from "@/application/dto/workshop/importBoqSchema";
 import type { IExcelParser } from "@/application/ports/IExcelParser";
 import type { IUseCase } from "@/application/use-cases/IUseCase";
-import { requireAuthenticatedUser } from "@/application/use-cases/family/authorizeFamilyAdmin";
 import {
   batchNameFromFileName,
   inferColumnMapping,
 } from "@/application/use-cases/workshop/autoColumnMapping";
+import { authorizeWorkshopImport } from "@/application/use-cases/workshop/authorizeWorkshopImport";
 import type { ImportBoqFromExcelUseCase } from "@/application/use-cases/workshop/ImportBoqFromExcelUseCase";
-import type { RunBatchCategorizationUseCase } from "@/application/use-cases/workshop/RunBatchCategorizationUseCase";
 import type { DomainError } from "@/domain/shared/errors/DomainError";
 import type { RequestContext } from "@/domain/shared/RequestContext";
 import { err, ok, type Result } from "@/domain/shared/Result";
@@ -26,7 +25,6 @@ export type ProcessImportJobsDependencies = {
   importCampaignRepository: IImportCampaignRepository;
   excelParser: IExcelParser;
   importBoqFromExcelUseCase: ImportBoqFromExcelUseCase;
-  runBatchCategorizationUseCase: RunBatchCategorizationUseCase;
 };
 
 export class ProcessImportJobsUseCase
@@ -38,7 +36,7 @@ export class ProcessImportJobsUseCase
     ctx: RequestContext,
     input: ProcessJobsInput,
   ): Promise<Result<ProcessImportJobsResult, DomainError>> {
-    const auth = requireAuthenticatedUser(ctx);
+    const auth = authorizeWorkshopImport(ctx);
     if (!auth.ok) {
       return auth;
     }
@@ -68,7 +66,7 @@ export class ProcessImportJobsUseCase
         const parsed = this.deps.excelParser.parse(buffer);
         const columnMapping = job.columnMappingJson
           ? (JSON.parse(job.columnMappingJson) as z.infer<typeof columnMappingSchema>)
-          : inferColumnMapping(parsed.headers);
+          : inferColumnMapping(parsed.headers, parsed.previewRows);
 
         const importResult = await this.deps.importBoqFromExcelUseCase.execute(ctx, {
           batchName: batchNameFromFileName(job.fileName),
@@ -88,31 +86,10 @@ export class ProcessImportJobsUseCase
           status: "imported",
           workshopBatchId: importResult.value.batchId,
           sheetName: parsed.sheetName,
-        });
-        await this.deps.importCampaignRepository.adjustCampaignCounters(input.campaignId, {
-          imported: 1,
-        });
-
-        await this.deps.importCampaignRepository.updateJob({
-          jobId: job.id,
-          status: "ai_running",
-        });
-
-        const aiResult = await this.deps.runBatchCategorizationUseCase.execute(ctx, {
-          batchId: importResult.value.batchId,
-        });
-
-        if (!aiResult.ok) {
-          throw new Error(aiResult.error.message);
-        }
-
-        await this.deps.importCampaignRepository.updateJob({
-          jobId: job.id,
-          status: "ai_done",
           completedAt: new Date(),
         });
         await this.deps.importCampaignRepository.adjustCampaignCounters(input.campaignId, {
-          aiComplete: 1,
+          imported: 1,
         });
 
         succeededCount += 1;

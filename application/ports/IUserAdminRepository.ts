@@ -40,5 +40,7 @@ export interface IUserAdminRepository {
 
   updateUser(params: UpdateUserParams): Promise<AdminUserRecord>;
 
+  deleteUser(id: string): Promise<void>;
+
   countActiveSystemAdministrators(excludeUserId?: string): Promise<number>;
 }
