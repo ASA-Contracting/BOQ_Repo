@@ -1,4 +1,5 @@
 import { ApproveBoqVersionFromBreakdownUseCase } from "@/application/use-cases/boq/ApproveBoqVersionFromBreakdownUseCase";
+import { DeleteBoqMasterListEntriesUseCase } from "@/application/use-cases/boq/DeleteBoqMasterListEntriesUseCase";
 import { DuplicateBoqVersionUseCase } from "@/application/use-cases/boq/DuplicateBoqVersionUseCase";
 import { GetBoqBreakdownUseCase } from "@/application/use-cases/boq/GetBoqBreakdownUseCase";
 import {
@@ -26,6 +27,7 @@ export type BoqServices = {
   listBoqVersionsUseCase: ListBoqVersionsUseCase;
   approveBoqVersionFromBreakdownUseCase: ApproveBoqVersionFromBreakdownUseCase;
   duplicateBoqVersionUseCase: DuplicateBoqVersionUseCase;
+  deleteBoqMasterListEntriesUseCase: DeleteBoqMasterListEntriesUseCase;
   listBoqLookupOptionsUseCase: ListBoqLookupOptionsUseCase;
   createBoqLookupOptionUseCase: CreateBoqLookupOptionUseCase;
   updateBoqLookupOptionUseCase: UpdateBoqLookupOptionUseCase;
@@ -49,6 +51,9 @@ export function createBoqServices(): BoqServices {
     listBoqVersionsUseCase: new ListBoqVersionsUseCase({ boqReadRepository }),
     approveBoqVersionFromBreakdownUseCase: new ApproveBoqVersionFromBreakdownUseCase(versionDeps),
     duplicateBoqVersionUseCase: new DuplicateBoqVersionUseCase({ boqVersionRepository }),
+    deleteBoqMasterListEntriesUseCase: new DeleteBoqMasterListEntriesUseCase({
+      boqReadRepository,
+    }),
     listBoqLookupOptionsUseCase: new ListBoqLookupOptionsUseCase(lookupDeps),
     createBoqLookupOptionUseCase: new CreateBoqLookupOptionUseCase(lookupDeps),
     updateBoqLookupOptionUseCase: new UpdateBoqLookupOptionUseCase(lookupDeps),

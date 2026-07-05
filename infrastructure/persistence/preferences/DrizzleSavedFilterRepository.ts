@@ -11,7 +11,7 @@ import type { ISavedFilterRepository } from "@/application/ports/ISavedFilterRep
 import { savedPageFilters } from "@/drizzle/schema/preferences";
 import { getDb } from "@/infrastructure/persistence/db";
 import {
-  normalizeSavedFilterDefinition,
+  normalizeSavedViewDefinition,
   type SavedFilterDefinition,
 } from "@/lib/filter-engine";
 
@@ -22,7 +22,7 @@ function toIsoString(value: Date | null | undefined): string | null {
 function readDefinition(raw: string): SavedFilterDefinition {
   try {
     const parsed = JSON.parse(raw) as SavedFilterDefinition;
-    return normalizeSavedFilterDefinition(parsed) ?? { groups: [] };
+    return normalizeSavedViewDefinition(parsed) ?? { groups: [] };
   } catch {
     return { groups: [] };
   }
@@ -62,9 +62,9 @@ export class DrizzleSavedFilterRepository implements ISavedFilterRepository {
     const db = getDb();
     const pageKey = input.pageKey.trim();
     const name = input.name.trim();
-    const definition = normalizeSavedFilterDefinition(input.definition);
+    const definition = normalizeSavedViewDefinition(input.definition);
     if (!definition) {
-      throw new Error("Saved filter definition is empty.");
+      throw new Error("Saved view definition is empty.");
     }
 
     const now = new Date();

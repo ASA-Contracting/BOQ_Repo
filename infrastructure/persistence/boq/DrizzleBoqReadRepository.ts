@@ -1,4 +1,4 @@
-import { and, desc, eq, gte, gt, sql } from "drizzle-orm";
+import { and, desc, eq, gte, gt, inArray, sql } from "drizzle-orm";
 
 import type { BoqBreakdownDto, BoqItemRowDto, BoqListEntryDto, BoqVersionSummaryDto, BoqWorkflowStatus } from "@/application/boq/dto";
 import type { IBoqReadRepository, InsertBoqItemInput } from "@/application/ports/IBoqReadRepository";
@@ -64,7 +64,7 @@ export class DrizzleBoqReadRepository extends DrizzleRepository implements IBoqR
           )
         )`,
         createdBy: boqVersions.CreatedBy,
-        importedByName: aspNetUsers.FullName,
+        importedByName: sql<string | null>`coalesce(${aspNetUsers.FullName}, ${aspNetUsers.Email}, ${aspNetUsers.UserName})`,
         importedAt: boqVersions.CreatedAt,
         itemCount: sql<number>`(
           select count(*)::int
@@ -460,6 +460,62 @@ export class DrizzleBoqReadRepository extends DrizzleRepository implements IBoqR
         categoryPath: null,
         sectionParentLabel: null,
       };
+    });
+  }
+
+  async softDeleteBoqVersions(versionIds: number[]): Promise<number> {
+    const uniqueIds = [...new Set(versionIds)];
+    if (uniqueIds.length === 0) {
+      return 0;
+    }
+
+    const now = new Date();
+
+    return this.database.transaction(async (tx) => {
+      const versionRows = await tx
+        .select({
+          id: boqVersions.Id,
+          boqId: boqVersions.BoqId,
+        })
+        .from(boqVersions)
+        .where(and(inArray(boqVersions.Id, uniqueIds), eq(boqVersions.IsDeleted, false)));
+
+      if (versionRows.length === 0) {
+        return 0;
+      }
+
+      const foundIds = versionRows.map((row) => row.id);
+      const affectedBoqIds = [...new Set(versionRows.map((row) => row.boqId))];
+
+      await tx
+        .update(boqVersions)
+        .set({ IsDeleted: true })
+        .where(inArray(boqVersions.Id, foundIds));
+
+      await tx
+        .update(boqItemVersions)
+        .set({ IsDeleted: true })
+        .where(inArray(boqItemVersions.BoqVersionId, foundIds));
+
+      for (const boqId of affectedBoqIds) {
+        const remainingRows = await tx
+          .select({ count: sql<number>`count(*)::int` })
+          .from(boqVersions)
+          .where(and(eq(boqVersions.BoqId, boqId), eq(boqVersions.IsDeleted, false)));
+
+        if ((remainingRows[0]?.count ?? 0) > 0) {
+          continue;
+        }
+
+        await tx.update(boqs).set({ IsDeleted: true }).where(eq(boqs.Id, boqId));
+
+        await tx
+          .update(boqItems)
+          .set({ IsDeleted: true, UpdatedAt: now })
+          .where(and(eq(boqItems.BoqId, boqId), eq(boqItems.IsDeleted, false)));
+      }
+
+      return foundIds.length;
     });
   }
 

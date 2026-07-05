@@ -3,6 +3,7 @@
 import * as React from "react";
 
 import type { FilterColumnDef, SortDirection } from "@/lib/filter-engine";
+import type { SavedViewGroupingState } from "@/lib/filter-engine";
 import {
   type AggregateOperation,
   calculateAggregate,
@@ -130,6 +131,33 @@ export function useGridGrouping<T>(
     [columnAggregates],
   );
 
+  const applyGroupingState = React.useCallback((grouping: SavedViewGroupingState | undefined) => {
+    if (!grouping) {
+      setSelections([{ field: "", order: "asc" }]);
+      setExpandedGroups(new Set());
+      setColumnAggregates({});
+      return;
+    }
+
+    if (grouping.selections?.length) {
+      setSelections(
+        grouping.selections.map((selection) => ({
+          field: selection.field,
+          order: selection.direction,
+        })),
+      );
+    } else {
+      setSelections([{ field: "", order: "asc" }]);
+    }
+
+    setExpandedGroups(new Set(grouping.expandedGroupKeys ?? []));
+    setColumnAggregates(
+      Object.fromEntries(
+        Object.entries(grouping.columnAggregates ?? {}).filter(([, value]) => !!value),
+      ) as ColumnAggregateState,
+    );
+  }, []);
+
   const buildBlocks = React.useCallback(
     (rows: T[]) => {
       if (!isGrouped || !primaryColumn || !primaryGroup) return [];
@@ -159,6 +187,7 @@ export function useGridGrouping<T>(
     collapseAllGroups,
     toggleGroupExpanded,
     setColumnAggregate,
+    applyGroupingState,
     getAggregateDisplay,
     buildBlocks,
   };

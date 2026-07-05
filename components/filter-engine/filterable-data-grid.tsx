@@ -20,13 +20,14 @@ import {
 import { useColumnLayout } from "@/components/filter-engine/use-column-layout";
 import { useFilterEngine } from "@/components/filter-engine/use-filter-engine";
 import { useGridGrouping } from "@/components/filter-engine/use-grid-grouping";
+import { useSavedFilters } from "@/components/filter-engine/use-saved-filters";
 import type { GridRowSelectionApi } from "@/hooks/use-grid-row-selection";
 import {
   type DataTableColumn,
   type DataTableProps,
 } from "@/components/ui/data-table";
 import type { FilterColumnDef, SortDirection } from "@/lib/filter-engine";
-import { getDistinctValues } from "@/lib/filter-engine";
+import { applyGridViewState, captureGridViewState, getDistinctValues } from "@/lib/filter-engine";
 import { cn } from "@/lib/utils";
 
 export type GroupBlock<T> = {
@@ -112,6 +113,8 @@ export function FilterableDataGrid<T>({
     initialPinById: initialColumnPins,
   });
   const grouping = useGridGrouping(columns, { initialGroupField });
+  const saved = useSavedFilters(pageKey);
+  const favoriteLoadedRef = React.useRef(false);
   const [contextMenu, setContextMenu] = React.useState<ColumnHeaderContextMenuState<T>>(null);
   const [filterPanelOpen, setFilterPanelOpen] = React.useState(false);
   const pendingFilterFieldRef = React.useRef<string | undefined>(undefined);
@@ -158,6 +161,31 @@ export function FilterableDataGrid<T>({
     if (!sortRequest) return;
     engine.setSort(sortRequest.field, sortRequest.direction);
   }, [engine, sortRequest?.field, sortRequest?.direction, sortRequest?.nonce]);
+
+  const captureViewState = React.useCallback(
+    () => captureGridViewState(engine, layout, grouping),
+    [engine, grouping, layout],
+  );
+
+  const applyViewState = React.useCallback(
+    (definition: Parameters<typeof applyGridViewState>[0]) => {
+      applyGridViewState(definition, engine, layout, grouping, columns);
+    },
+    [columns, engine, grouping, layout],
+  );
+
+  React.useEffect(() => {
+    if (!pageKey || favoriteLoadedRef.current) return;
+    favoriteLoadedRef.current = true;
+
+    void (async () => {
+      const items = await saved.load(true);
+      const favorite = items.find((item) => item.isFavorite);
+      if (!favorite) return;
+      applyGridViewState(favorite.definition, engine, layout, grouping, columns);
+      saved.setActiveId(favorite.id);
+    })();
+  }, [columns, engine, grouping, layout, pageKey, saved]);
 
   const tableColumns: DataTableColumn<T>[] = layout.visibleColumns.map((column) => {
     const pin = layout.pinById[column.id];
@@ -232,6 +260,9 @@ export function FilterableDataGrid<T>({
           columns={columns}
           data={data}
           engine={engine}
+          saved={saved}
+          captureViewState={captureViewState}
+          applyViewState={applyViewState}
           searchPlaceholder="Search records..."
           toolbarLeft={
             <>

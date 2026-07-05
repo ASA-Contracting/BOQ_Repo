@@ -8,9 +8,11 @@ import { BoqBreakdownGrid } from "@/components/boq/BoqBreakdownGrid";
 import { BoqBreakdownHeader } from "@/components/boq/BoqBreakdownHeader";
 import {
   applySectionParentLabels,
+  filterBoqItemsBySummary,
   insertBoqItemRowInOrder,
   removeBoqItemRow,
   withCalculatedTotal,
+  type BoqSummaryFilter,
 } from "@/components/boq/boq-breakdown-utils";
 import {
   buildCategoryOptionById,
@@ -46,6 +48,7 @@ export function BoqBreakdownWorkspace({
   const [discipline, setDiscipline] = useState(breakdown.discipline ?? "");
   const [disciplineSaving, setDisciplineSaving] = useState(false);
   const [disciplineError, setDisciplineError] = useState<string | null>(null);
+  const [summaryFilter, setSummaryFilter] = useState<BoqSummaryFilter>("all");
 
   const importHref = useMemo(() => {
     const params = new URLSearchParams({
@@ -76,10 +79,10 @@ export function BoqBreakdownWorkspace({
     [categoryOptions],
   );
 
-  const gridItems = useMemo(
-    () => applySectionParentLabels(items, categoryOptionById),
-    [items, categoryOptionById],
-  );
+  const gridItems = useMemo(() => {
+    const labeled = applySectionParentLabels(items, categoryOptionById);
+    return filterBoqItemsBySummary(labeled, summaryFilter);
+  }, [items, categoryOptionById, summaryFilter]);
 
   const handleApproveVersion = useCallback(async () => {
     if (!breakdown.versionId || isApproved) return;
@@ -157,6 +160,14 @@ export function BoqBreakdownWorkspace({
       }
     },
     [breakdown.batchId, breakdown.id, breakdown.versionId, discipline, isApproved],
+  );
+
+  const handleSelectVersion = useCallback(
+    (versionId: number) => {
+      if (versionId === breakdown.versionId) return;
+      router.push(`/boq/${breakdown.id}?versionId=${versionId}`);
+    },
+    [breakdown.id, breakdown.versionId, router],
   );
 
   const handleDuplicateVersion = useCallback(async () => {
@@ -331,9 +342,12 @@ export function BoqBreakdownWorkspace({
         rowActionError={rowActionError}
         disciplineError={disciplineError}
         importHref={importHref}
+        summaryFilter={summaryFilter}
+        onSummaryFilterChange={setSummaryFilter}
         onDisciplineChange={(value) => void handleDisciplineChange(value)}
         onApproveVersion={() => void handleApproveVersion()}
         onDuplicateVersion={() => void handleDuplicateVersion()}
+        onSelectVersion={handleSelectVersion}
         onOpenCategoryBuilder={onOpenCategoryBuilder}
       />
 

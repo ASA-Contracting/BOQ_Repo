@@ -4,6 +4,7 @@ import {
   applySectionParentLabels,
   calcRowTotal,
   displayCellValue,
+  filterBoqItemsBySummary,
   formatMasterNo,
   insertBoqItemRowInOrder,
   isBlankCellValue,
@@ -216,5 +217,66 @@ describe("boq-breakdown-utils", () => {
     expect(formatMasterNo(null)).toBe("—");
     expect(masterNoSortValue(3)).toBe(3);
     expect(masterNoSortValue(null)).toBe(Number.MAX_SAFE_INTEGER);
+  });
+
+  it("filters breakdown rows by summary chip selection", () => {
+    const rows = [
+      {
+        id: 1,
+        rowIndex: 1,
+        masterNo: 1,
+        itemNo: null,
+        description: "Section header",
+        unit: null,
+        quantity: null,
+        rate: null,
+        total: null,
+        isHeader: true,
+        isMeasurable: false,
+        materialNodeId: null,
+        categoryLabel: null,
+        categoryPath: null,
+        sectionParentLabel: null,
+      },
+      {
+        id: 2,
+        rowIndex: 2,
+        masterNo: 2,
+        itemNo: "1.1",
+        description: "Published item",
+        unit: "nr",
+        quantity: "1",
+        rate: "1",
+        total: "1",
+        isHeader: false,
+        isMeasurable: true,
+        materialNodeId: 10,
+        categoryLabel: "Cat",
+        categoryPath: null,
+        sectionParentLabel: null,
+      },
+      {
+        id: 3,
+        rowIndex: 3,
+        masterNo: 3,
+        itemNo: "1.2",
+        description: "Pending item",
+        unit: "nr",
+        quantity: "2",
+        rate: "1",
+        total: "2",
+        isHeader: false,
+        isMeasurable: true,
+        materialNodeId: null,
+        categoryLabel: null,
+        categoryPath: null,
+        sectionParentLabel: null,
+      },
+    ];
+
+    expect(filterBoqItemsBySummary(rows, "all")).toHaveLength(3);
+    expect(filterBoqItemsBySummary(rows, "sections").map((row) => row.id)).toEqual([1]);
+    expect(filterBoqItemsBySummary(rows, "published").map((row) => row.id)).toEqual([2]);
+    expect(filterBoqItemsBySummary(rows, "pending").map((row) => row.id)).toEqual([3]);
   });
 });

@@ -6,7 +6,8 @@ import * as React from "react";
 import { SharedFilterMenu } from "@/components/filter-engine/shared-filter-menu";
 import { isInsideSearchSelectOverlay } from "@/components/filter-engine/search-select-overlay";
 import type { FilterEngineState } from "@/components/filter-engine/use-filter-engine";
-import type { FilterColumnDef } from "@/lib/filter-engine";
+import type { useSavedFilters } from "@/components/filter-engine/use-saved-filters";
+import type { FilterColumnDef, SavedFilterDefinition } from "@/lib/filter-engine";
 import { isFilterComplete } from "@/lib/filter-engine";
 
 import "@/styles/abrd-filter-toolbar.css";
@@ -17,6 +18,9 @@ export type FilterToolbarProps<T> = {
   columns: FilterColumnDef<T>[];
   data: T[];
   engine: FilterEngineState<T>;
+  saved: ReturnType<typeof useSavedFilters>;
+  captureViewState: () => SavedFilterDefinition | null;
+  applyViewState: (definition: SavedFilterDefinition) => void;
   searchPlaceholder?: string;
   toolbarLeft?: React.ReactNode;
   toolbarRight?: React.ReactNode;
@@ -30,6 +34,9 @@ export function FilterToolbar<T>({
   columns,
   data,
   engine,
+  saved,
+  captureViewState,
+  applyViewState,
   searchPlaceholder = "Search projects...",
   toolbarLeft,
   toolbarRight,
@@ -110,7 +117,15 @@ export function FilterToolbar<T>({
             </button>
 
             {filterPanelOpen ? (
-              <SharedFilterMenu pageKey={pageKey} columns={columns} data={data} engine={engine} />
+              <SharedFilterMenu
+                pageKey={pageKey}
+                columns={columns}
+                data={data}
+                engine={engine}
+                saved={saved}
+                captureViewState={captureViewState}
+                applyViewState={applyViewState}
+              />
             ) : null}
           </div>
 

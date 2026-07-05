@@ -52,6 +52,25 @@ function mapSupabaseUser(user: {
   };
 }
 
+function isEmailDeliveryError(message: string, code?: string): boolean {
+  const normalized = message.toLowerCase();
+  return (
+    code === "over_email_send_rate_limit" ||
+    normalized.includes("rate limit") ||
+    normalized.includes("smtp") ||
+    normalized.includes("email provider")
+  );
+}
+
+function isExistingUserError(message: string): boolean {
+  const normalized = message.toLowerCase();
+  return (
+    normalized.includes("already been registered") ||
+    normalized.includes("already registered") ||
+    normalized.includes("already exists")
+  );
+}
+
 export class SupabaseUserAdminRepository implements IUserAdminRepository {
   private getClient() {
     const client = createSupabaseAdminClient();
@@ -109,6 +128,61 @@ export class SupabaseUserAdminRepository implements IUserAdminRepository {
     return mapSupabaseUser(data.user);
   }
 
+  private async findUserByEmail(email: string): Promise<AdminUserRecord | null> {
+    const client = this.getClient();
+    const needle = email.toLowerCase();
+    let page = 1;
+
+    while (page <= 10) {
+      const { data, error } = await client.auth.admin.listUsers({
+        page,
+        perPage: 1000,
+      });
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      const match = (data.users ?? []).find(
+        (user) => user.email?.toLowerCase() === needle,
+      );
+      if (match) {
+        return mapSupabaseUser(match);
+      }
+
+      if ((data.users ?? []).length < 1000) {
+        break;
+      }
+
+      page += 1;
+    }
+
+    return null;
+  }
+
+  private async applyUserProfile(
+    userId: string,
+    params: Pick<InviteUserParams, "displayName" | "roles">,
+  ): Promise<AdminUserRecord> {
+    const client = this.getClient();
+    const { data, error } = await client.auth.admin.updateUserById(userId, {
+      app_metadata: { roles: params.roles },
+      user_metadata: params.displayName
+        ? { display_name: params.displayName }
+        : undefined,
+    });
+
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    if (!data.user) {
+      throw new Error("User update succeeded but no user was returned.");
+    }
+
+    return mapSupabaseUser(data.user);
+  }
+
   async inviteUser(params: InviteUserParams): Promise<AdminUserRecord> {
     const client = this.getClient();
     const { data, error } = await client.auth.admin.inviteUserByEmail(
@@ -120,24 +194,51 @@ export class SupabaseUserAdminRepository implements IUserAdminRepository {
       },
     );
 
+    if (!error && data.user) {
+      return this.applyUserProfile(data.user.id, params);
+    }
+
+    if (error && isExistingUserError(error.message)) {
+      const existing = await this.findUserByEmail(params.email);
+      if (!existing) {
+        throw new Error(error.message);
+      }
+      return this.applyUserProfile(existing.id, params);
+    }
+
+    if (error && isEmailDeliveryError(error.message, error.code)) {
+      const { data: created, error: createError } =
+        await client.auth.admin.createUser({
+          email: params.email,
+          email_confirm: true,
+          user_metadata: params.displayName
+            ? { display_name: params.displayName }
+            : undefined,
+          app_metadata: { roles: params.roles },
+        });
+
+      if (!createError && created.user) {
+        return mapSupabaseUser(created.user);
+      }
+
+      if (createError && isExistingUserError(createError.message)) {
+        const existing = await this.findUserByEmail(params.email);
+        if (!existing) {
+          throw new Error(createError.message);
+        }
+        return this.applyUserProfile(existing.id, params);
+      }
+
+      if (createError) {
+        throw new Error(createError.message);
+      }
+    }
+
     if (error) {
       throw new Error(error.message);
     }
 
-    if (!data.user) {
-      throw new Error("Invite succeeded but no user was returned.");
-    }
-
-    const { data: updated, error: updateError } =
-      await client.auth.admin.updateUserById(data.user.id, {
-        app_metadata: { roles: params.roles },
-      });
-
-    if (updateError) {
-      throw new Error(updateError.message);
-    }
-
-    return mapSupabaseUser(updated.user ?? data.user);
+    throw new Error("Invite succeeded but no user was returned.");
   }
 
   async updateUser(params: UpdateUserParams): Promise<AdminUserRecord> {

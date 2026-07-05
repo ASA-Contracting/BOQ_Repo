@@ -19,6 +19,7 @@ import {
   upsertColumnFilterState,
 } from "@/lib/filter-engine";
 import { restoreSavedFilterGroups, serializeSavedFilterDefinition } from "@/lib/filter-engine/saved-filters";
+import type { SavedColumnFilterState } from "@/lib/filter-engine";
 
 export type UseFilterEngineOptions<T> = {
   data: T[];
@@ -215,6 +216,24 @@ export function useFilterEngine<T>({ data, columns, initialGlobalSearch = "" }: 
     [],
   );
 
+  const setColumnFiltersFromSaved = React.useCallback((filters: SavedColumnFilterState[]) => {
+    setColumnFilters(
+      filters.map((filter) => ({
+        field: filter.field,
+        operator: filter.operator,
+        value: filter.value,
+      })),
+    );
+  }, []);
+
+  const setSortsFromSaved = React.useCallback((nextSorts: SortState[]) => {
+    setSorts(nextSorts);
+  }, []);
+
+  const setAppliedFromSaved = React.useCallback((value: boolean) => {
+    setApplied(value);
+  }, []);
+
   const getCurrentDefinition = React.useCallback(
     () => serializeSavedFilterDefinition(filterGroups, globalSearch),
     [filterGroups, globalSearch],
@@ -262,6 +281,9 @@ export function useFilterEngine<T>({ data, columns, initialGlobalSearch = "" }: 
     clearFilterGroup,
     updateToolbarFilter,
     loadSavedDefinition,
+    setColumnFiltersFromSaved,
+    setSortsFromSaved,
+    setAppliedFromSaved,
     getCurrentDefinition,
     openFilterForColumn,
     activeFilterFields: new Set(

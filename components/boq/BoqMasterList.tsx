@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useCallback, useMemo, useState } from "react";
 import { Briefcase, Plus } from "lucide-react";
 
 import type { BoqListEntryDto } from "@/application/boq/dto";
@@ -15,9 +16,11 @@ import {
   BmlBadge,
   PUBLISH_BADGE,
   approvalLabel,
+  formatBoqDate,
   versionLabel,
   workflowLabel,
 } from "@/components/boq/boq-master-list-cells";
+import { BoqBulkDeleteDialog } from "@/components/boq/BoqBulkDeleteDialog";
 import { BoqSettingsModal, BoqSettingsToolbarButton } from "@/components/boq/BoqSettingsModal";
 import {
   FilterableDataGrid,
@@ -25,6 +28,7 @@ import {
 } from "@/components/filter-engine";
 import { ShellContent } from "@/components/shared/AppShell";
 import { Button } from "@/components/ui/button";
+import { useGridRowSelection } from "@/hooks/use-grid-row-selection";
 
 import "@/styles/boq-master-list.css";
 
@@ -155,13 +159,11 @@ function buildGridColumns(): FilterableColumn<BoqListEntryDto>[] {
       field: "importedByName",
       label: "Imported by",
       filterType: "text",
-      getValue: (boq) => boq.importedByName ?? boq.importedById ?? "Unknown",
+      getValue: (boq) => boq.importedByName ?? "Unknown",
       header: "Imported by",
       className: "min-w-[8rem]",
       cell: (boq) => (
-        <div className="bml-cell-primary">
-          {boq.importedByName ?? boq.importedById ?? "Unknown"}
-        </div>
+        <div className="bml-cell-primary">{boq.importedByName ?? "Unknown"}</div>
       ),
     },
     {
@@ -185,8 +187,74 @@ export function BoqMasterList({
   error = null,
   onOpenProjects,
 }: Props) {
+  const router = useRouter();
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  const rowSelection = useGridRowSelection();
   const gridColumns = useMemo(() => buildGridColumns(), []);
+
+  const selectedBoqs = useMemo(() => {
+    return boqs.filter((boq) => rowSelection.selectedKeys.has(String(boq.id)));
+  }, [boqs, rowSelection.selectedKeys]);
+
+  const handleCopyRows = useCallback(async () => {
+    if (selectedBoqs.length === 0) return;
+    const lines = selectedBoqs.map((boq) =>
+      [
+        boq.projectName,
+        boq.discipline ?? "—",
+        boq.name,
+        versionLabel(boq) || "—",
+        workflowLabel(boq),
+        approvalLabel(boq),
+        `${boq.categorizedCount}/${boq.measurableCount}`,
+        formatBoqDate(boq.importedAt),
+      ].join("\t"),
+    );
+    await navigator.clipboard.writeText(lines.join("\n"));
+    setStatusMessage("Copied");
+  }, [selectedBoqs]);
+
+  const handleCopyJson = useCallback(async () => {
+    if (selectedBoqs.length === 0) return;
+    await navigator.clipboard.writeText(JSON.stringify(selectedBoqs, null, 2));
+    setStatusMessage("JSON copied");
+  }, [selectedBoqs]);
+
+  const getRowSelectionNumber = useCallback((_boq: BoqListEntryDto, displayIndex: number) => {
+    return displayIndex + 1;
+  }, []);
+
+  const handleDeleteSelected = useCallback(async () => {
+    const versionIds = selectedBoqs.map((boq) => boq.versionId);
+    const response = await fetch("/api/boq/bulk-delete", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ versionIds }),
+    });
+
+    const payload = (await response.json()) as {
+      success?: boolean;
+      message?: string;
+    };
+
+    if (!response.ok || !payload.success) {
+      throw new Error(payload.message ?? "Unable to delete selected BOQs.");
+    }
+
+    rowSelection.recordSelectionUndo("Previous selection restored");
+    rowSelection.clear();
+    setStatusMessage(
+      versionIds.length === 1 ? "BOQ deleted" : `${versionIds.length} BOQs deleted`,
+    );
+    router.refresh();
+  }, [router, rowSelection, selectedBoqs]);
+
+  const handleOpenDeleteDialog = useCallback(() => {
+    if (selectedBoqs.length === 0) return;
+    setDeleteDialogOpen(true);
+  }, [selectedBoqs.length]);
 
   const content = (
     <div className="boq-master-list__page">
@@ -243,11 +311,22 @@ export function BoqMasterList({
                 <BoqSettingsToolbarButton onClick={() => setSettingsOpen(true)} />
               }
               shellClassName="border-0 bg-transparent shadow-none"
-              initialGroupField="scopeLabel"
+              initialHiddenColumnIds={["status"]}
               renderGroupHeader={({ block, expanded, toggle }) => (
                 <BoqProjectGroupHeader block={block} expanded={expanded} toggle={toggle} />
               )}
               aria-label="BOQ master list"
+              selectable
+              rowSelection={rowSelection}
+              getRowSelectionNumber={getRowSelectionNumber}
+              selectionActionBar={{
+                statusMessage,
+                showEditAction: false,
+                showExportAction: false,
+                onCopy: () => void handleCopyRows(),
+                onCopyJson: () => void handleCopyJson(),
+                onDelete: handleOpenDeleteDialog,
+              }}
             />
           </div>
         )}
@@ -258,6 +337,12 @@ export function BoqMasterList({
     <ShellContent className="boq-master-list">
       {content}
       <BoqSettingsModal open={settingsOpen} onClose={() => setSettingsOpen(false)} />
+      <BoqBulkDeleteDialog
+        open={deleteDialogOpen}
+        count={selectedBoqs.length}
+        onClose={() => setDeleteDialogOpen(false)}
+        onConfirm={handleDeleteSelected}
+      />
     </ShellContent>
   );
 }

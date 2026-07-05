@@ -3,6 +3,7 @@
 import * as React from "react";
 
 import type { FilterableColumn } from "@/components/filter-engine/filterable-data-grid";
+import type { SavedViewLayoutState } from "@/lib/filter-engine";
 
 export type ColumnPin = "left" | "right" | null;
 export type ColumnAlign = "left" | "center" | "right";
@@ -153,6 +154,38 @@ export function useColumnLayout<T>(
     setWidthById((current) => ({ ...current, [columnId]: width }));
   }, []);
 
+  const applyLayoutState = React.useCallback(
+    (layout: SavedViewLayoutState | undefined, sourceColumns: FilterableColumn<T>[]) => {
+      const filterOnlyIds = new Set(
+        sourceColumns.filter((column) => column.filterOnly).map((column) => column.id),
+      );
+
+      if (layout?.hiddenColumnIds) {
+        setHiddenIds(new Set([...filterOnlyIds, ...layout.hiddenColumnIds]));
+      }
+
+      if (layout?.columnOrder?.length) {
+        const nextIds = new Set(sourceColumns.map((column) => column.id));
+        const kept = layout.columnOrder.filter((id) => nextIds.has(id));
+        const missing = sourceColumns.map((column) => column.id).filter((id) => !kept.includes(id));
+        setOrder([...kept, ...missing]);
+      }
+
+      if (layout?.pinById) {
+        setPinById(layout.pinById);
+      }
+
+      if (layout?.alignById) {
+        setAlignById(layout.alignById);
+      }
+
+      if (layout?.widthById) {
+        setWidthById(layout.widthById);
+      }
+    },
+    [],
+  );
+
   const moveColumn = React.useCallback((activeId: string, overId: string) => {
     if (activeId === overId) return;
     setOrder((current) => {
@@ -184,6 +217,7 @@ export function useColumnLayout<T>(
     setColumnPin,
     setColumnAlign,
     setColumnWidth,
+    applyLayoutState,
     moveColumn,
   };
 }

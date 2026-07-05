@@ -61,9 +61,33 @@ export type SavedFilterGroupState = {
   rows: SavedFilterRowState[];
 };
 
+export type SavedViewLayoutState = {
+  hiddenColumnIds?: string[];
+  columnOrder?: string[];
+  pinById?: Record<string, "left" | "right">;
+  alignById?: Record<string, "left" | "center" | "right">;
+  widthById?: Record<string, string>;
+};
+
+export type SavedViewGroupingState = {
+  selections?: { field: string; direction: SortDirection }[];
+  expandedGroupKeys?: string[];
+  columnAggregates?: Record<string, string | null>;
+};
+
+export type SavedColumnFilterState = {
+  field: string;
+  operator: FilterOperator;
+  value: FilterValue;
+};
+
 export type SavedFilterDefinition = {
   groups: SavedFilterGroupState[];
   globalSearch?: string;
+  sorts?: SortState[];
+  columnFilters?: SavedColumnFilterState[];
+  grouping?: SavedViewGroupingState;
+  layout?: SavedViewLayoutState;
 };
 
 export type SavedFilterItem = {

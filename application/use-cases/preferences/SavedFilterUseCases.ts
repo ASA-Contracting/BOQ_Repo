@@ -13,7 +13,7 @@ import type { IUseCase } from "@/application/use-cases/IUseCase";
 import type { DomainError } from "@/domain/shared/errors/DomainError";
 import { NotFoundError } from "@/domain/shared/errors/NotFoundError";
 import { ValidationError } from "@/domain/shared/errors/ValidationError";
-import { normalizeSavedFilterDefinition } from "@/lib/filter-engine/saved-filters";
+import { normalizeSavedViewDefinition } from "@/lib/filter-engine/saved-views";
 import type { SavedFilterDefinition } from "@/lib/filter-engine";
 import type { RequestContext } from "@/domain/shared/RequestContext";
 import { err, ok, type Result } from "@/domain/shared/Result";
@@ -37,21 +37,73 @@ const filterOperatorSchema = z.enum([
   "globalSearch",
 ]);
 
+const sortDirectionSchema = z.enum(["asc", "desc"]);
+
+const savedViewLayoutSchema = z
+  .object({
+    hiddenColumnIds: z.array(z.string()).optional(),
+    columnOrder: z.array(z.string()).optional(),
+    pinById: z.record(z.string(), z.enum(["left", "right"])).optional(),
+    alignById: z.record(z.string(), z.enum(["left", "center", "right"])).optional(),
+    widthById: z.record(z.string(), z.string()).optional(),
+  })
+  .optional();
+
 const savedFilterDefinitionSchema = z.object({
-  groups: z.array(
-    z.object({
-      joinWithPrev: savedFilterJoinSchema.optional(),
-      rows: z.array(
-        z.object({
-          field: z.string().min(1),
-          operator: filterOperatorSchema,
-          value: z.string(),
-          joinWithPrev: savedFilterJoinSchema.optional(),
-        }),
-      ),
-    }),
-  ),
+  groups: z
+    .array(
+      z.object({
+        joinWithPrev: savedFilterJoinSchema.optional(),
+        rows: z.array(
+          z.object({
+            field: z.string().min(1),
+            operator: filterOperatorSchema,
+            value: z.string(),
+            joinWithPrev: savedFilterJoinSchema.optional(),
+          }),
+        ),
+      }),
+    )
+    .default([]),
   globalSearch: z.string().optional(),
+  sorts: z
+    .array(
+      z.object({
+        field: z.string().min(1),
+        direction: sortDirectionSchema,
+      }),
+    )
+    .optional(),
+  columnFilters: z
+    .array(
+      z.object({
+        field: z.string().min(1),
+        operator: filterOperatorSchema,
+        value: z.union([
+          z.string(),
+          z.number(),
+          z.boolean(),
+          z.null(),
+          z.array(z.union([z.string(), z.number(), z.boolean()])),
+        ]),
+      }),
+    )
+    .optional(),
+  grouping: z
+    .object({
+      selections: z
+        .array(
+          z.object({
+            field: z.string(),
+            direction: sortDirectionSchema,
+          }),
+        )
+        .optional(),
+      expandedGroupKeys: z.array(z.string()).optional(),
+      columnAggregates: z.record(z.string(), z.string().nullable()).optional(),
+    })
+    .optional(),
+  layout: savedViewLayoutSchema,
 });
 
 const listSavedFiltersSchema = z.object({
@@ -118,11 +170,11 @@ export class UpsertSavedFilterUseCase
     }
 
     try {
-      const definition = normalizeSavedFilterDefinition(
+      const definition = normalizeSavedViewDefinition(
         parsed.data.definition as SavedFilterDefinition,
       );
       if (!definition) {
-        return err(new ValidationError("Saved filter definition is empty."));
+        return err(new ValidationError("Saved view definition is empty."));
       }
       const item = await this.deps.savedFilterRepository.upsert(ctx.userId, {
         ...parsed.data,
@@ -130,7 +182,7 @@ export class UpsertSavedFilterUseCase
       });
       return ok(item);
     } catch (error) {
-      return err(new ValidationError(error instanceof Error ? error.message : "Failed to save filter"));
+      return err(new ValidationError(error instanceof Error ? error.message : "Failed to save view"));
     }
   }
 }

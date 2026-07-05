@@ -118,10 +118,15 @@ export function UserFormDialog({
               }),
             });
 
-      const payload = (await response.json()) as {
+      const payload = (await response.json().catch(() => null)) as {
         data?: UserSummaryDto;
         error?: { message?: string };
-      };
+      } | null;
+
+      if (!payload) {
+        setError("Unable to save user. The server returned an invalid response.");
+        return;
+      }
 
       if (!response.ok) {
         setError(payload.error?.message ?? "Unable to save user.");

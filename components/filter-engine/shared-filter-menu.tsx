@@ -15,8 +15,14 @@ import * as React from "react";
 import { SearchSelect } from "@/components/filter-engine/search-select";
 import { isInsideSearchSelectOverlay } from "@/components/filter-engine/search-select-overlay";
 import type { FilterEngineState } from "@/components/filter-engine/use-filter-engine";
-import { useSavedFilters } from "@/components/filter-engine/use-saved-filters";
-import type { FilterColumnDef, FilterJoin, FilterOperator, FilterRowState } from "@/lib/filter-engine";
+import type { useSavedFilters } from "@/components/filter-engine/use-saved-filters";
+import type {
+  FilterColumnDef,
+  FilterJoin,
+  FilterOperator,
+  FilterRowState,
+  SavedFilterDefinition,
+} from "@/lib/filter-engine";
 import {
   filterValuePlaceholder,
   getDefaultOperator,
@@ -40,10 +46,20 @@ export type SharedFilterMenuProps<T> = {
   columns: FilterColumnDef<T>[];
   data: T[];
   engine: FilterEngineState<T>;
+  saved: ReturnType<typeof useSavedFilters>;
+  captureViewState: () => SavedFilterDefinition | null;
+  applyViewState: (definition: SavedFilterDefinition) => void;
 };
 
-export function SharedFilterMenu<T>({ pageKey, columns, data, engine }: SharedFilterMenuProps<T>) {
-  const saved = useSavedFilters(pageKey);
+export function SharedFilterMenu<T>({
+  pageKey,
+  columns,
+  data,
+  engine,
+  saved,
+  captureViewState,
+  applyViewState,
+}: SharedFilterMenuProps<T>) {
   const [savedPanelOpen, setSavedPanelOpen] = React.useState(false);
   const [savedFilterSearchTerm, setSavedFilterSearchTerm] = React.useState("");
   const [savedFilterSaveModeOpen, setSavedFilterSaveModeOpen] = React.useState(false);
@@ -59,7 +75,7 @@ export function SharedFilterMenu<T>({ pageKey, columns, data, engine }: SharedFi
     group.rows.some((row) => isFilterComplete(row.field, row.operator, row.value)),
   );
 
-  const canSaveCurrent = engine.hasActiveFilters && engine.getCurrentDefinition() != null;
+  const canSaveCurrent = captureViewState() != null;
 
   const filteredSaved = saved.items.filter((item) =>
     item.name.toLowerCase().includes(savedFilterSearchTerm.trim().toLowerCase()),
@@ -78,18 +94,18 @@ export function SharedFilterMenu<T>({ pageKey, columns, data, engine }: SharedFi
     return () => document.removeEventListener("pointerdown", handler);
   }, [savedPanelOpen]);
 
-  const savedTriggerLabel = saved.favorite?.name ?? "Saved filters";
+  const savedTriggerLabel = saved.favorite?.name ?? "Saved views";
 
   const applySaved = (id: number) => {
     const item = saved.items.find((entry) => entry.id === id);
     if (!item) return;
-    engine.loadSavedDefinition(item.definition);
+    applyViewState(item.definition);
     saved.setActiveId(id);
     setSavedPanelOpen(false);
   };
 
   const handleSave = async () => {
-    const definition = engine.getCurrentDefinition();
+    const definition = captureViewState();
     if (!definition || !savedFilterName.trim()) return;
     await saved.save(savedFilterName.trim(), definition);
     setSavedFilterSaveModeOpen(false);
@@ -112,7 +128,7 @@ export function SharedFilterMenu<T>({ pageKey, columns, data, engine }: SharedFi
             ref={savedTriggerRef}
             className="proj-filter-saved"
             type="button"
-            aria-label="Saved filters"
+            aria-label="Saved views"
             aria-expanded={savedPanelOpen}
             aria-pressed={savedPanelOpen}
             onPointerDown={(event) => event.stopPropagation()}
@@ -148,10 +164,10 @@ export function SharedFilterMenu<T>({ pageKey, columns, data, engine }: SharedFi
               <div className="proj-saved-filters-body">
                 <p className="proj-saved-filters-section-label">Personal</p>
                 {saved.loading ? (
-                  <p className="proj-saved-filters-empty">Loading your saved filters...</p>
+                  <p className="proj-saved-filters-empty">Loading your saved views...</p>
                 ) : filteredSaved.length === 0 ? (
                   <p className="proj-saved-filters-empty">
-                    {savedFilterSearchTerm.trim() ? "No matching saved filters." : "No saved filters yet."}
+                    {savedFilterSearchTerm.trim() ? "No matching saved views." : "No saved views yet."}
                   </p>
                 ) : (
                   <div className="proj-saved-filters-list" role="list">
@@ -172,7 +188,7 @@ export function SharedFilterMenu<T>({ pageKey, columns, data, engine }: SharedFi
                         <button
                           type="button"
                           className="proj-saved-filter-item-favorite"
-                          aria-label={item.isFavorite ? "Remove favorite filter" : "Set as favorite filter"}
+                          aria-label={item.isFavorite ? "Remove default view" : "Set as default view"}
                           aria-pressed={item.isFavorite}
                           disabled={saved.busy}
                           onClick={() => void saved.setFavorite(item.id)}
@@ -182,7 +198,7 @@ export function SharedFilterMenu<T>({ pageKey, columns, data, engine }: SharedFi
                         <button
                           type="button"
                           className="proj-saved-filter-item-delete"
-                          aria-label="Delete saved filter"
+                          aria-label="Delete saved view"
                           disabled={saved.busy}
                           onClick={() => void saved.remove(item.id)}
                         >
@@ -197,7 +213,7 @@ export function SharedFilterMenu<T>({ pageKey, columns, data, engine }: SharedFi
               {saved.error ? (
                 <p className="proj-saved-filters-feedback proj-saved-filters-feedback--error">{saved.error}</p>
               ) : savedFilterSaveModeOpen && !canSaveCurrent ? (
-                <p className="proj-saved-filters-feedback">Add a complete filter to save it.</p>
+                <p className="proj-saved-filters-feedback">Adjust the grid before saving a view.</p>
               ) : null}
 
               <div className="proj-saved-filters-footer">
@@ -205,7 +221,7 @@ export function SharedFilterMenu<T>({ pageKey, columns, data, engine }: SharedFi
                   <input
                     className="proj-saved-filters-name"
                     type="text"
-                    placeholder="Filter name..."
+                    placeholder="View name..."
                     value={savedFilterName}
                     onChange={(event) => setSavedFilterName(event.target.value)}
                     onKeyDown={(event) => {
@@ -228,7 +244,7 @@ export function SharedFilterMenu<T>({ pageKey, columns, data, engine }: SharedFi
                     void handleSave();
                   }}
                 >
-                  {saved.busy ? "Saving..." : savedFilterSaveModeOpen ? "Save filter" : "Save new filter"}
+                  {saved.busy ? "Saving..." : savedFilterSaveModeOpen ? "Save view" : "Save new view"}
                 </button>
               </div>
             </div>

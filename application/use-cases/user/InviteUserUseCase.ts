@@ -4,7 +4,10 @@ import { mapAdminUserToSummaryDto } from "@/application/mappers/user/userMapper"
 import type { IUserAdminRepository } from "@/application/ports/IUserAdminRepository";
 import type { IUseCase } from "@/application/use-cases/IUseCase";
 import { authorizeUserAdmin } from "@/application/use-cases/user/authorizeUserAdmin";
-import { UserAdminNotConfiguredError } from "@/domain/user/errors/UserAdminErrors";
+import {
+  UserAdminNotConfiguredError,
+  UserAdminOperationError,
+} from "@/domain/user/errors/UserAdminErrors";
 import type { DomainError } from "@/domain/shared/errors/DomainError";
 import type { RequestContext } from "@/domain/shared/RequestContext";
 import { err, ok, type Result } from "@/domain/shared/Result";
@@ -31,12 +34,18 @@ export class InviteUserUseCase
       return err(new UserAdminNotConfiguredError());
     }
 
-    const created = await this.deps.userAdminRepository.inviteUser({
-      email: input.email,
-      displayName: input.displayName,
-      roles: input.roles,
-    });
+    try {
+      const created = await this.deps.userAdminRepository.inviteUser({
+        email: input.email,
+        displayName: input.displayName,
+        roles: input.roles,
+      });
 
-    return ok(mapAdminUserToSummaryDto(created));
+      return ok(mapAdminUserToSummaryDto(created));
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Unable to invite user.";
+      return err(new UserAdminOperationError(message));
+    }
   }
 }

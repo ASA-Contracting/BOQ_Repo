@@ -18,12 +18,16 @@ import {
   Dropdown,
   DropdownContent,
   DropdownItem,
+  DropdownLabel,
+  DropdownSeparator,
   DropdownTrigger,
 } from "@/components/ui/dropdown";
 import { Select, SelectOption } from "@/components/ui/select";
 import { useBoqLookupOptions } from "@/hooks/use-boq-lookup-options";
+import { formatBoqVersionLabel, useBoqVersions } from "@/hooks/use-boq-versions";
 import { cn } from "@/lib/utils";
 
+import type { BoqSummaryFilter } from "@/components/boq/boq-breakdown-utils";
 import {
   BOQ_HEADER_DEFAULT_WIDTHS,
   useBoqHeaderPanelWidths,
@@ -34,20 +38,26 @@ type StatChipProps = {
   value: number;
   tone: "slate" | "amber" | "emerald" | "rose";
   highlight?: boolean;
+  active?: boolean;
+  onClick: () => void;
 };
 
-function StatChip({ label, value, tone, highlight = false }: StatChipProps) {
+function StatChip({ label, value, tone, highlight = false, active = false, onClick }: StatChipProps) {
   return (
-    <div
+    <button
+      type="button"
       className={cn(
         "boq-breakdown__stat",
         `boq-breakdown__stat--${tone}`,
-        highlight && "boq-breakdown__stat--highlight",
+        highlight && !active && "boq-breakdown__stat--highlight",
+        active && "boq-breakdown__stat--active",
       )}
+      aria-pressed={active}
+      onClick={onClick}
     >
       <div className="boq-breakdown__stat-label">{label}</div>
       <div className="boq-breakdown__stat-value">{value}</div>
-    </div>
+    </button>
   );
 }
 
@@ -101,9 +111,12 @@ export type BoqBreakdownHeaderProps = {
   rowActionError: string | null;
   disciplineError?: string | null;
   importHref: string;
+  summaryFilter: BoqSummaryFilter;
+  onSummaryFilterChange: (filter: BoqSummaryFilter) => void;
   onDisciplineChange: (discipline: string) => void;
   onApproveVersion: () => void;
   onDuplicateVersion: () => void;
+  onSelectVersion: (versionId: number) => void;
   onOpenCategoryBuilder?: () => void;
 };
 
@@ -123,15 +136,24 @@ export function BoqBreakdownHeader({
   rowActionError,
   disciplineError = null,
   importHref,
+  summaryFilter,
+  onSummaryFilterChange,
   onDisciplineChange,
   onApproveVersion,
   onDuplicateVersion,
+  onSelectVersion,
   onOpenCategoryBuilder,
 }: BoqBreakdownHeaderProps) {
   const isApproved = breakdown.isApproved;
   const canApprove = !isApproved && breakdown.versionId != null;
   const { items: disciplineOptions, loading: disciplineLoading, error: disciplineLoadError } =
     useBoqLookupOptions("discipline");
+  const {
+    versions,
+    loading: versionsLoading,
+    error: versionsError,
+    ensureLoaded: ensureVersionsLoaded,
+  } = useBoqVersions(breakdown.id, breakdown.versionId);
 
   const disciplineChoices =
     !discipline || disciplineOptions.some((option) => option.name === discipline)
@@ -199,16 +221,66 @@ export function BoqBreakdownHeader({
             <span className="boq-breakdown__scope-text">{breakdown.name}</span>
           </ScopeCell>
           <ScopeCell label="Version" className="boq-breakdown__scope-cell--version">
-            <span
-              className={cn(
-                "boq-breakdown__scope-version",
-                isApproved
-                  ? "boq-breakdown__scope-version--approved"
-                  : "boq-breakdown__scope-version--draft",
-              )}
+            <Dropdown
+              onOpenChange={(open) => {
+                if (open) ensureVersionsLoaded();
+              }}
             >
-              {shortVersionLabel}
-            </span>
+              <DropdownTrigger asChild>
+                <button
+                  type="button"
+                  className={cn(
+                    "boq-breakdown__scope-version boq-breakdown__scope-version-btn",
+                    isApproved
+                      ? "boq-breakdown__scope-version--approved"
+                      : "boq-breakdown__scope-version--draft",
+                  )}
+                  aria-label={`Current version: ${versionLabel}. Show all versions.`}
+                >
+                  {shortVersionLabel}
+                  <ChevronDown size={10} aria-hidden />
+                </button>
+              </DropdownTrigger>
+              <DropdownContent align="end" className="min-w-[12rem]">
+                <DropdownLabel>Versions</DropdownLabel>
+                <DropdownSeparator />
+                {versionsLoading ? (
+                  <DropdownItem disabled className="gap-2">
+                    <Loader2 size={12} className="animate-spin" aria-hidden />
+                    Loading…
+                  </DropdownItem>
+                ) : versionsError ? (
+                  <DropdownItem disabled>{versionsError}</DropdownItem>
+                ) : versions.length === 0 ? (
+                  <DropdownItem disabled>No versions found</DropdownItem>
+                ) : (
+                  versions.map((version) => {
+                    const label = formatBoqVersionLabel(version);
+                    const isCurrent = version.isCurrent;
+                    return (
+                      <DropdownItem
+                        key={version.id}
+                        disabled={isCurrent}
+                        onSelect={() => onSelectVersion(version.id)}
+                        className="gap-2"
+                      >
+                        {isCurrent ? <Check size={12} aria-hidden /> : null}
+                        <span className="min-w-0 flex-1 truncate">{label}</span>
+                        {version.approvalStatus === "approved" ? (
+                          <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                            Approved
+                          </span>
+                        ) : (
+                          <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                            Draft
+                          </span>
+                        )}
+                      </DropdownItem>
+                    );
+                  })
+                )}
+              </DropdownContent>
+            </Dropdown>
           </ScopeCell>
         </div>
       ),
@@ -258,10 +330,35 @@ export function BoqBreakdownHeader({
       className: "boq-breakdown__panel--summary",
       content: (
         <div className="boq-breakdown__stats">
-          <StatChip label="Total rows" value={totalRows} tone="slate" />
-          <StatChip label="Sections" value={sections} tone="amber" />
-          <StatChip label="Published" value={published} tone="emerald" />
-          <StatChip label="Pending" value={pending} tone="rose" highlight={pending > 0} />
+          <StatChip
+            label="Total rows"
+            value={totalRows}
+            tone="slate"
+            active={summaryFilter === "all"}
+            onClick={() => onSummaryFilterChange("all")}
+          />
+          <StatChip
+            label="Sections"
+            value={sections}
+            tone="amber"
+            active={summaryFilter === "sections"}
+            onClick={() => onSummaryFilterChange("sections")}
+          />
+          <StatChip
+            label="Published"
+            value={published}
+            tone="emerald"
+            active={summaryFilter === "published"}
+            onClick={() => onSummaryFilterChange("published")}
+          />
+          <StatChip
+            label="Pending"
+            value={pending}
+            tone="rose"
+            highlight={pending > 0}
+            active={summaryFilter === "pending"}
+            onClick={() => onSummaryFilterChange("pending")}
+          />
         </div>
       ),
     },

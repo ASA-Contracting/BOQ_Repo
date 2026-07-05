@@ -35,3 +35,11 @@ export class CannotDeleteSelfError extends DomainError {
     super("You cannot delete your own account.");
   }
 }
+
+export class UserAdminOperationError extends DomainError {
+  readonly code = "USER_ADMIN_OPERATION_ERROR";
+
+  constructor(message: string) {
+    super(message);
+  }
+}

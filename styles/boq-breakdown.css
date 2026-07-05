@@ -243,6 +243,7 @@
 .boq-breakdown__scope-version {
   display: inline-flex;
   align-items: center;
+  gap: 2px;
   max-width: 100%;
   padding: 2px 7px;
   border-radius: 999px;
@@ -250,6 +251,20 @@
   font-weight: 700;
   line-height: 1.2;
   white-space: nowrap;
+}
+
+.boq-breakdown__scope-version-btn {
+  cursor: pointer;
+  transition: background-color 120ms ease, border-color 120ms ease;
+}
+
+.boq-breakdown__scope-version-btn:hover {
+  filter: brightness(0.97);
+}
+
+.boq-breakdown__scope-version-btn:focus-visible {
+  outline: 2px solid color-mix(in oklab, rgb(var(--ring)) 70%, transparent);
+  outline-offset: 1px;
 }
 
 .boq-breakdown__scope-version--draft {
@@ -474,6 +489,21 @@
   border-radius: 6px;
   border: 1px solid transparent;
   padding: 4px 8px 4px 11px;
+  cursor: pointer;
+  text-align: left;
+  transition:
+    border-color 120ms ease,
+    box-shadow 120ms ease,
+    transform 120ms ease;
+}
+
+.boq-breakdown__stat:hover {
+  transform: translateY(-1px);
+}
+
+.boq-breakdown__stat:focus-visible {
+  outline: 2px solid rgb(var(--ring));
+  outline-offset: 2px;
 }
 
 .boq-breakdown__stat::before {
@@ -545,6 +575,14 @@
   box-shadow:
     0 0 0 2px color-mix(in oklab, rgb(244 63 94) 22%, transparent),
     0 2px 6px rgb(225 29 72 / 0.12);
+}
+
+.boq-breakdown__stat--active {
+  border-width: 2px;
+  padding: 3px 7px 3px 10px;
+  box-shadow:
+    0 0 0 2px color-mix(in oklab, var(--bbd-stat-accent) 28%, transparent),
+    0 2px 6px color-mix(in oklab, var(--bbd-stat-accent) 18%, transparent);
 }
 
 .boq-breakdown__stat-label {

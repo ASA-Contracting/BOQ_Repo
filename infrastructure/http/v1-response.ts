@@ -82,6 +82,7 @@ function domainErrorStatus(code: string): number {
     case "USER_ADMIN_NOT_CONFIGURED":
     case "LAST_SYSTEM_ADMINISTRATOR":
     case "CANNOT_DELETE_SELF":
+    case "USER_ADMIN_OPERATION_ERROR":
       return 422;
     default:
       return 400;

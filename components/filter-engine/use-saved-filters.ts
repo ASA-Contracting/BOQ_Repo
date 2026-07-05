@@ -3,6 +3,7 @@
 import * as React from "react";
 
 import type { SavedFilterDefinition, SavedFilterItem } from "@/lib/filter-engine";
+import { hasSavedViewContent } from "@/lib/filter-engine";
 
 type ApiResponse<T> = {
   success: boolean;
@@ -17,12 +18,12 @@ export function useSavedFilters(pageKey: string) {
   const [error, setError] = React.useState<string | null>(null);
   const [activeId, setActiveId] = React.useState<number | null>(null);
 
-  const load = React.useCallback(async (force = false) => {
+  const load = React.useCallback(async (force = false): Promise<SavedFilterItem[]> => {
     if (!pageKey) {
-      return;
+      return [];
     }
     if (loading && !force) {
-      return;
+      return items;
     }
 
     setLoading(true);
@@ -32,20 +33,23 @@ export function useSavedFilters(pageKey: string) {
       const response = await fetch(`/api/saved-filters?pageKey=${encodeURIComponent(pageKey)}`);
       const payload = (await response.json()) as ApiResponse<SavedFilterItem[]>;
       if (!response.ok || !payload.success) {
-        throw new Error(payload.message || "Failed to load saved filters");
+        throw new Error(payload.message || "Failed to load saved views");
       }
-      setItems(payload.data ?? []);
+      const nextItems = payload.data ?? [];
+      setItems(nextItems);
+      return nextItems;
     } catch (loadError) {
-      setError(loadError instanceof Error ? loadError.message : "Failed to load saved filters");
+      setError(loadError instanceof Error ? loadError.message : "Failed to load saved views");
+      return items;
     } finally {
       setLoading(false);
     }
-  }, [loading, pageKey]);
+  }, [items, loading, pageKey]);
 
   const save = React.useCallback(
     async (name: string, definition: SavedFilterDefinition | null) => {
-      if (!definition) {
-        throw new Error("Add a complete filter before saving.");
+      if (!definition || !hasSavedViewContent(definition)) {
+        throw new Error("Adjust the grid before saving a view.");
       }
 
       setBusy(true);
@@ -58,13 +62,13 @@ export function useSavedFilters(pageKey: string) {
         });
         const payload = (await response.json()) as ApiResponse<SavedFilterItem>;
         if (!response.ok || !payload.success) {
-          throw new Error(payload.message || "Failed to save filter");
+          throw new Error(payload.message || "Failed to save view");
         }
         await load(true);
         setActiveId(payload.data.id);
         return payload.data;
       } catch (saveError) {
-        const message = saveError instanceof Error ? saveError.message : "Failed to save filter";
+        const message = saveError instanceof Error ? saveError.message : "Failed to save view";
         setError(message);
         throw saveError;
       } finally {
@@ -82,14 +86,14 @@ export function useSavedFilters(pageKey: string) {
         const response = await fetch(`/api/saved-filters/${id}`, { method: "DELETE" });
         const payload = (await response.json()) as ApiResponse<null>;
         if (!response.ok || !payload.success) {
-          throw new Error(payload.message || "Failed to delete saved filter");
+          throw new Error(payload.message || "Failed to delete saved view");
         }
         if (activeId === id) {
           setActiveId(null);
         }
         await load(true);
       } catch (deleteError) {
-        setError(deleteError instanceof Error ? deleteError.message : "Failed to delete saved filter");
+        setError(deleteError instanceof Error ? deleteError.message : "Failed to delete saved view");
         throw deleteError;
       } finally {
         setBusy(false);
@@ -106,12 +110,12 @@ export function useSavedFilters(pageKey: string) {
         const response = await fetch(`/api/saved-filters/${id}/favorite`, { method: "POST" });
         const payload = (await response.json()) as ApiResponse<SavedFilterItem>;
         if (!response.ok || !payload.success) {
-          throw new Error(payload.message || "Failed to update favorite filter");
+          throw new Error(payload.message || "Failed to update default view");
         }
         await load(true);
         return payload.data;
       } catch (favoriteError) {
-        setError(favoriteError instanceof Error ? favoriteError.message : "Failed to update favorite filter");
+        setError(favoriteError instanceof Error ? favoriteError.message : "Failed to update default view");
         throw favoriteError;
       } finally {
         setBusy(false);

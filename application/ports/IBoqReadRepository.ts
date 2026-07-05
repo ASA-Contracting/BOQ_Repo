@@ -17,6 +17,7 @@ export interface IBoqReadRepository {
   updateItemMaterialNodeId(itemId: number, materialNodeId: number | null): Promise<void>;
   insertBoqItem(input: InsertBoqItemInput): Promise<BoqItemRowDto>;
   deleteBoqItem(itemId: number): Promise<void>;
+  softDeleteBoqVersions(versionIds: number[]): Promise<number>;
   updateBatchDiscipline(batchId: number, discipline: string): Promise<void>;
   updateVersionDiscipline(versionId: number, discipline: string): Promise<void>;
   batchBelongsToBoq(boqId: number, batchId: number): Promise<boolean>;

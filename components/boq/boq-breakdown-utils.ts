@@ -1,4 +1,32 @@
 import type { BoqItemRowDto } from "@/application/boq/dto";
+
+export type BoqSummaryFilter = "all" | "sections" | "published" | "pending";
+
+export function matchesBoqSummaryFilter(
+  item: BoqItemRowDto,
+  filter: BoqSummaryFilter,
+): boolean {
+  switch (filter) {
+    case "all":
+      return true;
+    case "sections":
+      return item.isHeader;
+    case "published":
+      return item.isMeasurable && !item.isHeader && item.materialNodeId != null;
+    case "pending":
+      return item.isMeasurable && !item.isHeader && item.materialNodeId == null;
+  }
+}
+
+export function filterBoqItemsBySummary(
+  items: BoqItemRowDto[],
+  filter: BoqSummaryFilter,
+): BoqItemRowDto[] {
+  if (filter === "all") {
+    return items;
+  }
+  return items.filter((item) => matchesBoqSummaryFilter(item, filter));
+}
 import {
   resolveCategoryParentLabelFromMap,
   type CategoryPickerOption,

@@ -176,10 +176,6 @@ export function BoqNameCell({
           <ArrowUpRight size={13} className="bml-open-target__icon" aria-hidden />
         </Link>
       )}
-      <div className="bml-cell-secondary">
-        {boq.itemCount} rows · {boq.measurableCount} measurable
-      </div>
-      {boq.client ? <div className="bml-cell-tertiary">{boq.client}</div> : null}
     </div>
   );
 }
