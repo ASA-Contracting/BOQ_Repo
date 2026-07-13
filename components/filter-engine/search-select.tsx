@@ -9,7 +9,12 @@ export type SearchSelectProps<T> = {
   options: T[];
   value: T | null;
   onValueChange: (value: T | null) => void;
+  onQueryChange?: (query: string) => void;
   displayFn: (option: T | null) => string;
+  isOptionEqual?: (left: T | null, right: T | null) => boolean;
+  renderOption?: (option: T, state: { isSelected: boolean }) => React.ReactNode;
+  getOptionClassName?: (option: T) => string;
+  isPinnedOption?: (option: T) => boolean;
   placeholder?: string;
   searchPlaceholder?: string;
   noResultsText?: string;
@@ -26,7 +31,12 @@ export function SearchSelect<T>({
   options,
   value,
   onValueChange,
+  onQueryChange,
   displayFn,
+  isOptionEqual,
+  renderOption,
+  getOptionClassName,
+  isPinnedOption,
   placeholder = "Select…",
   searchPlaceholder = "Search…",
   noResultsText = "No results",
@@ -51,8 +61,11 @@ export function SearchSelect<T>({
   const filtered = React.useMemo(() => {
     const term = query.trim().toLowerCase();
     if (!term) return options;
-    return options.filter((option) => displayFn(option).toLowerCase().includes(term));
-  }, [displayFn, options, query]);
+    return options.filter(
+      (option) =>
+        isPinnedOption?.(option) || displayFn(option).toLowerCase().includes(term),
+    );
+  }, [displayFn, isPinnedOption, options, query]);
 
   const inlineDisplayText =
     open && openSource === "inline" && query.trim().length > 0 ? query : selectedLabel;
@@ -157,12 +170,16 @@ export function SearchSelect<T>({
             ) : (
               filtered.map((option, index) => {
                 const label = displayFn(option);
-                const isSelected = value != null && displayFn(value) === label;
+                const isSelected = value != null && (
+                  isOptionEqual
+                    ? isOptionEqual(value, option)
+                    : displayFn(value) === label
+                );
                 return (
                   <button
                     key={`${label}-${index}`}
                     type="button"
-                    className={`ss-item${isSelected ? " selected" : ""}`}
+                    className={`ss-item${isSelected ? " selected" : ""}${getOptionClassName?.(option) ? ` ${getOptionClassName(option)}` : ""}`}
                     role="option"
                     aria-selected={isSelected}
                     onPointerDown={(event) => event.stopPropagation()}
@@ -171,7 +188,11 @@ export function SearchSelect<T>({
                       selectOption(option);
                     }}
                   >
-                    <span className="ss-item-label">{label}</span>
+                    {renderOption ? (
+                      renderOption(option, { isSelected })
+                    ) : (
+                      <span className="ss-item-label">{label}</span>
+                    )}
                   </button>
                 );
               })
@@ -199,6 +220,7 @@ export function SearchSelect<T>({
             onChange={(event) => {
               const next = event.target.value;
               setQuery(next);
+              onQueryChange?.(next);
               if (!next.trim()) {
                 if (open && openSource === "inline") {
                   closePanel();

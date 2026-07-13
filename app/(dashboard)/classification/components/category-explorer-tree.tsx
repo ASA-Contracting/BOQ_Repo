@@ -122,6 +122,8 @@ export function CategoryContextMenu({
   const [tagPickerOpen, setTagPickerOpen] = useState(false);
   const [tagQuery, setTagQuery] = useState('');
   const tagPickerAnchorRef = useRef<HTMLButtonElement>(null);
+  const tagPickerFieldRef = useRef<HTMLButtonElement>(null);
+  const tagPickerOpenAnchorRef = useRef<HTMLButtonElement | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -163,6 +165,7 @@ export function CategoryContextMenu({
       return;
     }
     onAssignTagById(tagId);
+    setTagPickerOpen(false);
   };
 
   return (
@@ -232,9 +235,13 @@ export function CategoryContextMenu({
 
           <div className="mc-tree-context-tag-trigger">
             <button
+              ref={tagPickerFieldRef}
               type="button"
               className="mc-tree-context-tag-trigger__field"
-              onClick={() => setTagPickerOpen(true)}
+              onClick={() => {
+                tagPickerOpenAnchorRef.current = tagPickerFieldRef.current;
+                setTagPickerOpen(true);
+              }}
             >
               Select or create a tag
             </button>
@@ -246,7 +253,10 @@ export function CategoryContextMenu({
               aria-label="Select or create tags"
               aria-haspopup="dialog"
               aria-expanded={tagPickerOpen}
-              onClick={() => setTagPickerOpen((open) => !open)}
+              onClick={() => {
+                tagPickerOpenAnchorRef.current = tagPickerAnchorRef.current;
+                setTagPickerOpen((open) => !open);
+              }}
             >
               <i aria-hidden="true">
                 <IconDots />
@@ -261,7 +271,7 @@ export function CategoryContextMenu({
       </div>
 
       <CategoryTagPickerPopover
-        anchorRef={tagPickerAnchorRef}
+        anchorRef={tagPickerOpenAnchorRef}
         open={tagPickerOpen}
         tags={allTags}
         assignedTagIds={assignedTagIds}
@@ -271,6 +281,7 @@ export function CategoryContextMenu({
         onCreateTag={(name, color) => {
           onCreateAndAssignTag(name, color);
           setTagQuery('');
+          setTagPickerOpen(false);
         }}
         onClose={() => setTagPickerOpen(false)}
       />

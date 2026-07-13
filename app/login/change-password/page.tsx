@@ -1,9 +1,15 @@
+import { redirect } from "next/navigation";
+
 import { ChangePasswordForm } from "@/app/login/change-password/_components/ChangePasswordForm";
-import { tryGetSupabaseEnv } from "@/infrastructure/config/env";
+import { isAuthSkipped, tryGetSupabaseEnv } from "@/infrastructure/config/env";
 
 export const dynamic = "force-dynamic";
 
 export default function ChangePasswordPage() {
+  if (isAuthSkipped()) {
+    redirect("/");
+  }
+
   const authConfigured = Boolean(tryGetSupabaseEnv());
 
   return (

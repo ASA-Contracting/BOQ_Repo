@@ -3,6 +3,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { IconTrash, IconX } from '@/components/explorer-tree/classification-icons';
+import { useClassificationOverlayPortalElement } from './classification-overlay-portal';
 import {
   TAG_COLOR_OPTIONS,
   clampPopoverPosition,
@@ -62,6 +63,12 @@ function useFixedPopoverPosition(
   return { popoverRef, position };
 }
 
+function useTagOverlayPortal(): HTMLElement | null {
+  const portalElement = useClassificationOverlayPortalElement();
+  if (portalElement) return portalElement;
+  return typeof document !== 'undefined' ? document.body : null;
+}
+
 export function CategoryTagEditPopover({
   anchorRef,
   tag,
@@ -87,7 +94,8 @@ export function CategoryTagEditPopover({
     });
   }, [tag.id]);
 
-  if (typeof document === 'undefined') return null;
+  const portalElement = useTagOverlayPortal();
+  if (!portalElement) return null;
 
   return createPortal(
     <>
@@ -144,7 +152,7 @@ export function CategoryTagEditPopover({
         </button>
       </div>
     </>,
-    document.body,
+    portalElement,
   );
 }
 
@@ -187,11 +195,15 @@ export function CategoryTagPickerPopover({
     if (trimmed) setCreateColor(defaultTagColor(trimmed));
   }, [query]);
 
-  if (!open || typeof document === 'undefined') return null;
+  const portalElement = useTagOverlayPortal();
+  if (!open || !portalElement) return null;
 
-  const normalizedQuery = query.trim().replace(/^#+/, '').toLowerCase();
-  const filteredTags = tags.filter((tag) => tag.name.toLowerCase().includes(normalizedQuery));
-  const exactMatch = tags.some((tag) => tag.name.toLowerCase() === normalizedQuery);
+  const normalizedQuery = query.trim().replace(/^#+/, '');
+  const normalizedQueryLower = normalizedQuery.toLowerCase();
+  const filteredTags = tags.filter((tag) =>
+    tag.name.toLowerCase().includes(normalizedQueryLower),
+  );
+  const exactMatch = tags.some((tag) => tag.name.toLowerCase() === normalizedQueryLower);
   const canCreate = normalizedQuery.length > 0 && !exactMatch;
 
   return createPortal(
@@ -279,7 +291,7 @@ export function CategoryTagPickerPopover({
         </div>
       </div>
     </>,
-    document.body,
+    portalElement,
   );
 }
 

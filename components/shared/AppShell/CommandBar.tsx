@@ -18,7 +18,7 @@ type CommandBarProps = {
 
 export function CommandBar({ searchRef, trailing }: CommandBarProps) {
   const pathname = usePathname();
-  const { collapsed, toggleCollapsed, toggleMobileOpen } = useAppShell();
+  const { collapsed, toggleCollapsed, toggleMobileOpen, commandBarBeforeSearch } = useAppShell();
   const breadcrumbs = buildShellBreadcrumbs(pathname);
 
   return (
@@ -55,6 +55,7 @@ export function CommandBar({ searchRef, trailing }: CommandBarProps) {
         </div>
       </div>
 
+      {commandBarBeforeSearch}
       <div className="relative hidden w-full max-w-xs lg:block">
         <Search
           className="pointer-events-none absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground"

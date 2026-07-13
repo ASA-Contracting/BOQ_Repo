@@ -1,6 +1,6 @@
 ﻿'use client';
 
-import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Check, ChevronDown, ListFilter, Search, Tag } from 'lucide-react';
 
@@ -39,9 +39,28 @@ type Props = PickerTriggerProps & {
 };
 
 const MENU_Z_INDEX = 200020;
+const TAG_FILTER_MENU_WIDTH = 224;
+
+function computeTagFilterMenuStyle(anchorRect: DOMRect): React.CSSProperties {
+  const margin = 6;
+  let left = anchorRect.right + margin;
+  const top = anchorRect.top;
+
+  if (left + TAG_FILTER_MENU_WIDTH > window.innerWidth - 8) {
+    left = Math.max(8, anchorRect.left - TAG_FILTER_MENU_WIDTH - margin);
+  }
+
+  return {
+    position: 'fixed',
+    top,
+    left,
+    width: TAG_FILTER_MENU_WIDTH,
+    zIndex: MENU_Z_INDEX + 1,
+  };
+}
 
 function computeMenuStyle(anchorRect: DOMRect): React.CSSProperties {
-  const menuWidth = Math.min(360, Math.max(anchorRect.width, 280), window.innerWidth - 16);
+  const menuWidth = Math.min(440, Math.max(anchorRect.width, 320), window.innerWidth - 16);
   let left = anchorRect.left;
   if (left + menuWidth > window.innerWidth - 8) {
     left = Math.max(8, window.innerWidth - menuWidth - 8);
@@ -96,9 +115,12 @@ export function BoqCategoryPickerMenu({
   const [query, setQuery] = useState('');
   const [selectedTagNames, setSelectedTagNames] = useState<Set<string>>(new Set());
   const [tagFilterOpen, setTagFilterOpen] = useState(false);
+  const [tagFilterMenuStyle, setTagFilterMenuStyle] = useState<React.CSSProperties | null>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
   const tagFilterRef = useRef<HTMLDivElement>(null);
+  const tagFilterTriggerRef = useRef<HTMLButtonElement>(null);
+  const tagFilterMenuRef = useRef<HTMLDivElement>(null);
   const menuStyle = useMenuPosition(anchorEl, true);
 
   const availableTags = useMemo(
@@ -131,6 +153,33 @@ export function BoqCategoryPickerMenu({
     setSelectedTagNames(new Set());
   }, []);
 
+  const closeTagFilter = useCallback(() => {
+    setTagFilterOpen(false);
+  }, []);
+
+  useLayoutEffect(() => {
+    if (!tagFilterOpen || !tagFilterTriggerRef.current) {
+      setTagFilterMenuStyle(null);
+      return;
+    }
+
+    const updatePosition = () => {
+      if (!tagFilterTriggerRef.current) return;
+      setTagFilterMenuStyle(
+        computeTagFilterMenuStyle(tagFilterTriggerRef.current.getBoundingClientRect()),
+      );
+    };
+
+    updatePosition();
+    window.addEventListener('resize', updatePosition);
+    window.addEventListener('scroll', updatePosition, true);
+
+    return () => {
+      window.removeEventListener('resize', updatePosition);
+      window.removeEventListener('scroll', updatePosition, true);
+    };
+  }, [tagFilterOpen, availableTags.length]);
+
   useEffect(() => {
     searchRef.current?.focus({ preventScroll: true });
   }, []);
@@ -153,6 +202,7 @@ export function BoqCategoryPickerMenu({
     const onPointerDown = (event: MouseEvent) => {
       const target = event.target as Node;
       if (tagFilterRef.current?.contains(target)) return;
+      if (tagFilterMenuRef.current?.contains(target)) return;
       setTagFilterOpen(false);
     };
 
@@ -170,16 +220,80 @@ export function BoqCategoryPickerMenu({
 
   if (typeof document === 'undefined') return null;
 
-  return createPortal(
+  const tagFilterMenu =
+    tagFilterOpen && tagFilterMenuStyle ? (
+      <div
+        ref={tagFilterMenuRef}
+        className="boq-category-picker__tag-filter-menu overflow-hidden rounded-lg border border-indigo-200 bg-white shadow-lg"
+        role="menu"
+        style={tagFilterMenuStyle}
+        onPointerDown={(event) => event.stopPropagation()}
+        onMouseDown={(event) => event.stopPropagation()}
+      >
+        <div className="flex items-center justify-between border-b border-indigo-100 bg-indigo-50 px-3 py-2">
+          <span className="text-xs font-semibold text-indigo-900">Filter by tag</span>
+          {tagFilterActive ? (
+            <button
+              type="button"
+              className="text-[11px] font-medium text-indigo-600 hover:text-indigo-800"
+              onClick={clearTagFilters}
+            >
+              Clear
+            </button>
+          ) : null}
+        </div>
+        {availableTags.length === 0 ? (
+          <div className="px-3 py-3 text-center text-xs text-muted-foreground">
+            No tags applied yet.
+          </div>
+        ) : (
+          <div className="max-h-48 overflow-auto py-1">
+            {availableTags.map((tag) => {
+              const tagKey = tag.name.toLowerCase();
+              const isSelected = selectedTagNames.has(tagKey);
+              return (
+                <button
+                  key={tag.name}
+                  type="button"
+                  role="menuitemcheckbox"
+                  aria-checked={isSelected}
+                  className={cn(
+                    'boq-category-picker__tag-filter-option flex w-full items-center gap-2 px-3 py-2 text-left text-xs transition-colors',
+                    isSelected
+                      ? 'bg-indigo-100 font-semibold text-indigo-900'
+                      : 'text-slate-700 hover:bg-indigo-50',
+                  )}
+                  onClick={() => toggleTagFilter(tag.name)}
+                >
+                  <Tag
+                    className={cn(
+                      'h-3.5 w-3.5 shrink-0',
+                      isSelected ? 'text-indigo-600' : 'text-indigo-400',
+                    )}
+                    aria-hidden
+                  />
+                  <span className="min-w-0 flex-1 truncate">#{tag.name}</span>
+                  <span className="shrink-0 text-[10px] text-muted-foreground">{tag.count}</span>
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    ) : null;
+
+  return (
+    <>
+      {createPortal(
     <div
       ref={panelRef}
       id={`boq-category-picker-menu-${instanceId}`}
-      className="boq-category-picker__menu overflow-hidden rounded-lg border-2 border-indigo-200 bg-white shadow-xl"
+      className="boq-category-picker__menu overflow-visible rounded-lg border-2 border-indigo-200 bg-white shadow-xl"
       style={menuStyle}
       onPointerDown={(event) => event.stopPropagation()}
       onMouseDown={(event) => event.stopPropagation()}
     >
-      <div className="relative flex items-center gap-2 border-b border-indigo-100 bg-indigo-50 px-3 py-2">
+      <div className="relative z-10 flex items-center gap-2 overflow-visible border-b border-indigo-100 bg-indigo-50 px-3 py-2">
         <Search className="h-4 w-4 shrink-0 text-indigo-600" aria-hidden />
         <input
           ref={searchRef}
@@ -187,12 +301,15 @@ export function BoqCategoryPickerMenu({
           placeholder={searchPlaceholder}
           value={query}
           onChange={(event) => setQuery(event.target.value)}
+          onFocus={closeTagFilter}
+          onMouseDown={closeTagFilter}
           onKeyDown={(event) => {
             if (event.key === 'Escape') onClose();
           }}
         />
         <div ref={tagFilterRef} className="relative shrink-0">
           <button
+            ref={tagFilterTriggerRef}
             type="button"
             className={cn(
               'boq-category-picker__tag-filter-trigger flex h-7 w-7 items-center justify-center rounded-md border transition-colors',
@@ -212,64 +329,6 @@ export function BoqCategoryPickerMenu({
           >
             <ListFilter className="h-4 w-4" aria-hidden />
           </button>
-          {tagFilterOpen ? (
-            <div
-              className="boq-category-picker__tag-filter-menu absolute right-0 top-full z-10 mt-1 w-56 overflow-hidden rounded-lg border border-indigo-200 bg-white shadow-lg"
-              role="menu"
-            >
-              <div className="flex items-center justify-between border-b border-indigo-100 bg-indigo-50 px-3 py-2">
-                <span className="text-xs font-semibold text-indigo-900">Filter by tag</span>
-                {tagFilterActive ? (
-                  <button
-                    type="button"
-                    className="text-[11px] font-medium text-indigo-600 hover:text-indigo-800"
-                    onClick={clearTagFilters}
-                  >
-                    Clear
-                  </button>
-                ) : null}
-              </div>
-              {availableTags.length === 0 ? (
-                <div className="px-3 py-3 text-center text-xs text-muted-foreground">
-                  No tags applied yet.
-                </div>
-              ) : (
-                <div className="max-h-48 overflow-auto py-1">
-                  {availableTags.map((tag) => {
-                    const tagKey = tag.name.toLowerCase();
-                    const isSelected = selectedTagNames.has(tagKey);
-                    return (
-                      <button
-                        key={tag.name}
-                        type="button"
-                        role="menuitemcheckbox"
-                        aria-checked={isSelected}
-                        className={cn(
-                          'boq-category-picker__tag-filter-option flex w-full items-center gap-2 px-3 py-2 text-left text-xs transition-colors',
-                          isSelected
-                            ? 'bg-indigo-100 font-semibold text-indigo-900'
-                            : 'text-slate-700 hover:bg-indigo-50',
-                        )}
-                        onClick={() => toggleTagFilter(tag.name)}
-                      >
-                        <Tag
-                          className={cn(
-                            'h-3.5 w-3.5 shrink-0',
-                            isSelected ? 'text-indigo-600' : 'text-indigo-400',
-                          )}
-                          aria-hidden
-                        />
-                        <span className="min-w-0 flex-1 truncate">#{tag.name}</span>
-                        <span className="shrink-0 text-[10px] text-muted-foreground">
-                          {tag.count}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          ) : null}
         </div>
       </div>
       <div className="max-h-64 overflow-auto py-1">
@@ -306,17 +365,12 @@ export function BoqCategoryPickerMenu({
                 <span className="min-w-0 flex-1">
                   <span
                     className={cn(
-                      'block truncate text-sm',
+                      'block whitespace-normal break-words text-sm leading-snug',
                       isSelected ? 'font-bold' : 'font-medium text-slate-800',
                     )}
                   >
                     {getCategoryPickerDisplayLabel(option)}
                   </span>
-                  {option.path !== option.label && (
-                    <span className="block truncate text-[10px] text-muted-foreground">
-                      {option.path}
-                    </span>
-                  )}
                 </span>
               </button>
             );
@@ -325,6 +379,9 @@ export function BoqCategoryPickerMenu({
       </div>
     </div>,
     document.body,
+      )}
+      {tagFilterMenu ? createPortal(tagFilterMenu, document.body) : null}
+    </>
   );
 }
 

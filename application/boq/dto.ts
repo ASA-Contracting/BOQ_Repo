@@ -29,6 +29,18 @@ export type BoqListEntryDto = {
   updatedAt: string | null;
 };
 
+export type ListBoqsInput = {
+  page?: number;
+  pageSize?: number;
+};
+
+export type ListBoqsPageDto = {
+  items: BoqListEntryDto[];
+  page: number;
+  pageSize: number;
+  total: number;
+};
+
 export type BoqItemRowDto = {
   id: number;
   rowIndex: number;
@@ -77,6 +89,22 @@ export type BoqBreakdownDto = {
   approvalStatus: string | null;
   isApproved: boolean;
   items: BoqItemRowDto[];
+  hasMoreItems?: boolean;
+  nextCursor?: string | null;
+};
+
+export type BoqBreakdownItemsPageDto = {
+  items: BoqItemRowDto[];
+  page: number;
+  pageSize: number;
+  total: number;
+};
+
+export type ListBoqBreakdownItemsInput = {
+  boqId: number;
+  versionId?: number;
+  page?: number;
+  pageSize?: number;
 };
 
 export type GetBoqBreakdownInput = {

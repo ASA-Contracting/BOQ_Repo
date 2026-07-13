@@ -342,7 +342,7 @@ export function CategoryLevelGridPanel({
       </header>
 
       <div className="mc-level-panel__body">
-        {existingChildNodes.length > 0 ? (
+        {parentPath.length > 0 ? (
           <section className="mc-level-panel__section mc-level-panel__section--existing">
             <div className="mc-level-panel__section-head">
               <h2 className="mc-level-panel__section-title">
@@ -387,12 +387,15 @@ export function CategoryLevelGridPanel({
                     <th className="w-10 px-3 py-2">
                       <Checkbox
                         checked={
-                          allExistingSelected
-                            ? true
-                            : someExistingSelected
-                              ? 'indeterminate'
-                              : false
+                          existingChildNodes.length > 0
+                            ? allExistingSelected
+                              ? true
+                              : someExistingSelected
+                                ? 'indeterminate'
+                                : false
+                            : false
                         }
+                        disabled={existingChildNodes.length === 0}
                         aria-label="Select all existing categories"
                         onCheckedChange={(checked) => toggleSelectAllExisting(checked === true)}
                       />
@@ -402,7 +405,14 @@ export function CategoryLevelGridPanel({
                   </tr>
                 </thead>
                 <tbody>
-                  {existingChildNodes.map((node, index) => {
+                  {existingChildNodes.length === 0 ? (
+                    <tr>
+                      <td colSpan={3} className="px-3 py-8 text-center text-sm text-muted-foreground">
+                        No child categories yet.
+                      </td>
+                    </tr>
+                  ) : (
+                    existingChildNodes.map((node, index) => {
                     const checked = selectedExistingIds.has(node.id);
                     const checkboxId = `existing-category-${node.id}`;
                     const draftName = editedNames[node.id] ?? node.name;
@@ -491,17 +501,15 @@ export function CategoryLevelGridPanel({
                         </td>
                       </tr>
                     );
-                  })}
+                  })
+                  )}
                 </tbody>
               </table>
             </div>
           </section>
-        ) : parentPath.length > 0 ? (
-          <p className="mc-level-panel__empty-hint">
-            No child categories yet. Add names below or upload from Excel.
-          </p>
         ) : null}
 
+        {parentPath.length > 0 ? (
         <section className="mc-level-panel__section mc-level-panel__section--add">
           <div className="mc-level-panel__section-head">
             <h2 className="mc-level-panel__section-title">Add new</h2>
@@ -630,6 +638,7 @@ export function CategoryLevelGridPanel({
             </table>
           </div>
         </section>
+        ) : null}
       </div>
 
       <footer className="mc-level-panel__footer">

@@ -8,8 +8,10 @@ import { CategoryImportPrompt } from './category-import-prompt';
 import { CategoryLevelGridPanel } from './category-level-grid-panel';
 import { CategorySearchStrip } from './category-search-strip';
 import { CategoryTreeHeader } from './category-tree-header';
+import { ClassificationOverlayPortalTarget } from './classification-overlay-portal';
 import type { CategoryExplorerTreeNode } from '@/lib/category-tree-builder';
 import { getInheritedTagsForNode } from '@/lib/category-tree-builder';
+import { filterDirectTagsForNode } from '@/lib/category-tag-display';
 import type { ClassificationStateDto } from '@/application/classification/dto';
 import type { LevelOrderEntity } from '@/domain/classification/entities';
 import { useClassificationStore } from '@/hooks/use-classification-store';
@@ -77,19 +79,28 @@ export function CategoryWorkspace({
               color: tag?.color ?? null,
             };
           })
+          .filter((tag) =>
+            filterDirectTagsForNode([tag.name], store.contextMenu?.label ?? '').includes(tag.name),
+          )
       : [];
 
   const contextInheritedTags =
-    store.contextMenu && store.state
-      ? getInheritedTagsForNode(store.state, store.treeIndex, store.contextMenu.nodeId)
+    store.contextMenu && store.state && store.schemaId
+      ? getInheritedTagsForNode(
+          store.state,
+          store.treeIndex,
+          store.contextMenu.nodeId,
+          store.schemaId,
+        )
       : [];
 
-  const contextAllTags = store.state?.tags ?? [];
+  const contextAllTags = store.catalogTags;
 
   const searchMatchCount = countSearchMatches(store.treeRoot);
   const rootDropActive = store.dragSourceIds.length > 0;
 
   return (
+    <ClassificationOverlayPortalTarget containerRef={shellRef}>
     <div className="mc-dual-shell" ref={shellRef} style={{ ['--mc-sidebar-width' as string]: `${store.drawerWidthPx}px` }}>
       <aside className="mc-dual-shell__sidebar mc-side-card mc-side-card--tree" aria-label="Category hierarchy">
         <CategoryTreeHeader
@@ -116,7 +127,7 @@ export function CategoryWorkspace({
               filterLabel={store.filterLabel}
               bulkActionLabel={store.filterBulkActionLabel}
               availableTags={store.availableTags}
-              allTags={store.state?.tags ?? []}
+              allTags={store.catalogTags}
               onSearchChange={store.setSearch}
               onClearSearch={() => store.setSearch('')}
               onToggleFilter={() => store.setFilterOpen(!store.filterOpen)}
@@ -375,5 +386,6 @@ export function CategoryWorkspace({
         }}
       />
     </div>
+    </ClassificationOverlayPortalTarget>
   );
 }

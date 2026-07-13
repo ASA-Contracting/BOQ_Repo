@@ -14,12 +14,17 @@ type ApiEnvelope<T> = {
   data?: T;
 };
 
-export function useBoqLookupOptions(category: BoqLookupCategory = "discipline") {
+export function useBoqLookupOptions(
+  category: BoqLookupCategory = "discipline",
+  options: { enabled?: boolean } = {},
+) {
+  const enabled = options.enabled ?? true;
   const [items, setItems] = useState<BoqLookupOptionDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const reload = useCallback(async () => {
+    if (!enabled) return;
     setLoading(true);
     setError(null);
     try {
@@ -39,11 +44,11 @@ export function useBoqLookupOptions(category: BoqLookupCategory = "discipline") 
     } finally {
       setLoading(false);
     }
-  }, [category]);
+  }, [category, enabled]);
 
   useEffect(() => {
-    void reload();
-  }, [reload]);
+    if (enabled) void reload();
+  }, [enabled, reload]);
 
   return { items, loading, error, reload, setItems };
 }

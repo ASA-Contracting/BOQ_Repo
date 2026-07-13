@@ -1,0 +1,1 @@
+export const CLIENT_NAME_MAX_LENGTH = 150;

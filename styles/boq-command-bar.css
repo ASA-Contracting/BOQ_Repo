@@ -1,0 +1,36 @@
+.boq-command-bar__projects-btn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 32px;
+  padding: 0 14px;
+  border: 1px solid color-mix(in oklab, rgb(168 202 119) 55%, rgb(214 214 214));
+  border-radius: 8px;
+  background: rgb(168 202 119);
+  color: rgb(31 35 43);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color 150ms ease,
+    border-color 150ms ease;
+}
+
+@media (min-width: 1024px) {
+  .boq-command-bar__projects-btn {
+    display: inline-flex;
+  }
+}
+
+.boq-command-bar__projects-btn:hover {
+  background: color-mix(in oklab, rgb(168 202 119) 88%, white 12%);
+  border-color: color-mix(in oklab, rgb(168 202 119) 70%, rgb(214 214 214));
+}
+
+.boq-command-bar__projects-btn:focus-visible {
+  outline: 2px solid rgb(132 199 24);
+  outline-offset: 2px;
+}

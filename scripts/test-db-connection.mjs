@@ -1,52 +1,62 @@
-import fs from "node:fs";
+import { readFileSync, existsSync } from "node:fs";
 import postgres from "postgres";
 
-function readDatabaseUrl() {
-  const env = fs.readFileSync(".env.local", "utf8");
-  const match = env.match(/^DATABASE_URL=(.+)$/m);
-  return match?.[1]?.trim() ?? null;
-}
-
-async function probe(label, options) {
-  const sql = postgres(options);
-  try {
-    await sql`select 1 as ok`;
-    console.log(`${label}: OK`);
-    return true;
-  } catch (error) {
-    console.log(`${label}: FAIL`);
-    console.log((error instanceof Error ? error.message : String(error)).slice(0, 300));
-    return false;
-  } finally {
-    await sql.end({ timeout: 1 });
+function loadEnvFile(path) {
+  if (!existsSync(path)) return {};
+  const env = {};
+  for (const line of readFileSync(path, "utf8").split(/\r?\n/)) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith("#")) continue;
+    const idx = trimmed.indexOf("=");
+    if (idx === -1) continue;
+    env[trimmed.slice(0, idx)] = trimmed.slice(idx + 1).replace(/^['"]|['"]$/g, "");
   }
+  return env;
 }
 
-const configuredUrl = readDatabaseUrl();
-if (!configuredUrl) {
-  console.log("NO_DATABASE_URL");
+const env = { ...loadEnvFile(".env"), ...loadEnvFile(".env.local"), ...process.env };
+const databaseUrl = env.DATABASE_URL;
+
+if (!databaseUrl) {
+  console.log("RESULT: missing DATABASE_URL");
   process.exit(1);
 }
 
-await probe("DB_CONNECT_URL", configuredUrl);
+let host = "unknown";
+try {
+  const parsed = new URL(databaseUrl);
+  host = `${parsed.hostname}:${parsed.port || "5432"}`;
+} catch {
+  console.log("RESULT: invalid DATABASE_URL");
+  process.exit(1);
+}
 
-const parsed = new URL(configuredUrl);
-const password = decodeURIComponent(parsed.password);
-const projectRef = "lzfnluxdwmzqbpzxnige";
-const regions = [
-  "eu-central-1",
-  "eu-west-1",
-  "eu-west-2",
-  "us-east-1",
-  "us-west-1",
-  "ap-southeast-1",
-  "ap-south-1",
-];
+console.log("TARGET:", host);
 
-for (const region of regions) {
-  const poolerUrl = `postgresql://postgres.${projectRef}:${encodeURIComponent(password)}@aws-0-${region}.pooler.supabase.com:5432/postgres`;
-  const ok = await probe(`DB_CONNECT_POOLER_${region}`, poolerUrl);
-  if (ok) {
-    break;
-  }
+const sql = postgres(databaseUrl, {
+  prepare: false,
+  max: 1,
+  connect_timeout: 10,
+});
+
+try {
+  const [{ ok }] = await sql`select 1 as ok`;
+  const tables = await sql`
+    select table_name
+    from information_schema.tables
+    where table_schema = 'public'
+      and table_name in ('BoqVersions', 'Boqs', 'Projects', 'boq_work_batch')
+    order by table_name
+  `;
+  console.log("CONNECT: ok", ok);
+  console.log("TABLES:", tables.map((row) => row.table_name).join(", ") || "none");
+} catch (error) {
+  const message = error instanceof Error ? error.message : String(error);
+  const code = error && typeof error === "object" && "code" in error ? error.code : "unknown";
+  console.log("CONNECT: failed");
+  console.log("CODE:", code);
+  console.log("MESSAGE:", message);
+  process.exit(1);
+} finally {
+  await sql.end({ timeout: 5 });
 }

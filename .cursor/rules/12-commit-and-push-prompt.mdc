@@ -1,0 +1,64 @@
+---
+description: Prompt user to commit/push after major changes; never auto-commit
+alwaysApply: true
+---
+
+# Commit & push prompt
+
+## When to ask
+
+After finishing a task that made **major** local changes, stop and ask before leaving a large dirty tree. Treat as major if any of:
+
+- ≥10 files changed (modified + untracked), or
+- any file under `drizzle/migrations/`, or
+- new/removed API route, domain module, use case, or DI wiring, or
+- user-visible feature/fix spanning multiple layers
+
+Skip the prompt for tiny edits (typo, one-liner, comment-only) unless the user asks to commit.
+
+## Never do without explicit approval
+
+- Do **not** commit, push, create branches, or open PRs until the user answers.
+- Do **not** invent or finalize the commit message — the user writes it (you may suggest 1–2 options).
+- Never force-push `main`. Never commit secrets, `.env*`, or `.next/`.
+
+## Required flow (wait for answers)
+
+### 1. Load real branches first
+
+Run (readonly) before asking:
+
+```bash
+git branch --format="%(refname:short)"
+git branch -r --format="%(refname:short)"
+```
+
+Build a unique list of short names (`main`, `feature/foo`, …). Strip `origin/` for display but keep remote-only branches selectable. Mark the current branch in the label (e.g. `main (current)`).
+
+### 2. Ask with choice options (not free-typed branch names)
+
+Use **AskQuestion** when available. Otherwise print a numbered menu and wait for the user’s pick.
+
+**Q1 — Commit now?** choices: `Yes` · `No` · `Later`  
+If No/Later → stop; do not ask further.
+
+**Q2 — Commit message**  
+Ask them to type it (not a branch picker). You may suggest 1–2 imperative options; they must confirm or rewrite.
+
+**Q3 — Where to put this commit?** choices must include:
+
+- every local branch by **exact name** (one option each)
+- every remote-only branch by **exact short name** (one option each), if any
+- `Create new branch…` (if chosen, ask for the name next; prefer `feature/*`, `fix/*`, `chore/*`)
+- `Commit here only — do not change branch`
+
+Do **not** ask “which branch?” as open text when existing branches exist — list them as selectable options.
+
+**Q4 — Push after commit?** choices: `Yes` · `No`  
+If Yes and destination is `main`, confirm once more that they really want `main`.
+
+### 3. After they answer
+
+Only then: create/switch branch if needed → stage relevant files → commit with **their** message → push only if they said Yes (`-u` for new branches).
+
+If they said No / Later on Q1, leave the working tree alone and remind them changes are still uncommitted.

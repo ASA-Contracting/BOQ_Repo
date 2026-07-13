@@ -1,5 +1,13 @@
 import type { LevelOptionEntity } from '@/domain/classification/entities';
 import { buildMaterialClassificationTreeIndex } from '@/domain/classification/tree-index';
+import {
+  buildCatalogTagContext,
+  filterDirectTagsForNode,
+  filterInheritedTagsForNode,
+  isCatalogTagName,
+  normalizeTagLabel,
+  type CatalogTagContext,
+} from '@/lib/category-tag-display';
 import { matchesTagFilter } from '@/lib/category-tree-filter';
 
 export type CategoryPickerMaterialTag = {
@@ -10,7 +18,7 @@ export type CategoryPickerMaterialTag = {
 export type CategoryPickerOption = {
   id: number;
   label: string;
-  /** When set, used in picker UI instead of `label` (e.g. "Section - Air Outlets"). */
+  /** Optional override for picker UI display; defaults to `label`. */
   pickerLabel?: string;
   path: string;
   depth: number;
@@ -39,10 +47,52 @@ function normalizeTagNames(tags: string[]): string[] {
   return result;
 }
 
+function isValidPickerDirectTag(
+  tagName: string,
+  nodeName: string,
+  catalogCtx: CatalogTagContext,
+): boolean {
+  const direct = filterDirectTagsForNode([tagName], nodeName);
+  if (!direct.length) return false;
+  const key = normalizeTagLabel(tagName).toLowerCase();
+  const nonSelfCount = catalogCtx.nonSelfCountByTagLower.get(key) ?? 0;
+  return isCatalogTagName(
+    tagName,
+    catalogCtx.categoryNamesLower,
+    nonSelfCount,
+    catalogCtx.rootCategoryNamesLower,
+    catalogCtx.categoryTokens,
+  );
+}
+
+function filterValidPickerDirectTags(
+  tags: string[],
+  nodeName: string,
+  catalogCtx: CatalogTagContext,
+): string[] {
+  return normalizeTagNames(tags).filter((tag) =>
+    isValidPickerDirectTag(tag, nodeName, catalogCtx),
+  );
+}
+
 function buildTagNamesByNodeId(
   treeIndex: ReturnType<typeof buildMaterialClassificationTreeIndex>,
+  nodes: LevelOptionEntity[],
   materialTags: CategoryPickerMaterialTag[],
 ): { tagNamesByNodeId: Map<number, string[]>; directTagNamesByNodeId: Map<number, string[]> } {
+  const schemaId = nodes[0]?.schemaId ?? 1;
+  const catalogCtx = buildCatalogTagContext(
+    nodes.map((node) => ({
+      id: node.id,
+      name: node.name,
+      schemaId: node.schemaId,
+      isActive: node.isActive ?? true,
+      parentId: node.parentId,
+    })),
+    materialTags,
+    schemaId,
+  );
+
   const directTagsByNodeId = new Map<number, string[]>();
   for (const link of materialTags) {
     const bucket = directTagsByNodeId.get(link.materialNodeId) ?? [];
@@ -54,17 +104,33 @@ function buildTagNamesByNodeId(
   const directTagNamesByNodeId = new Map<number, string[]>();
 
   for (const option of treeIndex.activeOptions) {
-    const direct = normalizeTagNames(directTagsByNodeId.get(option.id) ?? []);
+    const direct = filterValidPickerDirectTags(
+      directTagsByNodeId.get(option.id) ?? [],
+      option.name,
+      catalogCtx,
+    );
     directTagNamesByNodeId.set(option.id, direct);
 
-    const inherited: string[] = [];
+    const inheritedRows: Array<{ tag: string; sourceLabel: string }> = [];
     const path = treeIndex.pathById.get(option.id) ?? [];
     for (let index = path.length - 2; index >= 0; index -= 1) {
       const ancestor = path[index];
-      for (const tag of directTagsByNodeId.get(ancestor.id) ?? []) {
-        inherited.push(tag);
+      for (const tag of filterValidPickerDirectTags(
+        directTagsByNodeId.get(ancestor.id) ?? [],
+        ancestor.name,
+        catalogCtx,
+      )) {
+        inheritedRows.push({ tag, sourceLabel: ancestor.name });
       }
     }
+    const inherited = filterInheritedTagsForNode(
+      inheritedRows,
+      option.name,
+      catalogCtx.categoryNamesLower,
+      catalogCtx.nonSelfCountByTagLower,
+      catalogCtx.rootCategoryNamesLower,
+      catalogCtx.categoryTokens,
+    ).map((row) => row.tag);
 
     tagNamesByNodeId.set(option.id, normalizeTagNames([...direct, ...inherited]));
   }
@@ -72,18 +138,11 @@ function buildTagNamesByNodeId(
   return { tagNamesByNodeId, directTagNamesByNodeId };
 }
 
-const SECTION_LABEL_PREFIX = 'Section - ';
-
-export function formatSectionPickerLabel(label: string): string {
-  return `${SECTION_LABEL_PREFIX}${label}`;
-}
-
 export function withSectionPickerLabels(
   options: CategoryPickerOption[],
 ): CategoryPickerOption[] {
   return options.map((option) => ({
     ...option,
-    pickerLabel: formatSectionPickerLabel(option.label),
     searchText: `section ${option.searchText}`,
   }));
 }
@@ -102,7 +161,7 @@ export function formatCategoryParentChildLabel(
 }
 
 export function getCategoryPickerDisplayLabel(option: CategoryPickerOption): string {
-  return formatCategoryParentChildLabel(option.label, option.parentLabel);
+  return option.pickerLabel ?? option.label;
 }
 
 export function buildCategoryPickerOptions(
@@ -112,6 +171,7 @@ export function buildCategoryPickerOptions(
   const treeIndex = buildMaterialClassificationTreeIndex(nodes);
   const { tagNamesByNodeId, directTagNamesByNodeId } = buildTagNamesByNodeId(
     treeIndex,
+    nodes,
     materialTags,
   );
 

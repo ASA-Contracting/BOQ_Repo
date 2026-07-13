@@ -73,6 +73,8 @@ describe("boq-breakdown-utils", () => {
         parentId: 1,
         parentLabel: "HVAC",
         searchText: "air outlets",
+        tagNames: [],
+        directTagNames: [],
       },
       {
         id: 3,
@@ -82,8 +84,10 @@ describe("boq-breakdown-utils", () => {
         parentId: 2,
         parentLabel: "Air Outlets",
         searchText: "ceiling diffuser",
+        tagNames: [],
+        directTagNames: [],
       },
-    ] as const;
+    ];
 
     const enriched = applySectionParentLabels(
       [

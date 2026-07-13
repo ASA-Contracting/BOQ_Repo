@@ -71,7 +71,7 @@ describe("mapImportRows", () => {
         "1": "description",
         "2": "unit",
         "3": "quantity",
-      },
+      } as const,
     };
 
     expect(mapImportRows(payload)).toHaveLength(3);

@@ -22,9 +22,17 @@ import {
   type PreferencesServices,
 } from "@/infrastructure/di/preferences";
 import {
+  createReportingServices,
+  type ReportingServices,
+} from "@/infrastructure/di/reporting";
+import {
   createUserAdminServices,
   type UserAdminServices,
 } from "@/infrastructure/di/userAdmin";
+import {
+  createClientServices,
+  type ClientServices,
+} from "@/infrastructure/di/client";
 import { DrizzleDatabaseHealthRepository } from "@/infrastructure/persistence/repositories/DrizzleDatabaseHealthRepository";
 import { DrizzleUnitOfWork } from "@/infrastructure/persistence/unitOfWork/DrizzleUnitOfWork";
 import { ConsoleLogger } from "@/infrastructure/logging/ConsoleLogger";
@@ -41,6 +49,8 @@ export type AppServices = {
   boq: BoqServices;
   workshop: WorkshopServices;
   preferences: PreferencesServices;
+  reporting: ReportingServices;
+  client: ClientServices;
   userAdmin: UserAdminServices;
 };
 
@@ -83,6 +93,8 @@ export function createAppServices(): AppServices {
       boqReadRepository: boq.boqReadRepository,
     }),
     preferences: createPreferencesServices(),
+    reporting: createReportingServices(),
+    client: createClientServices(),
     userAdmin: createUserAdminServices(),
   };
 }
