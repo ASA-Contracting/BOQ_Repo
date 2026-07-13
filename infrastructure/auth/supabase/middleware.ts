@@ -1,7 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
 
-import { getSupabaseEnv } from "@/infrastructure/config/env";
+import { getSupabaseEnv, isAuthSkipped } from "@/infrastructure/config/env";
 import { createCorrelationId } from "@/infrastructure/auth/correlationId";
 import {
   CORRELATION_ID_HEADER,
@@ -24,6 +24,17 @@ function attachCorrelationId(
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
+
+  if (isAuthSkipped()) {
+    const pathname = request.nextUrl.pathname;
+    if (pathname.startsWith("/login")) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/";
+      return attachCorrelationId(request, NextResponse.redirect(url));
+    }
+
+    return attachCorrelationId(request, supabaseResponse);
+  }
 
   let supabaseEnv: ReturnType<typeof getSupabaseEnv>;
   try {

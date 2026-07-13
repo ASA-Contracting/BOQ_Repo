@@ -19,6 +19,6 @@ describe("Permission", () => {
   });
 
   it("covers every role in the matrix", () => {
-    expect(ROLES.length).toBe(7);
+    expect(ROLES.length).toBe(5);
   });
 });

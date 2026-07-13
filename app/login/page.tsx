@@ -1,9 +1,15 @@
+import { redirect } from "next/navigation";
+
 import { LoginForm } from "@/app/login/_components/LoginForm";
-import { tryGetSupabaseEnv } from "@/infrastructure/config/env";
+import { isAuthSkipped, tryGetSupabaseEnv } from "@/infrastructure/config/env";
 
 export const dynamic = "force-dynamic";
 
 export default function LoginPage() {
+  if (isAuthSkipped()) {
+    redirect("/");
+  }
+
   const authConfigured = Boolean(tryGetSupabaseEnv());
 
   return (

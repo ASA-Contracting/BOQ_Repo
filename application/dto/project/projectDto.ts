@@ -5,6 +5,11 @@ export type ProjectDetailDto = {
   name: string;
   description: string | null;
   client: string;
+  clientId: number | null;
+  tenderStatus: string | null;
+  country: string | null;
+  assignedTo: string | null;
+  ownerType: string | null;
   status: ProjectStatus;
   abrdProjectId: number | null;
   externalSource: string;

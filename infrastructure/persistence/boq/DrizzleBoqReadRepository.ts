@@ -1,6 +1,16 @@
 import { and, desc, eq, gte, gt, inArray, sql } from "drizzle-orm";
 
-import type { BoqBreakdownDto, BoqItemRowDto, BoqListEntryDto, BoqVersionSummaryDto, BoqWorkflowStatus } from "@/application/boq/dto";
+import type {
+  BoqBreakdownDto,
+  BoqBreakdownItemsPageDto,
+  BoqItemRowDto,
+  BoqListEntryDto,
+  ListBoqBreakdownItemsInput,
+  ListBoqsInput,
+  ListBoqsPageDto,
+  BoqVersionSummaryDto,
+  BoqWorkflowStatus,
+} from "@/application/boq/dto";
 import type { IBoqReadRepository, InsertBoqItemInput } from "@/application/ports/IBoqReadRepository";
 import type { BoqId } from "@/domain/boq/ids";
 import { buildMaterialClassificationTreeIndex } from "@/domain/classification/tree-index";
@@ -143,6 +153,37 @@ export class DrizzleBoqReadRepository extends DrizzleRepository implements IBoqR
         updatedAt: toIsoString(row.updatedAt),
       };
     });
+  }
+
+  async listBoqsPaginated(input: ListBoqsInput): Promise<ListBoqsPageDto> {
+    const page = Math.max(1, input.page ?? 1);
+    const pageSize = Math.max(1, input.pageSize ?? 50);
+    const rows = await this.listBoqs();
+    const offset = (page - 1) * pageSize;
+
+    return {
+      items: rows.slice(offset, offset + pageSize),
+      page,
+      pageSize,
+      total: rows.length,
+    };
+  }
+
+  async listBoqBreakdownItems(
+    input: ListBoqBreakdownItemsInput,
+  ): Promise<BoqBreakdownItemsPageDto> {
+    const page = Math.max(1, input.page ?? 1);
+    const pageSize = Math.max(1, input.pageSize ?? 100);
+    const breakdown = await this.getBoqBreakdown(input.boqId, input.versionId);
+    const rows = breakdown?.items ?? [];
+    const offset = (page - 1) * pageSize;
+
+    return {
+      items: rows.slice(offset, offset + pageSize),
+      page,
+      pageSize,
+      total: rows.length,
+    };
   }
 
   async getBoqBreakdown(boqId: number, versionId?: number): Promise<BoqBreakdownDto | null> {

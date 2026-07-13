@@ -6,6 +6,11 @@ export type Project = {
   name: string;
   description: string | null;
   client: string;
+  clientId: number | null;
+  tenderStatus: string | null;
+  country: string | null;
+  assignedTo: string | null;
+  ownerType: string | null;
   status: ProjectStatus;
   abrdProjectId: number | null;
   externalSource: string;
@@ -16,7 +21,12 @@ export type Project = {
 export type NewProject = {
   name: string;
   description?: string | null;
-  client: string;
+  client?: string;
+  clientId?: number | null;
+  tenderStatus?: string | null;
+  country?: string | null;
+  assignedTo?: string | null;
+  ownerType?: string | null;
   abrdProjectId?: number | null;
   externalSource?: string;
 };

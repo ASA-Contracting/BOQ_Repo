@@ -1,7 +1,7 @@
 "use server";
 
 import { createClient } from "@/infrastructure/auth/supabase/server";
-import { tryGetSupabaseEnv } from "@/infrastructure/config/env";
+import { isAuthSkipped, tryGetSupabaseEnv } from "@/infrastructure/config/env";
 
 const AUTH_NOT_CONFIGURED_MESSAGE =
   "Sign-in is not configured on this server. Add Supabase environment variables in Vercel and redeploy.";
@@ -20,6 +20,10 @@ export async function signInAction(
   formData: FormData,
 ): Promise<SignInActionState> {
   if (!tryGetSupabaseEnv()) {
+    if (isAuthSkipped()) {
+      return { success: true };
+    }
+
     return { error: AUTH_NOT_CONFIGURED_MESSAGE };
   }
 

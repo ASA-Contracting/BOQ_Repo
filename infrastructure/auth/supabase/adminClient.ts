@@ -1,12 +1,12 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
-import { getSupabaseEnv } from "@/infrastructure/config/env";
+import { tryGetSupabaseEnv } from "@/infrastructure/config/env";
 
 let adminClient: SupabaseClient | undefined;
 
 export function createSupabaseAdminClient(): SupabaseClient | null {
-  const env = getSupabaseEnv();
-  if (!env.SUPABASE_SECRET_KEY) {
+  const env = tryGetSupabaseEnv();
+  if (!env?.SUPABASE_SECRET_KEY) {
     return null;
   }
 

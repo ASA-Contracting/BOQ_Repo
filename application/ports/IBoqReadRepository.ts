@@ -1,4 +1,13 @@
-import type { BoqBreakdownDto, BoqItemRowDto, BoqListEntryDto, BoqVersionSummaryDto } from "@/application/boq/dto";
+import type {
+  BoqBreakdownDto,
+  BoqBreakdownItemsPageDto,
+  BoqItemRowDto,
+  BoqListEntryDto,
+  ListBoqBreakdownItemsInput,
+  ListBoqsInput,
+  ListBoqsPageDto,
+  BoqVersionSummaryDto,
+} from "@/application/boq/dto";
 import type { BoqId } from "@/domain/boq/ids";
 
 export type InsertBoqItemInput = {
@@ -10,6 +19,10 @@ export type InsertBoqItemInput = {
 
 export interface IBoqReadRepository {
   listBoqs(): Promise<BoqListEntryDto[]>;
+  listBoqsPaginated(input: ListBoqsInput): Promise<ListBoqsPageDto>;
+  listBoqBreakdownItems(
+    input: ListBoqBreakdownItemsInput,
+  ): Promise<BoqBreakdownItemsPageDto>;
   getBoqBreakdown(boqId: number, versionId?: number): Promise<BoqBreakdownDto | null>;
   listBoqVersions(boqId: number, currentVersionId?: number | null): Promise<BoqVersionSummaryDto[]>;
   countMeasurableItems(boqId: BoqId): Promise<number>;

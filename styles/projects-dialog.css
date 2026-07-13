@@ -1,0 +1,27 @@
+.boq-projects-dialog .project-list--embedded {
+  border: 0;
+  box-shadow: none;
+  padding-left: 0;
+  padding-right: 0;
+  padding-bottom: 0;
+  background: rgb(var(--bg1, 249 249 249));
+}
+
+.boq-projects-dialog .project-list--embedded > .min-h-0 {
+  scrollbar-gutter: stable;
+}
+
+.boq-projects-dialog .project-list__grid-shell--embedded {
+  padding: 0 20px 20px;
+}
+
+.boq-projects-dialog .abrd-filter-engine {
+  border-radius: 0;
+  min-height: 0;
+  flex: 1 1 auto;
+}
+
+.boq-projects-dialog .project-list__grid {
+  height: 100%;
+  min-height: 0;
+}

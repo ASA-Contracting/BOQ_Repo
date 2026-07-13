@@ -1,0 +1,211 @@
+.import-project-picker {
+  cursor: text;
+}
+
+.import-project-picker .ss,
+.import-project-picker .ss-origin {
+  width: 100%;
+}
+
+.import-project-picker .ss-inline-trigger {
+  width: 100%;
+  height: 2.25rem;
+  min-height: 0;
+  border-radius: 0;
+  border: 0;
+  background: transparent;
+  color: hsl(var(--foreground));
+  display: flex;
+  align-items: stretch;
+  overflow: hidden;
+}
+
+.import-project-picker .ss-inline-trigger.focused {
+  outline: none;
+}
+
+.import-project-picker .ss-inline-input {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
+  background: transparent;
+  color: hsl(var(--foreground));
+  padding: 0 0.75rem;
+  font-size: 0.875rem;
+  line-height: 2.25rem;
+  outline: none;
+}
+
+.import-project-picker .ss-inline-input::placeholder {
+  color: hsl(var(--muted-foreground));
+}
+
+.import-project-picker .ss-caret-trigger {
+  margin-left: auto;
+  width: 2rem;
+  min-width: 2rem;
+  height: 100%;
+  border: none;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.import-project-picker .ss-caret-box {
+  width: 2rem;
+  height: 100%;
+  border-left: 1px solid hsl(var(--border));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.import-project-picker .ss-caret {
+  width: 8px;
+  height: 8px;
+  border-right: 1.5px solid hsl(var(--muted-foreground));
+  border-bottom: 1.5px solid hsl(var(--muted-foreground));
+  transform: rotate(45deg);
+  display: inline-block;
+  transition: transform 0.12s ease-out;
+}
+
+.import-project-picker .ss-caret.open {
+  transform: rotate(-135deg);
+}
+
+.import-project-create-panel {
+  border: 1px dashed hsl(var(--border));
+  border-radius: 8px;
+  background: hsl(var(--muted) / 0.25);
+}
+
+/* Rich dropdown panel — aligned with BoqCategoryPicker menu styling */
+
+.import-project-picker-overlay {
+  --primary: 5 150 105;
+}
+
+.import-project-picker-overlay .ss-panel {
+  border: 2px solid rgb(199 210 254);
+  border-radius: 0.5rem;
+  background: white;
+  box-shadow:
+    0 20px 25px -5px rgb(0 0 0 / 0.1),
+    0 8px 10px -6px rgb(0 0 0 / 0.1);
+}
+
+.import-project-picker-overlay .ss-search {
+  height: 2.5rem;
+  border: 0;
+  border-bottom: 1px solid rgb(224 231 255);
+  border-radius: 0;
+  background: rgb(238 242 255);
+  color: rgb(30 27 75);
+  padding: 0 0.75rem;
+  font-size: 0.875rem;
+}
+
+.import-project-picker-overlay .ss-search::placeholder {
+  color: rgb(129 140 248);
+}
+
+.import-project-picker-overlay .ss-list {
+  max-height: min(16rem, 42vh);
+  padding: 0.25rem 0;
+  gap: 0;
+}
+
+.import-project-picker-overlay .ss-item {
+  min-height: auto;
+  align-items: flex-start;
+  gap: 0.5rem;
+  border-radius: 0;
+  padding: 0.5rem 0.75rem;
+  font-size: inherit;
+  line-height: inherit;
+}
+
+.import-project-picker-overlay .ss-item:hover {
+  background: rgb(238 242 255);
+}
+
+.import-project-picker-overlay .ss-item.selected {
+  background: rgb(209 250 229);
+  color: rgb(6 78 59);
+  box-shadow: none;
+}
+
+.import-project-picker-overlay .ss-item.create-option {
+  border-top: 1px solid rgb(241 245 249);
+  color: hsl(var(--primary));
+  font-weight: 600;
+  align-items: center;
+}
+
+.import-project-picker-overlay .ss-item.create-option:hover {
+  background: rgb(239 246 255);
+}
+
+.import-project-picker-overlay .ss-empty {
+  min-height: 4rem;
+  padding: 1rem 0.75rem;
+  color: hsl(var(--muted-foreground));
+  font-size: 0.75rem;
+}
+
+.import-project-option-check {
+  margin-top: 0.125rem;
+  height: 1rem;
+  width: 1rem;
+  flex-shrink: 0;
+  color: rgb(5 150 105);
+}
+
+.import-project-option-dot {
+  margin-top: 0.375rem;
+  height: 0.375rem;
+  width: 0.375rem;
+  flex-shrink: 0;
+  border-radius: 9999px;
+  background: rgb(165 180 252);
+}
+
+.import-project-option-text {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.import-project-option-primary {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: rgb(30 41 59);
+}
+
+.import-project-picker-overlay .ss-item.selected .import-project-option-primary {
+  font-weight: 700;
+  color: rgb(6 78 59);
+}
+
+.import-project-option-secondary {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.625rem;
+  color: hsl(var(--muted-foreground));
+}
+
+.import-project-option-create {
+  font-size: 0.875rem;
+  font-weight: 600;
+}

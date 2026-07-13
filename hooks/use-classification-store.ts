@@ -17,6 +17,7 @@ import {
   type CategoryExplorerTreeNode,
   type CategoryInlineState,
 } from '@/lib/category-tree-builder';
+import { filterCatalogTagRecords } from '@/lib/category-tag-display';
 import {
   getTreeFilterLabel,
   getTreeFilterSelectedModes,
@@ -404,6 +405,11 @@ export function useClassificationStore(initial?: ClassificationStoreInitial) {
     return collectAvailableTags(state, schemaId);
   }, [state, schemaId]);
 
+  const catalogTags = useMemo(() => {
+    if (!state || !schemaId) return [];
+    return filterCatalogTagRecords(state.tags, state, schemaId);
+  }, [state, schemaId]);
+
   const filterLabel = useMemo(() => getTreeFilterLabel(filter), [filter]);
   const filterActive = useMemo(
     () => isTreeFilterActive(filter, filterTagNames),
@@ -772,13 +778,20 @@ export function useClassificationStore(initial?: ClassificationStoreInitial) {
       if (!normalized) throw new Error('Tag name is required');
       const existing = state?.tags.find((tag) => tag.name.toLowerCase() === normalized.toLowerCase());
       if (existing) return existing;
-      return fetchJson<{ id: number; name: string; color?: string | null }>('/api/classification/tags', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: normalized, color: color ?? null }),
-      });
+      const created = await fetchJson<{ id: number; name: string; color?: string | null }>(
+        '/api/classification/tags',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: normalized, color: color ?? null }),
+        },
+      );
+      if (schemaId) {
+        await refreshState(schemaId);
+      }
+      return created;
     },
-    [state],
+    [state, schemaId, refreshState],
   );
 
   const ensureTagId = useCallback(
@@ -1127,6 +1140,7 @@ export function useClassificationStore(initial?: ClassificationStoreInitial) {
     setShowParentContext,
     toggleShowParentContext,
     availableTags,
+    catalogTags,
     treeIndex,
     treeRoot,
     categoryCount,

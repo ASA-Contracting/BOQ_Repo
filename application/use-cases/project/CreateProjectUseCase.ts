@@ -34,16 +34,23 @@ export class CreateProjectUseCase
     const name = validateProjectName(input.name);
     if (!name.ok) return name;
 
-    const client = validateProjectClient(input.client);
-    if (!client.ok) return client;
+    const client = input.clientId
+      ? null
+      : validateProjectClient(input.client ?? "");
+    if (client && !client.ok) return client;
 
     const description = validateProjectDescription(input.description);
     if (!description.ok) return description;
 
     const project = await this.deps.projectRepository.create({
       name: name.value,
-      client: client.value,
+      client: client?.value,
+      clientId: input.clientId ?? null,
       description: description.value,
+      ownerType: input.ownerType ?? null,
+      tenderStatus: input.tenderStatus ?? null,
+      country: input.country ?? null,
+      assignedTo: input.assignedTo ?? null,
     });
 
     return ok(mapProjectToDetailDto(project));

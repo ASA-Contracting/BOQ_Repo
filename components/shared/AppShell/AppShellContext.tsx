@@ -19,6 +19,8 @@ type AppShellContextValue = {
   mobileOpen: boolean;
   setMobileOpen: (open: boolean) => void;
   toggleMobileOpen: () => void;
+  commandBarBeforeSearch: React.ReactNode;
+  setCommandBarBeforeSearch: (content: React.ReactNode) => void;
 };
 
 const AppShellContext = React.createContext<AppShellContextValue | null>(null);
@@ -58,6 +60,12 @@ export function AppShellProvider({ children }: { children: React.ReactNode }) {
   const [sidebarWidth, setSidebarWidthState] = React.useState(DEFAULT_WIDTH);
   const [mobileOpen, setMobileOpen] = React.useState(false);
   const [hydrated, setHydrated] = React.useState(false);
+  const [commandBarBeforeSearch, setCommandBarBeforeSearchState] =
+    React.useState<React.ReactNode>(null);
+
+  const setCommandBarBeforeSearch = React.useCallback((content: React.ReactNode) => {
+    setCommandBarBeforeSearchState(() => content);
+  }, []);
 
   React.useEffect(() => {
     setCollapsedState(readStoredBoolean(STORAGE_COLLAPSED, false));
@@ -97,6 +105,8 @@ export function AppShellProvider({ children }: { children: React.ReactNode }) {
       mobileOpen,
       setMobileOpen,
       toggleMobileOpen,
+      commandBarBeforeSearch,
+      setCommandBarBeforeSearch,
     }),
     [
       collapsed,
@@ -107,6 +117,8 @@ export function AppShellProvider({ children }: { children: React.ReactNode }) {
       sidebarWidth,
       toggleCollapsed,
       toggleMobileOpen,
+      commandBarBeforeSearch,
+      setCommandBarBeforeSearch,
     ],
   );
 
@@ -121,6 +133,14 @@ export function useAppShell(): AppShellContextValue {
     throw new Error("useAppShell must be used within AppShellProvider");
   }
   return context;
+}
+
+export function useCommandBarSlot(): Pick<
+  AppShellContextValue,
+  "commandBarBeforeSearch" | "setCommandBarBeforeSearch"
+> {
+  const { commandBarBeforeSearch, setCommandBarBeforeSearch } = useAppShell();
+  return { commandBarBeforeSearch, setCommandBarBeforeSearch };
 }
 
 export {

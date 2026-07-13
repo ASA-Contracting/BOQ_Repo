@@ -771,8 +771,8 @@
 .mc-level-panel__body {
   display: flex;
   flex: 1 1 auto;
-  flex-direction: column;
-  gap: 12px;
+  flex-direction: row;
+  gap: 16px;
   min-height: 0;
   overflow: hidden;
   padding: 14px 18px 10px;
@@ -783,16 +783,18 @@
   flex-direction: column;
   gap: 10px;
   min-height: 0;
+  min-width: 0;
 }
 
 .mc-level-panel__section--existing {
-  flex: 0 1 auto;
-  max-height: min(36vh, 280px);
+  flex: 1 1 50%;
+  padding-right: 8px;
+  border-right: 1px solid rgb(var(--border-strong) / 0.45);
 }
 
 .mc-level-panel__section--add {
-  flex: 1 1 0%;
-  min-height: 140px;
+  flex: 1 1 50%;
+  padding-left: 8px;
 }
 
 .mc-level-panel__section-head {
@@ -844,6 +846,7 @@
 
 .mc-level-panel__table-scroll {
   min-height: 0;
+  flex: 1 1 0%;
   overflow: auto;
   border: 1px solid rgb(var(--border-strong) / 0.5);
   border-radius: 10px;

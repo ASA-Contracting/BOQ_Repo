@@ -18,10 +18,33 @@ export type UpdateProjectInput = {
   description?: string | null;
 };
 
+export type AbrdProjectImportInput = {
+  abrdProjectId: number;
+  name: string;
+  abrdOwnerId: number | null;
+  clientId: number | null;
+  client: string;
+};
+
+export type TenderProjectImportInput = {
+  abrdProjectId: number | null;
+  name: string;
+  client: string;
+  clientId: number;
+  ownerType: string | null;
+  tenderStatus: string | null;
+  country: string | null;
+  assignedTo: string | null;
+};
+
 export interface IProjectRepository {
   findById(id: ProjectId): Promise<Project | null>;
   list(query: ProjectListQuery): Promise<ProjectListResult>;
   create(input: NewProject): Promise<Project>;
   update(id: ProjectId, input: UpdateProjectInput): Promise<Project>;
   close(id: ProjectId): Promise<Project>;
+  importFromAbrd(input: AbrdProjectImportInput): Promise<"imported" | "skipped">;
+  importFromTenderCsv(
+    input: TenderProjectImportInput,
+  ): Promise<"imported" | "updated" | "skipped">;
 }

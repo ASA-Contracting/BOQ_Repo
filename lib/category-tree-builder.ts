@@ -12,6 +12,14 @@ import {
   matchesTagFilter,
   type CategoryTreeFilter,
 } from './category-tree-filter';
+import {
+  buildCatalogTagContextFromState,
+  filterDirectTagsForNode,
+  filterInheritedTagsForNode,
+  isCatalogTagName,
+  isSelfCategoryTag,
+  normalizeTagLabel,
+} from './category-tag-display';
 
 export type CategoryTreeTagBadge = {
   label: string;
@@ -113,6 +121,7 @@ function normalizeTagNames(tags: string[]): string[] {
 function buildTagContext(
   state: ClassificationStateDto,
   treeIndex: MaterialClassificationTreeIndex,
+  schemaId: number,
   showParentContext: boolean,
 ): Pick<
   NodeContext,
@@ -121,6 +130,7 @@ function buildTagContext(
   | 'searchTagsByNodeId'
   | 'tagBadgesByNodeId'
 > {
+  const catalogCtx = buildCatalogTagContextFromState(state, schemaId);
   const directTagsByNodeId = new Map<number, string[]>();
   for (const link of state.materialTags) {
     const bucket = directTagsByNodeId.get(link.materialNodeId) ?? [];
@@ -136,20 +146,36 @@ function buildTagContext(
   const tagBadgesByNodeId = new Map<number, CategoryTreeTagBadge[]>();
 
   for (const option of treeIndex.activeOptions) {
-    const direct = normalizeTagNames(directTagsByNodeId.get(option.id) ?? []);
+    const nodeName = option.name;
+    const direct = filterDirectTagsForNode(
+      normalizeTagNames(directTagsByNodeId.get(option.id) ?? []),
+      nodeName,
+    );
     const inheritedRows: Array<{ tag: string; sourceLabel: string }> = [];
     const path = treeIndex.pathById.get(option.id) ?? [];
     for (let index = path.length - 2; index >= 0; index -= 1) {
       const ancestor = path[index];
-      for (const tag of directTagsByNodeId.get(ancestor.id) ?? []) {
+      const ancestorTags = filterDirectTagsForNode(
+        normalizeTagNames(directTagsByNodeId.get(ancestor.id) ?? []),
+        ancestor.name,
+      );
+      for (const tag of ancestorTags) {
         inheritedRows.push({ tag, sourceLabel: ancestor.name });
       }
     }
-    inheritedTagsByNodeId.set(option.id, inheritedRows);
+    const inherited = filterInheritedTagsForNode(
+      inheritedRows,
+      nodeName,
+      catalogCtx.categoryNamesLower,
+      catalogCtx.nonSelfCountByTagLower,
+      catalogCtx.rootCategoryNamesLower,
+      catalogCtx.categoryTokens,
+    );
+    inheritedTagsByNodeId.set(option.id, inherited);
 
     const searchTags = normalizeTagNames([
       ...direct,
-      ...inheritedRows.map((row) => row.tag),
+      ...inherited.map((row) => row.tag),
     ]);
     searchTagsByNodeId.set(option.id, searchTags);
 
@@ -159,7 +185,7 @@ function buildTagContext(
       title: 'Direct tag',
     }));
     const directLabels = new Set(direct.map((tag) => tag.toLowerCase()));
-    const inheritedBadges = inheritedRows
+    const inheritedBadges = inherited
       .filter((row) => !directLabels.has(row.tag.toLowerCase()))
       .map((row) => ({
         label: row.tag,
@@ -308,7 +334,12 @@ export function buildCategoryTreeRoot(params: BuildCategoryTreeParams): Category
     }))
   );
 
-  const tagContext = buildTagContext(params.state, treeIndex, params.showParentContext);
+  const tagContext = buildTagContext(
+    params.state,
+    treeIndex,
+    params.schemaId,
+    params.showParentContext,
+  );
   const ctx: NodeContext = {
     treeIndex,
     summaryById: new Map(params.state.nodeSummaries.map((s) => [s.materialId, s])),
@@ -353,6 +384,7 @@ export function collectAvailableTags(
   state: ClassificationStateDto,
   schemaId: number
 ): Array<{ name: string; count: number }> {
+  const catalogCtx = buildCatalogTagContextFromState(state, schemaId);
   const activeNodeIds = new Set(
     state.materials
       .filter((m) => m.schemaId === schemaId && m.isActive)
@@ -362,7 +394,21 @@ export function collectAvailableTags(
 
   for (const link of state.materialTags) {
     if (!activeNodeIds.has(link.materialNodeId)) continue;
-    const key = link.tagName.toLowerCase();
+    const nodeName = catalogCtx.nodeNameById.get(link.materialNodeId);
+    if (!nodeName || isSelfCategoryTag(link.tagName, nodeName)) continue;
+    const key = normalizeTagLabel(link.tagName).toLowerCase();
+    const nonSelfCount = catalogCtx.nonSelfCountByTagLower.get(key) ?? 0;
+    if (
+      !isCatalogTagName(
+        link.tagName,
+        catalogCtx.categoryNamesLower,
+        nonSelfCount,
+        catalogCtx.rootCategoryNamesLower,
+        catalogCtx.categoryTokens,
+      )
+    ) {
+      continue;
+    }
     const current = counts.get(key);
     counts.set(key, {
       name: current?.name ?? link.tagName,
@@ -379,7 +425,15 @@ export function getInheritedTagsForNode(
   state: ClassificationStateDto,
   treeIndex: MaterialClassificationTreeIndex,
   nodeId: number,
+  schemaId?: number,
 ): Array<{ tag: string; sourceLabel: string }> {
+  const resolvedSchemaId =
+    schemaId ??
+    state.materials.find((material) => material.id === nodeId)?.schemaId ??
+    state.materials[0]?.schemaId;
+  if (resolvedSchemaId == null) return [];
+
+  const catalogCtx = buildCatalogTagContextFromState(state, resolvedSchemaId);
   const directTagsByNodeId = new Map<number, string[]>();
   for (const link of state.materialTags) {
     const bucket = directTagsByNodeId.get(link.materialNodeId) ?? [];
@@ -388,21 +442,35 @@ export function getInheritedTagsForNode(
   }
 
   const path = treeIndex.pathById.get(nodeId) ?? [];
+  const nodeName = path[path.length - 1]?.name ?? '';
   const directLabels = new Set(
-    normalizeTagNames(directTagsByNodeId.get(nodeId) ?? []).map((tag) => tag.toLowerCase()),
+    filterDirectTagsForNode(
+      normalizeTagNames(directTagsByNodeId.get(nodeId) ?? []),
+      nodeName,
+    ).map((tag) => tag.toLowerCase()),
   );
   const inheritedRows: Array<{ tag: string; sourceLabel: string }> = [];
 
   for (let index = path.length - 2; index >= 0; index -= 1) {
     const ancestor = path[index];
-    for (const tag of normalizeTagNames(directTagsByNodeId.get(ancestor.id) ?? [])) {
+    for (const tag of filterDirectTagsForNode(
+      normalizeTagNames(directTagsByNodeId.get(ancestor.id) ?? []),
+      ancestor.name,
+    )) {
       if (directLabels.has(tag.toLowerCase())) continue;
       inheritedRows.push({ tag, sourceLabel: ancestor.name });
       directLabels.add(tag.toLowerCase());
     }
   }
 
-  return inheritedRows;
+  return filterInheritedTagsForNode(
+    inheritedRows,
+    nodeName,
+    catalogCtx.categoryNamesLower,
+    catalogCtx.nonSelfCountByTagLower,
+    catalogCtx.rootCategoryNamesLower,
+    catalogCtx.categoryTokens,
+  );
 }
 
 export function getExistingCategoryPaths(

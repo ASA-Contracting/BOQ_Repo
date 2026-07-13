@@ -1,6 +1,12 @@
 import { z } from "zod";
 
-export const BOQ_LOOKUP_CATEGORIES = ["discipline"] as const;
+export const BOQ_LOOKUP_CATEGORIES = [
+  "discipline",
+  "owner_type",
+  "tender_status",
+  "country",
+  "assigned_to",
+] as const;
 
 export type BoqLookupCategory = (typeof BOQ_LOOKUP_CATEGORIES)[number];
 
@@ -95,6 +101,14 @@ export function getBoqSettingsAddButtonLabel(category: BoqLookupCategory): strin
   switch (category) {
     case "discipline":
       return "Create New Discipline";
+    case "owner_type":
+      return "Create New Owner Type";
+    case "tender_status":
+      return "Create New Tender Status";
+    case "country":
+      return "Create New Country";
+    case "assigned_to":
+      return "Create New Assignee";
   }
 }
 
@@ -102,6 +116,14 @@ export function getBoqSettingsFirstColumnLabel(category: BoqLookupCategory): str
   switch (category) {
     case "discipline":
       return "Discipline";
+    case "owner_type":
+      return "Owner Type";
+    case "tender_status":
+      return "Tender Status";
+    case "country":
+      return "Country";
+    case "assigned_to":
+      return "Assigned To";
   }
 }
 
@@ -109,5 +131,13 @@ export function getBoqSettingsTabLabel(category: BoqLookupCategory): string {
   switch (category) {
     case "discipline":
       return "Discipline";
+    case "owner_type":
+      return "Owner Type";
+    case "tender_status":
+      return "Tender Status";
+    case "country":
+      return "Country";
+    case "assigned_to":
+      return "Assigned To";
   }
 }

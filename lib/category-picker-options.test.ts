@@ -4,7 +4,6 @@ import {
   buildCategoryPickerOptions,
   collectCategoryPickerAvailableTags,
   filterCategoryPickerOptions,
-  formatSectionPickerLabel,
   getCategoryPickerDisplayLabel,
   resolveCategoryParentLabel,
   withSectionPickerLabels,
@@ -46,17 +45,18 @@ describe('category-picker-options', () => {
     expect(resolveCategoryParentLabel(1, options)).toBeNull();
   });
 
-  it('prefixes section picker labels', () => {
+  it('keeps section keyword in search text without changing labels', () => {
     const options = buildCategoryPickerOptions([
       { id: 1, name: 'Air Outlets', materialLevelTypeId: 1, parentId: null, schemaId: 1, isActive: true },
     ]);
 
-    expect(formatSectionPickerLabel('Air Outlets')).toBe('Section - Air Outlets');
-    expect(withSectionPickerLabels(options)[0]?.pickerLabel).toBe('Section - Air Outlets');
-    expect(filterCategoryPickerOptions(withSectionPickerLabels(options), 'section air')).toHaveLength(1);
+    const sectionOptions = withSectionPickerLabels(options);
+    expect(sectionOptions[0]?.pickerLabel).toBeUndefined();
+    expect(getCategoryPickerDisplayLabel(sectionOptions[0]!)).toBe('Air Outlets');
+    expect(filterCategoryPickerOptions(sectionOptions, 'section air')).toHaveLength(1);
   });
 
-  it('formats selected category as parent - chosen in the cell', () => {
+  it('formats selected category as node name in the picker', () => {
     const options = buildCategoryPickerOptions([
       { id: 1, name: 'HVAC', materialLevelTypeId: 1, parentId: null, schemaId: 1, isActive: true },
       { id: 2, name: 'Air Outlets', materialLevelTypeId: 2, parentId: 1, schemaId: 1, isActive: true },
@@ -64,8 +64,8 @@ describe('category-picker-options', () => {
     ]);
 
     expect(getCategoryPickerDisplayLabel(options[0]!)).toBe('HVAC');
-    expect(getCategoryPickerDisplayLabel(options[1]!)).toBe('HVAC - Air Outlets');
-    expect(getCategoryPickerDisplayLabel(options[2]!)).toBe('Air Outlets - Ceiling Diffuser');
+    expect(getCategoryPickerDisplayLabel(options[1]!)).toBe('Air Outlets');
+    expect(getCategoryPickerDisplayLabel(options[2]!)).toBe('Ceiling Diffuser');
   });
 
   it('includes direct and inherited tags on picker options', () => {
@@ -101,5 +101,26 @@ describe('category-picker-options', () => {
       { name: 'Mechanical', count: 1 },
       { name: 'Wet', count: 1 },
     ]);
+  });
+
+  it('excludes category-name self tags from picker filter tags', () => {
+    const options = buildCategoryPickerOptions(
+      [
+        { id: 1, name: 'HVAC', materialLevelTypeId: 1, parentId: null, schemaId: 1, isActive: true },
+        { id: 2, name: '1 kg', materialLevelTypeId: 2, parentId: 1, schemaId: 1, isActive: true },
+        { id: 3, name: '100 L', materialLevelTypeId: 2, parentId: 1, schemaId: 1, isActive: true },
+      ],
+      [
+        { materialNodeId: 1, tagName: 'HVAC' },
+        { materialNodeId: 2, tagName: '1 kg' },
+        { materialNodeId: 2, tagName: 'HVAC' },
+        { materialNodeId: 3, tagName: '100 L' },
+        { materialNodeId: 3, tagName: 'HVAC' },
+      ],
+    );
+
+    expect(options.find((option) => option.id === 2)?.directTagNames).toEqual(['HVAC']);
+    expect(options.find((option) => option.id === 3)?.directTagNames).toEqual(['HVAC']);
+    expect(collectCategoryPickerAvailableTags(options)).toEqual([{ name: 'HVAC', count: 2 }]);
   });
 });

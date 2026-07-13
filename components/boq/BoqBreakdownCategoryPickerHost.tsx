@@ -15,7 +15,6 @@ import {
 import type { BoqItemRowDto } from "@/application/boq/dto";
 import { BoqCategoryPickerMenu } from "@/components/boq/BoqCategoryPicker";
 import {
-  formatSectionPickerLabel,
   getCategoryPickerDisplayLabel,
   type CategoryPickerOption,
 } from "@/lib/category-picker-options";
@@ -84,7 +83,7 @@ const BoqBreakdownCategoryPickerMenuLayer = forwardRef<PickerController, MenuLay
       sectionMode &&
       activeItem.materialNodeId == null &&
       activeItem.sectionParentLabel
-        ? formatSectionPickerLabel(activeItem.sectionParentLabel)
+        ? activeItem.sectionParentLabel
         : null;
 
     return (
@@ -166,7 +165,7 @@ export function BoqBreakdownCategoryPickerTrigger({ item, optionById }: TriggerP
     selected != null
       ? getCategoryPickerDisplayLabel(selected)
       : sectionMode && item.sectionParentLabel
-        ? formatSectionPickerLabel(item.sectionParentLabel)
+        ? item.sectionParentLabel
         : null;
   const disabled = isRowSaving(item.id) || readOnly;
   const placeholder = sectionMode ? "Select section…" : "Select category…";
